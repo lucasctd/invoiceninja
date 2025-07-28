@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -26,7 +26,6 @@ class TaskFilters extends QueryFilters
      *
      * @param string $filter
      * @return Builder
-     * @deprecated
      */
     public function filter(string $filter = ''): Builder
     {
@@ -86,10 +85,14 @@ class TaskFilters extends QueryFilters
             $this->builder->whereNull('invoice_id');
         }
 
+        if (in_array('is_running', $status_parameters)) {
+            $this->builder->where('is_running', true);
+        }
+
         return $this->builder;
     }
 
-    public function project_tasks($project): Builder
+    public function project_tasks(string $project = ''): Builder
     {
         if (strlen($project) == 0) {
             return $this->builder;
@@ -97,7 +100,7 @@ class TaskFilters extends QueryFilters
 
         return $this->builder->where('project_id', $this->decodePrimaryKey($project));
     }
-    
+
     public function hash(string $hash = ''): Builder
     {
         if (strlen($hash) == 0) {
@@ -105,7 +108,7 @@ class TaskFilters extends QueryFilters
         }
 
         return $this->builder->where('hash', $hash);
-        
+
     }
 
     public function number(string $number = ''): Builder
@@ -127,21 +130,47 @@ class TaskFilters extends QueryFilters
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('tasks'))) {
             return $this->builder;
         }
 
+        $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
+
         if ($sort_col[0] == 'client_id') {
             return $this->builder->orderBy(\App\Models\Client::select('name')
-                    ->whereColumn('clients.id', 'tasks.client_id'), $sort_col[1]);
+                    ->whereColumn('clients.id', 'tasks.client_id'), $dir);
         }
 
         if ($sort_col[0] == 'user_id') {
             return $this->builder->orderBy(\App\Models\User::select('first_name')
-                    ->whereColumn('users.id', 'tasks.user_id'), $sort_col[1]);
+                    ->whereColumn('users.id', 'tasks.user_id'), $dir);
         }
 
-        return $this->builder->orderBy($sort_col[0], $sort_col[1]);
+        if ($sort_col[0] == 'number') {
+            return $this->builder->orderByRaw("REGEXP_REPLACE(number,'[^0-9]+','')+0 " . $dir);
+        }
+
+        return $this->builder->orderBy($sort_col[0], $dir);
+    }
+
+    public function user_id(string $user = ''): Builder
+    {
+        if (strlen($user) == 0) {
+            return $this->builder;
+        }
+
+        return $this->builder->where('user_id', $this->decodePrimaryKey($user));
+
+    }
+
+    public function assigned_user(string $user = ''): Builder
+    {
+        if (strlen($user) == 0) {
+            return $this->builder;
+        }
+
+        return $this->builder->where('assigned_user_id', $this->decodePrimaryKey($user));
+
     }
 
     public function task_status(string $value = ''): Builder
@@ -150,9 +179,10 @@ class TaskFilters extends QueryFilters
             return $this->builder;
         }
 
+        /** @var array $status_parameters */
         $status_parameters = explode(',', $value);
 
-        if(count($status_parameters) >= 1) {
+        if (count($status_parameters) >= 1) {
 
             $this->builder->where(function ($query) use ($status_parameters) {
                 $query->whereIn('status_id', $this->transformKeys($status_parameters))->whereNull('invoice_id');

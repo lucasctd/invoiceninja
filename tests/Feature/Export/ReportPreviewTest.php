@@ -33,7 +33,7 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
+ * 
  */
 class ReportPreviewTest extends TestCase
 {
@@ -65,11 +65,12 @@ class ReportPreviewTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -96,11 +97,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -127,11 +129,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'vendor_id' => $this->vendor->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -147,7 +150,7 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        
+
         //nlog($r);
 
     }
@@ -159,11 +162,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -179,7 +183,7 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        
+
         //nlog($r);
 
     }
@@ -192,11 +196,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -212,7 +217,7 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        
+
         //nlog($r);
 
     }
@@ -226,11 +231,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'vendor_id' => $this->vendor->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -256,11 +262,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -286,11 +293,12 @@ class ReportPreviewTest extends TestCase
             'user_id' => $this->user->id,
             'client_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -315,11 +323,12 @@ class ReportPreviewTest extends TestCase
             'company_id' => $this->company->id,
             'user_id' => $this->user->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -346,11 +355,12 @@ class ReportPreviewTest extends TestCase
             'documentable_type' => Client::class,
             'documentable_id' => $this->client->id,
         ]);
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -375,6 +385,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -387,6 +398,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => ['client.name','client.balance'],
+            'include_deleted' => false,
         ];
 
 
@@ -408,6 +420,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -420,6 +433,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => ['client.name','client.balance','contact.email'],
+            'include_deleted' => false,
         ];
 
 
@@ -439,6 +453,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -461,11 +476,12 @@ class ReportPreviewTest extends TestCase
 
     public function testCreditExportPreview()
     {
-        
+
         $data = [
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $p = (new PreviewReport($this->company, $data, CreditExport::class, '123'))->handle();
@@ -475,7 +491,7 @@ class ReportPreviewTest extends TestCase
         $r = Cache::pull('123');
 
         $this->assertNotNull($r);
-        
+
     }
 
     public function testCreditPreview()
@@ -484,6 +500,7 @@ class ReportPreviewTest extends TestCase
             'send_email' => false,
             'date_range' => 'all',
             'report_keys' => [],
+            'include_deleted' => false,
         ];
 
         $response = $this->withHeaders([
@@ -492,6 +509,6 @@ class ReportPreviewTest extends TestCase
         ])->postJson('/api/v1/reports/credits?output=json', $data)
         ->assertStatus(200);
 
-    
+
     }
 }

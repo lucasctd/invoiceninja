@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -17,10 +17,11 @@ use App\Jobs\Util\SystemLogger;
 use App\Models\GatewayType;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\EwayPaymentDriver;
 use App\Utils\Traits\MakesHash;
 
-class CreditCard
+class CreditCard implements LivewireMethodInterface
 {
     use MakesHash;
 
@@ -61,24 +62,24 @@ class CreditCard
             'State' => $this->eway_driver->client->state,
             'PostalCode' => $this->eway_driver->client->postal_code,
             'Country' => $this->eway_driver->client->country->iso_3166_2,
-            'Phone' => $this->eway_driver->client->phone,
-            'Email' => $this->eway_driver->client->contacts()->first()->email,
-            'Url' => $this->eway_driver->client->website,
+            'Phone' => $this->eway_driver->client->phone ?? '',
+            'Email' => $this->eway_driver->client->contacts()->first()->email ?? '',
+            'Url' => $this->eway_driver->client->website  ?? '',
             'Method' => \Eway\Rapid\Enum\PaymentMethod::CREATE_TOKEN_CUSTOMER,
             'SecuredCardData' => $securefieldcode,
         ];
 
         $response = $this->eway_driver->init()->eway->createCustomer(\Eway\Rapid\Enum\ApiMethod::DIRECT, $transaction);
 
-        if($response->getErrors()) {
-    
+        if ($response->getErrors()) {
+
             $response_status['message'] = \Eway\Rapid::getMessage($response->getErrors()[0]);
 
             $this->eway_driver->sendFailureMail($response_status['message']);
 
             $this->logResponse($response);
 
-            throw new PaymentFailed($response_status['message'] ?? 'Unknown response from gateway, please contact you merchant.', 400);
+            throw new PaymentFailed($response_status['message'] ?? 'Unknown response from gateway, please contact you merchant.', 400); //@phpstan-ignore-line
         }
 
         //success
@@ -86,7 +87,7 @@ class CreditCard
         $cgt['token'] = strval($response->Customer->TokenCustomerID);
         $cgt['payment_method_id'] = GatewayType::CREDIT_CARD;
 
-        $payment_meta = new \stdClass;
+        $payment_meta = new \stdClass();
         $payment_meta->exp_month = $response->Customer->CardDetails->ExpiryMonth;
         $payment_meta->exp_year = $response->Customer->CardDetails->ExpiryYear;
         $payment_meta->brand = 'CC';
@@ -102,10 +103,17 @@ class CreditCard
         return $token;
     }
 
-    public function paymentView($data)
+    public function paymentData(array $data): array
     {
         $data['gateway'] = $this->eway_driver;
         $data['public_api_key'] = $this->eway_driver->company_gateway->getConfigField('publicApiKey');
+
+        return $data;
+    }
+
+    public function paymentView($data)
+    {
+        $data = $this->paymentData($data);
 
         return render('gateways.eway.pay', $data);
     }
@@ -135,7 +143,7 @@ class CreditCard
         $invoice_numbers = '';
 
         if ($this->eway_driver->payment_hash->data) {
-            $invoice_numbers = collect($this->eway_driver->payment_hash->data->invoices)->pluck('invoice_number')->implode(',');
+            $invoice_numbers = collect($this->eway_driver->payment_hash->data->invoices)->pluck('invoice_number')->implode(','); //@phpstan-ignore-line
         }
 
         $amount = array_sum(array_column($this->eway_driver->payment_hash->invoices(), 'amount')) + $this->eway_driver->payment_hash->fee_total;
@@ -275,5 +283,9 @@ class CreditCard
         }
 
         return $payment;
+    }
+    public function livewirePaymentView(array $data): string
+    {
+        return 'gateways.eway.pay_livewire';
     }
 }

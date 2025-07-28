@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -16,14 +16,6 @@ namespace App\DataMapper;
  */
 class BaseSettings
 {
-    // //@deprecated
-    // public function __construct($obj)
-    // {
-    //     // foreach ($obj as $key => $value) {
-    //     //     $obj->{$key} = $value;
-    //     // }
-    // }
-
     public static function setCasts($obj, $casts)
     {
         foreach ($casts as $key => $value) {
@@ -38,16 +30,16 @@ class BaseSettings
         switch ($key) {
             case 'int':
             case 'integer':
-                return (int) $value;
+                return is_scalar($value) ? (int) $value : 0;
             case 'real':
             case 'float':
             case 'double':
-                return (float) $value;
+                return is_scalar($value) ? (float) $value : 0;
             case 'string':
-                return is_null($value) ? '' : (string) $value;
+                return is_scalar($value) ? (string) $value : '';
             case 'bool':
             case 'boolean':
-                return boolval($value);
+                return is_scalar($value) ? boolval($value) : false;
             case 'object':
                 return json_decode($value);
             case 'array':

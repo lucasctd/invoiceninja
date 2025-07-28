@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -69,11 +69,11 @@ class DesignUpdate extends Command
 
     private function handleOnDb()
     {
-        foreach (Design::whereIsCustom(false)->get() as $design) {
-            $invoice_design = new \App\Services\PdfMaker\Design(strtolower($design->name));
-            $invoice_design->document();
+        foreach (Design::where('is_custom', false)->get() as $design) {
+            
+            $invoice_design = new \App\Services\Pdf\DesignExtractor($design->name);
 
-            $design_object = new stdClass;
+            $design_object = new stdClass();
             $design_object->includes = $invoice_design->getSectionHTML('style');
             $design_object->header = $invoice_design->getSectionHTML('header');
             $design_object->body = $invoice_design->getSectionHTML('body');

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,15 +19,15 @@ class VendorContactDecorator implements DecoratorInterface
     {
         $contact = false;
 
-        if($entity instanceof VendorContact) {
+        if ($entity instanceof VendorContact) {
             $contact = $entity;
-        } elseif($entity->contacts) {
+        } elseif ($entity->contacts) {
             $contact = $entity->contacts()->first();
         }
 
-        if($contact && method_exists($this, $key)) {
+        if ($contact && method_exists($this, $key)) {
             return $this->{$key}($contact);
-        } elseif($contact && $contact->{$key}) {
+        } elseif ($contact && ($contact->{$key} ?? false)) {
             return $contact->{$key} ?? '';
         }
 

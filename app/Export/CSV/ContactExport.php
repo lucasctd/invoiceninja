@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,13 +25,12 @@ use Illuminate\Database\Eloquent\Builder;
 
 class ContactExport extends BaseExport
 {
-
     private ClientTransformer $client_transformer;
 
     private ClientContactTransformer $contact_transformer;
 
     private Decorator $decorator;
-    
+
     public Writer $csv;
 
     public string $date_key = 'created_at';
@@ -59,9 +58,12 @@ class ContactExport extends BaseExport
         }
 
         $query = ClientContact::query()
-                        ->where('company_id', $this->company->id);
+                        ->where('company_id', $this->company->id)
+                        ->whereHas('client', function ($q) {
+                            $q->where('is_deleted', false);
+                        });
 
-        $query = $this->addDateRange($query);
+        $query = $this->addDateRange($query, 'client_contacts');
 
         return $query;
 
@@ -69,16 +71,18 @@ class ContactExport extends BaseExport
 
     public function run()
     {
-        
+
         $query = $this->init();
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()->each(function ($contact) {
+            /** @var \App\Models\ClientContact $contact */
             $this->csv->insertOne($this->buildRow($contact));
         });
 
@@ -98,15 +102,16 @@ class ContactExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($contact) {
+                    /** @var \App\Models\ClientContact $contact */
                     $row = $this->buildRow($contact);
                     return $this->processMetaData($row, $contact);
                 })->toArray();
-        
+
         return array_merge(['columns' => $header], $report);
     }
 
 
-    private function buildRow(ClientContact $contact) :array
+    private function buildRow(ClientContact $contact): array
     {
         $transformed_contact = false;
 
@@ -129,11 +134,11 @@ class ContactExport extends BaseExport
 
             }
         }
-        return $entity;
-        // return $this->decorateAdvancedFields($contact->client, $entity);
+        // return $entity;
+        return $this->decorateAdvancedFields($contact->client, $entity);
     }
 
-    private function decorateAdvancedFields(Client $client, array $entity) :array
+    private function decorateAdvancedFields(Client $client, array $entity): array
     {
         if (in_array('client.country_id', $this->input['report_keys'])) {
             $entity['country'] = $client->country ? ctrans("texts.country_{$client->country->name}") : '';
@@ -150,6 +155,15 @@ class ContactExport extends BaseExport
         if (in_array('client.industry_id', $this->input['report_keys'])) {
             $entity['industry_id'] = $client->industry ? ctrans("texts.industry_{$client->industry->name}") : '';
         }
+
+        if (in_array('client.user_id', $this->input['report_keys'])) {
+            $entity['client.user_id'] = $client->user ? $client->user->present()->name() : '';// @phpstan-ignore-line
+        }
+
+        if (in_array('client.assigned_user_id', $this->input['report_keys'])) {
+            $entity['client.assigned_user_id'] = $client->assigned_user ? $client->assigned_user->present()->name() : '';
+        }
+
 
         return $entity;
     }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,7 +25,6 @@ use App\Http\Requests\PurchaseOrder\StorePurchaseOrderRequest;
 use App\Http\Requests\PurchaseOrder\UpdatePurchaseOrderRequest;
 use App\Http\Requests\PurchaseOrder\UploadPurchaseOrderRequest;
 use App\Jobs\Entity\CreateRawPdf;
-use App\Jobs\PurchaseOrder\PurchaseOrderEmail;
 use App\Jobs\PurchaseOrder\ZipPurchaseOrders;
 use App\Models\Account;
 use App\Models\Client;
@@ -60,7 +59,7 @@ class PurchaseOrderController extends BaseController
      *
      * @param \App\Filters\PurchaseOrderFilters $filters  The filters
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/purchase_orders",
@@ -105,7 +104,7 @@ class PurchaseOrderController extends BaseController
      *
      * @param CreatePurchaseOrderRequest $request  The request
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -144,6 +143,7 @@ class PurchaseOrderController extends BaseController
         $user = auth()->user();
 
         $purchase_order = PurchaseOrderFactory::create($user->company()->id, $user->id);
+        $purchase_order->date = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
 
         return $this->itemResponse($purchase_order);
     }
@@ -152,7 +152,7 @@ class PurchaseOrderController extends BaseController
      *
      * @param StorePurchaseOrderRequest $request  The request
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Post(
@@ -196,7 +196,7 @@ class PurchaseOrderController extends BaseController
             ->fillDefaults()
             ->triggeredActions($request)
             ->save();
-            
+
         event(new PurchaseOrderWasCreated($purchase_order, $purchase_order->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
         return $this->itemResponse($purchase_order->fresh());
@@ -207,7 +207,7 @@ class PurchaseOrderController extends BaseController
      * @param ShowPurchaseOrderRequest $request  The request
      * @param PurchaseOrder $purchase_order  The purchase order
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -261,7 +261,7 @@ class PurchaseOrderController extends BaseController
      * @param EditPurchaseOrderRequest $request The request
      * @param PurchaseOrder $purchase_order The purchase order
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      * @OA\Get(
      *      path="/api/v1/purchase_orders/{id}/edit",
@@ -313,7 +313,7 @@ class PurchaseOrderController extends BaseController
      *
      * @param UpdatePurchaseOrderRequest $request The request
      * @param PurchaseOrder $purchase_order
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @throws \ReflectionException
@@ -433,7 +433,7 @@ class PurchaseOrderController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return \Illuminate\Support\Collection
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse | \Illuminate\Http\Response | \Symfony\Component\HttpFoundation\BinaryFileResponse
      *
      * @OA\Post(
      *      path="/api/v1/purchase_orders/bulk",
@@ -492,9 +492,17 @@ class PurchaseOrderController extends BaseController
             return response(['message' => 'Please verify your account to send emails.'], 400);
         }
 
+        if (Ninja::isHosted()  && $user->account->emailQuotaExceeded()) {
+            return response(['message' => ctrans('texts.email_quota_exceeded_subject')], 400);
+        }
+                    
+        if ($user->hasExactPermission('disable_emails') && (stripos($action, 'email') !== false)) {
+            return response(['message' => ctrans('texts.disable_emails_error')], 400);
+        }
+
         $purchase_orders = PurchaseOrder::withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
 
-        if (! $purchase_orders) {
+        if ($purchase_orders->count() == 0) {
             return response()->json(['message' => 'No Purchase Orders Found']);
         }
 
@@ -514,18 +522,50 @@ class PurchaseOrderController extends BaseController
         }
 
         if ($action == 'bulk_print' && $user->can('view', $purchase_orders->first())) {
-            $paths = $purchase_orders->map(function ($purchase_order) {
-                return (new CreateRawPdf($purchase_order->invitations->first()))->handle();
-            });
+            // $paths = $purchase_orders->map(function ($purchase_order) {
+            //     return (new CreateRawPdf($purchase_order->invitations->first()))->handle();
+            // });
 
-            $merge = (new PdfMerge($paths->toArray()))->run();
+            // $merge = (new PdfMerge($paths->toArray()))->run();
 
-            return response()->streamDownload(function () use ($merge) {
-                echo($merge);
-            }, 'print.pdf', ['Content-Type' => 'application/pdf']);
+            // return response()->streamDownload(function () use ($merge) {
+            //     echo($merge);
+            // }, 'print.pdf', ['Content-Type' => 'application/pdf']);
+        
+            $start = microtime(true);
+
+            $batch_id = (new \App\Jobs\Invoice\PrintEntityBatch(PurchaseOrder::class, $purchase_orders->pluck('id')->toArray(), $user->company()->db))->handle();
+            $batch = \Illuminate\Support\Facades\Bus::findBatch($batch_id);
+            $batch_key = $batch->name;
+
+            $finished = false;
+
+            do {
+                usleep(500000);
+                $batch = \Illuminate\Support\Facades\Bus::findBatch($batch_id);
+                $finished = $batch->finished();
+            } while (!$finished);
+
+            $paths = $purchase_orders->map(function ($purchase_order) use ($batch_key) {
+                return \Illuminate\Support\Facades\Cache::pull("{$batch_key}-{$purchase_order->id}");
+            })->filter(function ($value) {
+                return !is_null($value);
+            })->toArray();
+
+            $mergedPdf = (new PdfMerge($paths))->run();
+
+            return response()->streamDownload(function () use ($mergedPdf) {
+                echo $mergedPdf;
+            }, 'print.pdf', [
+                'Content-Type' => 'application/pdf',
+                'Cache-Control:' => 'no-cache',
+                'Server-Timing' => (string)(microtime(true) - $start)
+            ]);
+
+        
         }
 
-        if($action == 'template' && $user->can('view', $purchase_orders->first())) {
+        if ($action == 'template' && $user->can('view', $purchase_orders->first())) {
 
             $hash_or_response = $request->boolean('send_email') ? 'email sent' : \Illuminate\Support\Str::uuid();
 
@@ -645,7 +685,6 @@ class PurchaseOrderController extends BaseController
                     echo $file;
                 }, $purchase_order->numberFormatter().".pdf", ['Content-Type' => 'application/pdf']);
 
-                break;
             case 'restore':
                 $this->purchase_order_repository->restore($purchase_order);
 
@@ -668,20 +707,13 @@ class PurchaseOrderController extends BaseController
                     return $this->itemResponse($purchase_order);
                 }
                 break;
-            
+
             case 'email':
-                //check query parameter for email_type and set the template else use calculateTemplate
-                PurchaseOrderEmail::dispatch($purchase_order, $purchase_order->company);
-
-                if (! $bulk) {
-                    return response()->json(['message' => 'email sent'], 200);
-                }
-                break;
-
             case 'send_email':
                 //check query parameter for email_type and set the template else use calculateTemplate
-                PurchaseOrderEmail::dispatch($purchase_order, $purchase_order->company);
-
+                
+                $purchase_order->service()->sendEmail();
+                
                 if (! $bulk) {
                     return response()->json(['message' => 'email sent'], 200);
                 }
@@ -698,7 +730,7 @@ class PurchaseOrderController extends BaseController
                 if ($purchase_order->expense()->exists()) {
                     return response()->json(['message' => ctrans('texts.purchase_order_already_expensed')], 400);
                 }
-                    
+
                 $expense = $purchase_order->service()->expense();
 
                 return $this->itemResponse($purchase_order);
@@ -709,7 +741,7 @@ class PurchaseOrderController extends BaseController
                     $purchase_order->status_id = PurchaseOrder::STATUS_CANCELLED;
                     $purchase_order->save();
                 }
-                
+
                 if (! $bulk) {
                     return $this->itemResponse($purchase_order);
                 }
@@ -717,7 +749,7 @@ class PurchaseOrderController extends BaseController
 
             default:
                 return response()->json(['message' => ctrans('texts.action_unavailable', ['action' => $action])], 400);
-                break;
+
         }
     }
 
@@ -726,7 +758,7 @@ class PurchaseOrderController extends BaseController
      *
      * @param UploadPurchaseOrderRequest $request
      * @param PurchaseOrder $purchase_order
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -776,7 +808,7 @@ class PurchaseOrderController extends BaseController
         if (!$this->checkFeature(Account::FEATURE_DOCUMENTS)) {
             return $this->featureFailure();
         }
-        
+
         if ($request->has('documents')) {
             $this->saveDocuments($request->file('documents'), $purchase_order, $request->input('is_public', true));
         }
@@ -826,7 +858,7 @@ class PurchaseOrderController extends BaseController
      *       ),
      *     )
      * @param $invitation_key
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse | \Illuminate\Http\Response
      */
     public function downloadPdf($invitation_key)
     {
@@ -849,5 +881,72 @@ class PurchaseOrderController extends BaseController
         return response()->streamDownload(function () use ($file) {
             echo $file;
         }, $purchase_order->numberFormatter().".pdf", $headers);
+    }
+    /**
+     * @OA\Get(
+     *      path="/api/v1/credit/{invitation_key}/download_e_purchase_order",
+     *      operationId="downloadEPurchaseOrder",
+     *      tags={"purchase_orders"},
+     *      summary="Download a specific E-Purchase-Order by invitation key",
+     *      description="Downloads a specific E-Purchase-Order",
+     *      @OA\Parameter(ref="#/components/parameters/X-API-TOKEN"),
+     *      @OA\Parameter(ref="#/components/parameters/X-Requested-With"),
+     *      @OA\Parameter(ref="#/components/parameters/include"),
+     *      @OA\Parameter(
+     *          name="invitation_key",
+     *          in="path",
+     *          description="The E-Purchase-Order Invitation Key",
+     *          example="D2J234DFA",
+     *          required=true,
+     *          @OA\Schema(
+     *              type="string",
+     *              format="string",
+     *          ),
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="Returns the E-Purchase-Order pdf",
+     *          @OA\Header(header="X-MINIMUM-CLIENT-VERSION", ref="#/components/headers/X-MINIMUM-CLIENT-VERSION"),
+     *          @OA\Header(header="X-RateLimit-Remaining", ref="#/components/headers/X-RateLimit-Remaining"),
+     *          @OA\Header(header="X-RateLimit-Limit", ref="#/components/headers/X-RateLimit-Limit"),
+     *       ),
+     *       @OA\Response(
+     *          response=422,
+     *          description="Validation error",
+     *          @OA\JsonContent(ref="#/components/schemas/ValidationError"),
+     *
+     *       ),
+     *       @OA\Response(
+     *           response="default",
+     *           description="Unexpected Error",
+     *           @OA\JsonContent(ref="#/components/schemas/Error"),
+     *       ),
+     *     )
+     * @param $invitation_key
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse | \Illuminate\Http\Response
+     */
+    public function downloadEPurchaseOrder($invitation_key)
+    {
+        $invitation = $this->purchase_order_repository->getInvitationByKey($invitation_key);
+
+        if (! $invitation) {
+            return response()->json(['message' => 'no record found'], 400);
+        }
+
+        $contact = $invitation->contact;
+        $purchase_order = $invitation->purchase_order;
+
+        $file = $purchase_order->service()->getEPurchaseOrder($contact);
+        $file_name = $purchase_order->getFileName("xml");
+
+        $headers = ['Content-Type' => 'application/xml'];
+
+        if (request()->input('inline') == 'true') {
+            $headers = array_merge($headers, ['Content-Disposition' => 'inline']);
+        }
+
+        return response()->streamDownload(function () use ($file) {
+            echo $file;
+        }, $file_name, $headers);
     }
 }

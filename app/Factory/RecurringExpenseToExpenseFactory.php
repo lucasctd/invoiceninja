@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,7 +19,7 @@ use Illuminate\Support\Str;
 
 class RecurringExpenseToExpenseFactory
 {
-    public static function create(RecurringExpense $recurring_expense) :Expense
+    public static function create(RecurringExpense $recurring_expense): Expense
     {
         $expense = new Expense();
         $expense->user_id = $recurring_expense->user_id;
@@ -82,11 +82,15 @@ class RecurringExpenseToExpenseFactory
         } else {
             $locale = $recurring_expense->company->locale();
 
-            $date_formats = Cache::get('date_formats');
+            //@deprecated
+            // $date_formats = Cache::get('date_formats');
 
-            $date_format = $date_formats->filter(function ($item) use ($recurring_expense) {
+            /** @var \Illuminate\Support\Collection<\App\Models\DateFormat> */
+            $date_formats = app('date_formats');
+
+            $date_format = $date_formats->first(function ($item) use ($recurring_expense) {
                 return $item->id == $recurring_expense->company->settings->date_format_id;
-            })->first()->format;
+            })->format;
         }
 
         Carbon::setLocale($locale);
@@ -144,45 +148,45 @@ class RecurringExpenseToExpenseFactory
                 continue;
             }
 
-            if (Str::contains($match, '|')) {
-                $parts = explode('|', $match); // [ '[MONTH', 'MONTH+2]' ]
+            // if (Str::contains($match, '|')) {
+            $parts = explode('|', $match); // [ '[MONTH', 'MONTH+2]' ]
 
-                $left = substr($parts[0], 1); // 'MONTH'
-                $right = substr($parts[1], 0, -1); // MONTH+2
+            $left = substr($parts[0], 1); // 'MONTH'
+            $right = substr($parts[1], 0, -1); // MONTH+2
 
-                // If left side is not part of replacements, skip.
-                if (! array_key_exists($left, $replacements['ranges'])) {
-                    continue;
-                }
-
-                $_left = Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F Y');
-                $_right = '';
-
-                // If right side doesn't have any calculations, replace with raw ranges keyword.
-                if (! Str::contains($right, ['-', '+', '/', '*'])) {
-                    $_right = Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F Y');
-                }
-
-                // If right side contains one of math operations, calculate.
-                if (Str::contains($right, ['+'])) {
-                    $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $right, $_matches);
-
-                    $_operation = array_shift($_matches)[0]; // + -
-
-                    $_value = explode($_operation, $right); // [MONTHYEAR, 4]
-
-                    $_right = Carbon::createFromDate(now()->year, now()->month)->addMonths($_value[1])->translatedFormat('F Y');
-                }
-
-                $replacement = sprintf('%s to %s', $_left, $_right);
-
-                $value = preg_replace(
-                    sprintf('/%s/', preg_quote($match)),
-                    $replacement,
-                    $value,
-                    1
-                );
+            // If left side is not part of replacements, skip.
+            if (! array_key_exists($left, $replacements['ranges'])) {
+                continue;
             }
+
+            $_left = Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F Y');
+            $_right = '';
+
+            // If right side doesn't have any calculations, replace with raw ranges keyword.
+            if (! Str::contains($right, ['-', '+', '/', '*'])) {
+                $_right = Carbon::createFromDate(now()->year, now()->month)->translatedFormat('F Y');
+            }
+
+            // If right side contains one of math operations, calculate.
+            if (Str::contains($right, ['+'])) {
+                $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $right, $_matches);
+
+                $_operation = array_shift($_matches)[0]; // + -
+
+                $_value = explode($_operation, $right); // [MONTHYEAR, 4]
+
+                $_right = Carbon::createFromDate(now()->year, now()->month)->addMonths($_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
+            }
+
+            $replacement = sprintf('%s to %s', $_left, $_right);
+
+            $value = preg_replace(
+                sprintf('/%s/', preg_quote($match)),
+                $replacement,
+                $value,
+                1
+            );
+            // }
         }
 
         // Second case with more common calculations.
@@ -245,7 +249,7 @@ class RecurringExpenseToExpenseFactory
 
                 if ($matches->keys()->first() == ':MONTHYEAR') {
 
-                    $final_date = now()->addMonths($output-now()->month);
+                    $final_date = now()->addMonths($output - now()->month);
 
                     $output =    \sprintf(
                         '%s %s',

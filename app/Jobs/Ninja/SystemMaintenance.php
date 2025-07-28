@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,7 +25,10 @@ use Illuminate\Support\Facades\Storage;
 
 class SystemMaintenance implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance.
@@ -68,7 +71,7 @@ class SystemMaintenance implements ShouldQueue
         }
 
         Invoice::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays($delete_pdf_days)])
+                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int)$delete_pdf_days)])
                 ->withTrashed()
                 ->cursor()
                 ->each(function ($invoice) {
@@ -78,7 +81,7 @@ class SystemMaintenance implements ShouldQueue
                 });
 
         Quote::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays($delete_pdf_days)])
+                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int)$delete_pdf_days)])
                 ->withTrashed()
                 ->cursor()
                 ->each(function ($quote) {
@@ -88,7 +91,7 @@ class SystemMaintenance implements ShouldQueue
                 });
 
         Credit::with('invitations')
-                ->whereBetween('created_at', [now()->subYear(), now()->subDays($delete_pdf_days)])
+                ->whereBetween('created_at', [now()->subYear(), now()->subDays((int)$delete_pdf_days)])
                 ->withTrashed()
                 ->cursor()
                 ->each(function ($credit) {
@@ -104,7 +107,7 @@ class SystemMaintenance implements ShouldQueue
             return;
         }
 
-        Backup::where('created_at', '<', now()->subDays($delete_backup_days))
+        Backup::where('created_at', '<', now()->subDays((int)$delete_backup_days))
                 ->cursor()
                 ->each(function ($backup) {
                     nlog("deleting {$backup->filename}");
@@ -118,13 +121,13 @@ class SystemMaintenance implements ShouldQueue
     }
 
     //double check this is correct.
-    
+
     // private function cleanPdfs()
     // {
     //     $company_keys = Company::query()
     //                             ->pluck('company_key')
     //                             ->toArray();
-        
+
     //     $directories = Storage::disk(config('filesystems.default'))->directories();
 
     //     $del_dirs = ['quotes','invoices','credits','recurring_invoices', 'e_invoice'];

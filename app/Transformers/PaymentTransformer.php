@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -82,7 +82,7 @@ class PaymentTransformer extends EntityTransformer
 
     public function includeType(Payment $payment)
     {
-        return $this->includeItem($payment, new PaymentTypeTransformer, PaymentType::class);
+        return $this->includeItem($payment, new PaymentTypeTransformer(), PaymentType::class);
     }
 
     public function transform(Payment $payment)
@@ -114,7 +114,7 @@ class PaymentTransformer extends EntityTransformer
             'client_contact_id' => (string) $this->encodePrimaryKey($payment->client_contact_id),
             'company_gateway_id' => (string) $this->encodePrimaryKey($payment->company_gateway_id),
             'gateway_type_id' => (string) $payment->gateway_type_id ?: '',
-            'status_id'=> (string) $payment->status_id,
+            'status_id' => (string) $payment->status_id,
             'project_id' => (string) $this->encodePrimaryKey($payment->project_id),
             'vendor_id' => (string) $this->encodePrimaryKey($payment->vendor_id),
             'currency_id' => (string) $payment->currency_id ?: '',

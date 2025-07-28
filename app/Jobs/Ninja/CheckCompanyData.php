@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -27,7 +27,10 @@ use Illuminate\Support\Facades\DB;
 
 class CheckCompanyData implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $company;
 
@@ -60,7 +63,6 @@ class CheckCompanyData implements ShouldQueue
         $this->checkPaidToDates();
         $this->checkClientBalances();
         $this->checkContacts();
-        $this->checkCompanyData();
 
         if (Cache::has($this->hash)) {
             $cache_instance = Cache::get($this->hash);

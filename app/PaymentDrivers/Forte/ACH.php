@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2021. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,23 +19,24 @@ use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\FortePaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Illuminate\Support\Facades\Validator;
 
-class ACH
+class ACH implements LivewireMethodInterface
 {
     use MakesHash;
-    
+
     public $forte;
 
-    private $forte_base_uri="";
-    private $forte_api_access_id="";
-    private $forte_secure_key="";
-    private $forte_auth_organization_id="";
-    private $forte_organization_id="";
-    private $forte_location_id="";
-    
+    private $forte_base_uri = "";
+    private $forte_api_access_id = "";
+    private $forte_secure_key = "";
+    private $forte_auth_organization_id = "";
+    private $forte_organization_id = "";
+    private $forte_location_id = "";
+
     public function __construct(FortePaymentDriver $forte)
     {
         $this->forte = $forte;
@@ -60,7 +61,7 @@ class ACH
 
     public function authorizeResponse(Request $request)
     {
-        $payment_meta = new \stdClass;
+        $payment_meta = new \stdClass();
         $payment_meta->brand = (string)ctrans('texts.ach');
         $payment_meta->last4 = (string) $request->last_4;
         $payment_meta->exp_year = '-';
@@ -79,10 +80,8 @@ class ACH
 
     public function paymentView(array $data)
     {
-        $this->forte->payment_hash->data = array_merge((array) $this->forte->payment_hash->data, $data);
-        $this->forte->payment_hash->save();
+        $data = $this->paymentData($data);
 
-        $data['gateway'] = $this->forte;
         return render('gateways.forte.ach.pay', $data);
     }
 
@@ -101,7 +100,7 @@ class ACH
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS =>'{
+            CURLOPT_POSTFIELDS => '{
                 "action":"sale",
                 "authorization_amount": '.$payment_hash->data->total->amount_with_fee.',
                 "echeck":{
@@ -127,7 +126,7 @@ class ACH
 
             curl_close($curl);
 
-            $response=json_decode($response);
+            $response = json_decode($response);
         } catch (\Throwable $th) {
             throw $th;
         }
@@ -137,8 +136,8 @@ class ACH
             'server_response' => $response,
             'data' => $payment_hash->data,
         ];
-        
-        if ($httpcode>299) {
+
+        if ($httpcode > 299) {
             SystemLogger::dispatch(
                 $message,
                 SystemLog::CATEGORY_GATEWAY_RESPONSE,
@@ -147,9 +146,14 @@ class ACH
                 $this->forte->client,
                 $this->forte->client->company,
             );
+
             $error = Validator::make([], []);
+
             $error->getMessageBag()->add('gateway_error', $response->response->response_desc);
-            return redirect('client/invoices')->withErrors($error);
+
+            return redirect()->route('client.invoice.show', ['invoice' => $payment_hash->fee_invoice->hashed_id])->withErrors($error);
+
+            // return response()->redirect('client/invoices')->withErrors($error);
         }
 
         SystemLogger::dispatch(
@@ -169,7 +173,31 @@ class ACH
             'gateway_type_id' => GatewayType::BANK_TRANSFER,
         ];
 
-        $payment=$this->forte->createPayment($data, Payment::STATUS_COMPLETED);
-        return redirect('client/invoices')->withSuccess('Invoice paid.');
+        $payment = $this->forte->createPayment($data, Payment::STATUS_COMPLETED);
+        // return redirect('client/invoices')->withSuccess('Invoice paid.');
+
+        return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
+
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function livewirePaymentView(array $data): string
+    {
+        return 'gateways.forte.ach.pay_livewire';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function paymentData(array $data): array
+    {
+        $this->forte->payment_hash->data = array_merge((array) $this->forte->payment_hash->data, $data);
+        $this->forte->payment_hash->save();
+
+        $data['gateway'] = $this->forte;
+
+        return $data;
     }
 }

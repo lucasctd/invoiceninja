@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,6 +19,7 @@ use App\Models\ClientGatewayToken;
 use App\Models\GatewayType;
 use App\Models\SystemLog;
 use App\PaymentDrivers\CheckoutComPaymentDriver;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\Common\MethodInterface;
 use App\Utils\Traits\MakesHash;
 use Checkout\CheckoutApiException;
@@ -32,7 +33,7 @@ use Illuminate\Contracts\View\Factory;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-class CreditCard implements MethodInterface
+class CreditCard implements MethodInterface, LivewireMethodInterface
 {
     use Utilities;
     use MakesHash;
@@ -90,7 +91,7 @@ class CreditCard implements MethodInterface
         $gateway_response = \json_decode($request->gateway_response);
 
         $customerRequest = $this->checkout->getCustomer();
-        
+
         $request = $this->bootRequest($gateway_response->token);
         $request->capture = false;
         $request->reference = '$1 payment for authorization.';
@@ -102,7 +103,7 @@ class CreditCard implements MethodInterface
             $response = $this->checkout->gateway->getPaymentsClient()->requestPayment($request);
 
             if ($response['approved'] && $response['status'] === 'Authorized') {
-                $payment_meta = new \stdClass;
+                $payment_meta = new \stdClass();
                 $payment_meta->exp_month = (string) $response['source']['expiry_month'];
                 $payment_meta->exp_year = (string) $response['source']['expiry_year'];
                 $payment_meta->brand = (string) $response['source']['scheme'];
@@ -140,7 +141,7 @@ class CreditCard implements MethodInterface
         }
     }
 
-    public function paymentView($data)
+    public function paymentData(array $data): array
     {
         $data['gateway'] = $this->checkout;
         $data['company_gateway'] = $this->checkout->company_gateway;
@@ -150,7 +151,23 @@ class CreditCard implements MethodInterface
         $data['raw_value'] = $data['total']['amount_with_fee'];
         $data['customer_email'] = $this->checkout->client->present()->email();
 
+        return $data;
+    }
+
+    public function paymentView($data, $livewire = false)
+    {
+        $data = $this->paymentData($data);
+
+        if ($livewire) {
+            return render('gateways.checkout.credit_card.pay_livewire', $data);
+        }
+
         return render('gateways.checkout.credit_card.pay', $data);
+    }
+
+    public function livewirePaymentView(array $data): string
+    {
+        return 'gateways.checkout.credit_card.pay_livewire';
     }
 
     public function paymentResponse(PaymentResponseRequest $request)
@@ -232,12 +249,22 @@ class CreditCard implements MethodInterface
         try {
             $response = $this->checkout->gateway->getPaymentsClient()->requestPayment($paymentRequest);
 
+            if ($this->checkout->company_gateway->update_details && isset($response['customer'])) {
+                $this->checkout->updateCustomer($response['customer']['id'] ?? '');
+            }
+
             if ($response['status'] == 'Authorized') {
+
                 return $this->processSuccessfulPayment($response);
             }
 
             if ($response['status'] == 'Pending') {
-                $this->checkout->confirmGatewayFee();
+
+                $data = [
+                    'gateway_type_id' => GatewayType::CREDIT_CARD,
+                ];
+
+                $this->checkout->confirmGatewayFee($data);
 
                 return $this->processPendingPayment($response);
             }
@@ -321,7 +348,6 @@ class CreditCard implements MethodInterface
 
             return new PaymentFailed("There was a problem communicating with the API credentials for Checkout", $e->getCode());
 
-            // return $this->checkout->processInternallyFailedPayment($this->checkout, $human_exception);
         }
     }
 }

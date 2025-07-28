@@ -21,17 +21,16 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- * @test
- * @covers App\Http\Controllers\BankTransactionController
- */
+
 class BankTransactionApiTest extends TestCase
 {
     use MakesHash;
     use DatabaseTransactions;
     use MockAccountData;
 
-    protected function setUp() :void
+    public $faker;
+
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -42,6 +41,17 @@ class BankTransactionApiTest extends TestCase
         $this->faker = \Faker\Factory::create();
 
         Model::reguard();
+    }
+
+    public function testBankTransactionCreate()
+    {
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->get('/api/v1/bank_transactions/create');
+
+        $response->assertStatus(200);
     }
 
 
@@ -116,7 +126,7 @@ class BankTransactionApiTest extends TestCase
     public function testBankTransactionUnlink()
     {
         BankTransaction::truncate();
-        
+
         $bi = BankIntegration::factory()->create([
             'account_id' => $this->account->id,
             'company_id' => $this->company->id,
@@ -136,7 +146,7 @@ class BankTransactionApiTest extends TestCase
             'expense_id' => "{$this->expense->hashed_id},{$e->hashed_id}",
             'invoice_ids' => $this->invoice->hashed_id,
         ]);
-        
+
         $e->transaction_id = $bank_transaction->id;
         $e->save();
 
@@ -147,7 +157,6 @@ class BankTransactionApiTest extends TestCase
             'ids' => [$this->encodePrimaryKey($bank_transaction->id)],
         ];
 
-        // nlog($bank_transaction->toArray());
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -51,10 +51,12 @@ class ProductExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($resource) {
+
+                    /** @var \App\Models\Product $resource */
                     $row = $this->buildRow($resource);
                     return $this->processMetaData($row, $resource);
                 })->toArray();
-        
+
         return array_merge(['columns' => $header], $report);
     }
 
@@ -73,10 +75,17 @@ class ProductExport extends BaseExport
 
         $query = Product::query()
                         ->withTrashed()
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
+        if (!$this->input['include_deleted'] ?? false) { //@phpstan-ignore-line
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'products');
+
+        if ($this->input['document_email_attachment'] ?? false) {
+            $this->queueDocuments($query);
+        }
 
         return $query;
 
@@ -84,24 +93,27 @@ class ProductExport extends BaseExport
 
     public function run()
     {
-        
+
         $query = $this->init();
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
               ->each(function ($entity) {
+
+                  /** @var \App\Models\Product $entity */
                   $this->csv->insertOne($this->buildRow($entity));
               });
 
         return $this->csv->toString();
     }
 
-    private function buildRow(Product $product) :array
+    private function buildRow(Product $product): array
     {
         $transformed_entity = $this->entity_transformer->transform($product);
 
@@ -113,27 +125,11 @@ class ProductExport extends BaseExport
             if (array_key_exists($key, $transformed_entity)) {
                 $entity[$keyval] = $transformed_entity[$key];
             } else {
-                // nlog($key);
                 $entity[$key] = $this->decorator->transform($key, $product);
-                // $entity[$key] = '';
-
             }
         }
 
-        return $entity;
-        // return $this->decorateAdvancedFields($product, $entity);
+        return $this->convertFloats($entity);
     }
 
-    private function decorateAdvancedFields(Product $product, array $entity) :array
-    {
-        if (in_array('vendor_id', $this->input['report_keys'])) {
-            $entity['vendor'] = $product->vendor()->exists() ? $product->vendor->name : '';
-        }
-
-        // if (array_key_exists('project_id', $this->input['report_keys'])) {
-        //     $entity['project'] = $product->project()->exists() ? $product->project->name : '';
-        // }
-
-        return $entity;
-    }
 }

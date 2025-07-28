@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -61,9 +61,8 @@ class MarkSent extends AbstractService
 
         if ($fire_webhook) {
             event('eloquent.updated: App\Models\Invoice', $this->invoice);
+            $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
         }
-
-        $this->invoice->sendEvent(Webhook::EVENT_SENT_INVOICE, "client");
 
         return $this->invoice->fresh();
     }

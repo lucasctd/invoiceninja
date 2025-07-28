@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -24,7 +24,6 @@ use League\Csv\Writer;
 
 class VendorExport extends BaseExport
 {
-
     private $vendor_transformer;
 
     private $contact_transformer;
@@ -55,17 +54,25 @@ class VendorExport extends BaseExport
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = array_values($this->vendor_report_keys);
         }
-        
+
         $query = Vendor::query()->with('contacts')
                         ->withTrashed()
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
+        if (!$this->input['include_deleted'] ?? false) {
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'vendors');
+
+        if ($this->input['document_email_attachment'] ?? false) {
+            $this->queueDocuments($query);
+        }
 
         return $query;
 
@@ -83,16 +90,18 @@ class VendorExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($resource) {
+
+                    /** @var \App\Models\Vendor $resource */
                     $row = $this->buildRow($resource);
                     return $this->processMetaData($row, $resource);
                 })->toArray();
-        
+
         return array_merge(['columns' => $header], $report);
     }
 
     public function run()
     {
-    
+
         $query = $this->init();
 
         //insert the header
@@ -100,13 +109,15 @@ class VendorExport extends BaseExport
 
         $query->cursor()
               ->each(function ($vendor) {
+
+                  /** @var \App\Models\Vendor $vendor */
                   $this->csv->insertOne($this->buildRow($vendor));
               });
 
         return $this->csv->toString();
     }
 
-    private function buildRow(Vendor $vendor) :array
+    private function buildRow(Vendor $vendor): array
     {
         $transformed_contact = false;
 
@@ -126,18 +137,17 @@ class VendorExport extends BaseExport
             } elseif (is_array($parts) && $parts[0] == 'vendor_contact' && isset($transformed_contact[$parts[1]])) {
                 $entity[$key] = $transformed_contact[$parts[1]];
             } else {
-                // nlog($key);
+
                 $entity[$key] = $this->decorator->transform($key, $vendor);
 
-                // $entity[$key] = $this->resolveKey($key, $vendor, $this->vendor_transformer);
             }
         }
 
-        return $entity;
-        // return $this->decorateAdvancedFields($vendor, $entity);
+        // return $entity;
+        return $this->decorateAdvancedFields($vendor, $entity);
     }
 
-    private function decorateAdvancedFields(Vendor $vendor, array $entity) :array
+    private function decorateAdvancedFields(Vendor $vendor, array $entity): array
     {
         if (in_array('vendor.country_id', $this->input['report_keys'])) {
             $entity['country'] = $vendor->country ? ctrans("texts.country_{$vendor->country->name}") : '';
@@ -151,21 +161,30 @@ class VendorExport extends BaseExport
             $entity['vendor.classification'] = ctrans("texts.{$vendor->classification}") ?? '';
         }
 
+        if (in_array('vendor.user_id', $this->input['report_keys'])) {
+            $entity['vendor.user_id'] = $vendor->user ? $vendor->user->present()->name() : '';
+        }
+
+        if (in_array('vendor.assigned_user_id', $this->input['report_keys'])) {
+            $entity['vendor.assigned_user_id'] = $vendor->assigned_user ? $vendor->assigned_user->present()->name() : '';
+        }
+
+
         // $entity['status'] = $this->calculateStatus($vendor);
 
         return $entity;
     }
 
-    private function calculateStatus($vendor)
-    {
-        if ($vendor->is_deleted) {
-            return ctrans('texts.deleted');
-        }
+    // private function calculateStatus($vendor)
+    // {
+    //     if ($vendor->is_deleted) {
+    //         return ctrans('texts.deleted');
+    //     }
 
-        if ($vendor->deleted_at) {
-            return ctrans('texts.archived');
-        }
+    //     if ($vendor->deleted_at) {
+    //         return ctrans('texts.archived');
+    //     }
 
-        return ctrans('texts.active');
-    }
+    //     return ctrans('texts.active');
+    // }
 }

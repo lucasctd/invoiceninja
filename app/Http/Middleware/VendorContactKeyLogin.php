@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -56,7 +56,7 @@ class VendorContactKeyLogin
                 $vendor_contact->save();
 
                 auth()->guard('vendor')->loginUsingId($vendor_contact->id, true);
-                
+
                 if ($request->query('redirect') && ! empty($request->query('redirect'))) {
                     return redirect()->to($request->query('redirect'));
                 }

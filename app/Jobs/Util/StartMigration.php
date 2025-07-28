@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -35,7 +35,10 @@ use ZipArchive;
 
 class StartMigration implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     private $filepath;
 
@@ -80,7 +83,7 @@ class StartMigration implements ShouldQueue
         nlog('Inside Migration Job');
 
         Cache::put("migration-{$this->company->company_key}", "started", 86400);
-        
+
         set_time_limit(0);
 
         MultiDB::setDb($this->company->db);
@@ -141,7 +144,7 @@ class StartMigration implements ShouldQueue
                 app('sentry')->captureException($e);
             }
 
-            if(!$this->silent_migration) {
+            if (!$this->silent_migration) {
                 Mail::to($this->user->email, $this->user->name())->send(new MigrationFailed($e, $this->company, $e->getMessage()));
             }
 
@@ -165,6 +168,6 @@ class StartMigration implements ShouldQueue
 
     public function failed($exception = null)
     {
-        info(print_r($exception->getMessage(), 1));
+        nlog($exception->getMessage());
     }
 }

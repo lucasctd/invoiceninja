@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,7 +23,7 @@ class ShowChartRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /**@var \App\Models\User auth()->user */
         $user = auth()->user();
@@ -42,13 +42,13 @@ class ShowChartRequest extends Request
 
     public function prepareForValidation()
     {
-        
+
         /**@var \App\Models\User auth()->user */
         $user = auth()->user();
 
         $input = $this->all();
 
-        if(isset($input['date_range'])) {
+        if (isset($input['date_range'])) {
             $dates = $this->calculateStartAndEndDates($input, $user->company());
             $input['start_date'] = $dates[0];
             $input['end_date'] = $dates[1];
@@ -59,6 +59,7 @@ class ShowChartRequest extends Request
         }
 
         if (! isset($input['end_date'])) {
+            // $input['end_date'] = now()->lastOfMonth()->format('Y-m-d');
             $input['end_date'] = now()->format('Y-m-d');
         }
 

@@ -1,4 +1,4 @@
-@component('email.template.admin', ['design' => 'light', 'settings' => $settings, 'logo' => $logo])
+@component('email.template.admin', ['design' => 'light', 'settings' => $settings, 'logo' => $logo, 'url' => $url])
     <div class="center">
         @isset($greeting)
             <p>{{ $greeting }}</p>
@@ -14,7 +14,7 @@
 
         <div style="margin-top: 10px; margin-bottom: 30px;">
             @isset($content)
-                {{ $content }}
+                {!! nl2br($content, true) !!}
             @endisset
 
             @isset($slot)
@@ -26,7 +26,7 @@
             <p>{{ $additional_info }}</p>
         @endisset
 
-        @isset($url)
+        @if($url)
 
         <!--[if (gte mso 9)|(IE)]>
         <table align="center" cellspacing="0" cellpadding="0" style="width: 600px;">
@@ -50,7 +50,7 @@
         <![endif]-->
 
 
-        @endisset
+        @endif
 
         @isset($signature)
             <p>{!! nl2br($signature) !!}</p>

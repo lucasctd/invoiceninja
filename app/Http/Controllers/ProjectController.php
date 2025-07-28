@@ -4,32 +4,35 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers;
 
+use App\Models\Account;
+use App\Models\Invoice;
+use App\Models\Project;
+use Illuminate\Http\Response;
 use App\Factory\ProjectFactory;
 use App\Filters\ProjectFilters;
+use App\Utils\Traits\MakesHash;
+use App\Utils\Traits\SavesDocuments;
+use App\Utils\Traits\GeneratesCounter;
+use App\Repositories\ProjectRepository;
+use App\Transformers\ProjectTransformer;
+use App\Services\Template\TemplateAction;
 use App\Http\Requests\Project\BulkProjectRequest;
-use App\Http\Requests\Project\CreateProjectRequest;
-use App\Http\Requests\Project\DestroyProjectRequest;
 use App\Http\Requests\Project\EditProjectRequest;
 use App\Http\Requests\Project\ShowProjectRequest;
 use App\Http\Requests\Project\StoreProjectRequest;
+use App\Http\Requests\Project\CreateProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Http\Requests\Project\UploadProjectRequest;
-use App\Models\Account;
-use App\Models\Project;
-use App\Repositories\ProjectRepository;
-use App\Services\Template\TemplateAction;
-use App\Transformers\ProjectTransformer;
-use App\Utils\Traits\GeneratesCounter;
-use App\Utils\Traits\MakesHash;
-use App\Utils\Traits\SavesDocuments;
-use Illuminate\Http\Response;
+use App\Http\Requests\Project\DestroyProjectRequest;
+use App\Http\Requests\Project\InvoiceProjectRequest;
+use App\Transformers\InvoiceTransformer;
 
 /**
  * Class ProjectController.
@@ -88,7 +91,7 @@ class ProjectController extends BaseController
      *       ),
      *     )
      * @param ProjectFilters $filters
-     * @return Response|mixed
+     * @return Response| \Illuminate\Http\JsonResponse|mixed
      */
     public function index(ProjectFilters $filters)
     {
@@ -102,7 +105,7 @@ class ProjectController extends BaseController
      *
      * @param ShowProjectRequest $request
      * @param Project $project
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -156,7 +159,7 @@ class ProjectController extends BaseController
      *
      * @param EditProjectRequest $request
      * @param Project $project
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -210,7 +213,7 @@ class ProjectController extends BaseController
      *
      * @param UpdateProjectRequest $request
      * @param Project $project
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -278,7 +281,7 @@ class ProjectController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateProjectRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -326,7 +329,7 @@ class ProjectController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param StoreProjectRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -388,7 +391,7 @@ class ProjectController extends BaseController
      *
      * @param DestroyProjectRequest $request
      * @param Project $project
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @throws \Exception
@@ -445,7 +448,7 @@ class ProjectController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Post(
@@ -503,7 +506,14 @@ class ProjectController extends BaseController
 
         $projects = Project::withTrashed()->whereIn('id', $this->transformKeys($ids))->company()->get();
 
-        if($action == 'template' && $user->can('view', $projects->first())) {
+        if($action == 'invoice' && $user->can('edit', $projects->first())) {
+           $invoice = $this->project_repo->invoice($projects);
+           $this->entity_transformer = InvoiceTransformer::class;
+           $this->entity_type = Invoice::class;
+           return $this->itemResponse($invoice);
+        }
+
+        if ($action == 'template' && $user->can('view', $projects->first())) {
 
             $hash_or_response = $request->boolean('send_email') ? 'email sent' : \Illuminate\Support\Str::uuid();
 
@@ -535,7 +545,7 @@ class ProjectController extends BaseController
      *
      * @param UploadProjectRequest $request
      * @param Project $project
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      * @OA\Put(
      *      path="/api/v1/projects/{id}/upload",
@@ -589,5 +599,15 @@ class ProjectController extends BaseController
         }
 
         return $this->itemResponse($project->fresh());
+    }
+
+    public function invoice(InvoiceProjectRequest $request, Project $project)
+    {
+        $this->entity_transformer = InvoiceTransformer::class;
+        $this->entity_type = Invoice::class;
+
+        $invoice = $this->project_repo->invoice($project);
+
+        return $this->itemResponse($invoice);
     }
 }

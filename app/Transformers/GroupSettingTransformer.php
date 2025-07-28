@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -42,7 +42,7 @@ class GroupSettingTransformer extends EntityTransformer
         return [
             'id' => $this->encodePrimaryKey($group_setting->id),
             'name' => (string) $group_setting->name ?: '',
-            'settings' => $group_setting->settings ?: new stdClass,
+            'settings' => $group_setting->settings ?: new stdClass(),
             'created_at' => (int) $group_setting->created_at,
             'updated_at' => (int) $group_setting->updated_at,
             'archived_at' => (int) $group_setting->deleted_at,

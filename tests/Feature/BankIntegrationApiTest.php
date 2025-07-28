@@ -18,17 +18,16 @@ use Illuminate\Support\Facades\Session;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
-/**
- * @test
- * @covers App\Http\Controllers\BankIntegrationController
- */
+
 class BankIntegrationApiTest extends TestCase
 {
     use MakesHash;
     use DatabaseTransactions;
     use MockAccountData;
 
-    protected function setUp() :void
+    protected $faker;
+
+    protected function setUp(): void
     {
         parent::setUp();
 

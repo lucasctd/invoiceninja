@@ -1,11 +1,6 @@
 @extends('portal.ninja2020.layout.payments', ['gateway_title' => ctrans('texts.payment_type_credit_card'), 'card_title' => 'PayPal'])
 
 @section('gateway_head')
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://www.paypalobjects.com/webstatic/en_US/developer/docs/css/cardfields.css"
-    />
 
 @endsection
 
@@ -30,11 +25,18 @@
 
 @push('footer')
 
-<script src="https://www.paypal.com/sdk/js?client-id={!! $client_id !!}&currency={!! $currency !!}&merchant-id={!! $merchantId !!}&components=buttons,funding-eligibility&intent=capture"  data-partner-attribution-id="invoiceninja_SP_PPCP"></script>
-<div id="paypal-button-container"></div>
-<script>
+<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">
+    {
+        "f":"{{ $guid }}",
+        "s":"paypal.ppcp.pay"        
+    }
+</script>
 
-//&buyer-country=US&currency=USD&enable-funding=venmo
+<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
+
+
+<script src="https://www.paypal.com/sdk/js?client-id={!! $client_id !!}&currency={!! $currency !!}&merchant-id={!! $merchantId !!}&components=buttons,funding-eligibility&intent=capture&enable-funding={!! $funding_source !!}"  data-partner-attribution-id="invoiceninja_SP_PPCP"></script>
+<script>
     const fundingSource = "{!! $funding_source !!}";
     const clientId = "{{ $client_id }}";
     const orderId = "{!! $order_id !!}";
@@ -48,15 +50,54 @@
         },
         onApprove: function(data, actions) {
 
-            var errorDetail = Array.isArray(data.details) && data.details[0];
-                if (errorDetail && ['INSTRUMENT_DECLINED', 'PAYER_ACTION_REQUIRED'].includes(errorDetail.issue)) {
-                return actions.restart();
-            }
+            document.getElementById("gateway_response").value =JSON.stringify( data );  
+            
+            formData = JSON.stringify(Object.fromEntries(new FormData(document.getElementById("server_response")))),
 
-            return actions.order.capture().then(function(details) {
-                document.getElementById("gateway_response").value =JSON.stringify( details );
+            fetch('{{ route('client.payments.response') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-Token": document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: formData,
+            })
+            .then(response => {
+
+                if (!response.ok) {
+                    return response.json().then(errorData => {
+                        throw new Error(errorData.message ?? 'Unknown error.');
+                    });
+                }
+                
+                return response.json();                
+
+            })
+            .then(data => {
+
+                var errorDetail = Array.isArray(data.details) && data.details[0];
+
+                if (errorDetail && ['INSTRUMENT_DECLINED', 'PAYER_ACTION_REQUIRED'].includes(errorDetail.issue)) {
+                    return actions.restart();
+                }
+
+                if(data.redirect){
+                    window.location.href = data.redirect;
+                    return;
+                }
+
+                document.getElementById("gateway_response").value =JSON.stringify( data );
                 document.getElementById("server_response").submit();
-            });           
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                document.getElementById('errors').textContent = `Sorry, your transaction could not be processed...\n\n${error.message}`;
+                document.getElementById('errors').hidden = false;
+            });
+
+
         },
         onCancel: function() {
             window.location.href = "/client/invoices/";
@@ -64,9 +105,25 @@
         onError: function(error) {
             document.getElementById("gateway_response").value = error;
             document.getElementById("server_response").submit();
+        },
+        onClick: function (){
         }
     
-    }).render('#paypal-button-container');
+    }).render('#paypal-button-container').catch(function(err) {
+        
+      document.getElementById('errors').textContent = err;
+      document.getElementById('errors').hidden = false;
+        
+    });
+    
+    document.getElementById("server_response").addEventListener('submit', (e) => {
+		if (document.getElementById("server_response").classList.contains('is-submitting')) {
+			e.preventDefault();
+		}
+		
+		document.getElementById("server_response").classList.add('is-submitting');
+	});
+
 </script>
 
 @endpush

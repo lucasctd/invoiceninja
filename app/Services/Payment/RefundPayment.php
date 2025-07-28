@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,24 +23,16 @@ use stdClass;
 
 class RefundPayment
 {
-
     private float $total_refund = 0;
 
     private float $credits_used = 0;
 
-    private $gateway_refund_status;
-
-    private $activity_repository;
-
     private bool $refund_failed = false;
-    
+
     private string $refund_failed_message = '';
 
     public function __construct(public Payment $payment, public array $refund_data)
     {
-        $this->gateway_refund_status = false;
-
-        $this->activity_repository = new ActivityRepository();
     }
 
     public function run()
@@ -52,7 +44,6 @@ class RefundPayment
                             ->setStatus() //sets status of payment
                             ->updatePaymentables() //update the paymentable items
                             ->adjustInvoices()
-                            ->finalize()
                             ->save();
 
         if (array_key_exists('email_receipt', $this->refund_data) && $this->refund_data['email_receipt'] == 'true') {
@@ -60,20 +51,21 @@ class RefundPayment
             EmailRefundPayment::dispatch($this->payment, $this->payment->company, $contact);
         }
 
-        $notes = ctrans('texts.refunded') . " : {$this->total_refund} - " . ctrans('texts.gateway_refund') . " : ";
-        $notes .= $this->refund_data['gateway_refund'] !== false ? ctrans('texts.yes') : ctrans('texts.no');
+        $is_gateway_refund = ($this->refund_data['gateway_refund'] !== false || $this->refund_failed || (isset($this->refund_data['via_webhook']) && $this->refund_data['via_webhook'] !== false)) ? ctrans('texts.yes') : ctrans('texts.no');
+        $notes = ctrans('texts.refunded') . " : {$this->total_refund} - " . ctrans('texts.gateway_refund') . " : " . $is_gateway_refund;
 
         $this->createActivity($notes);
+        $this->finalize();
 
         return $this->payment;
     }
 
     private function finalize(): self
     {
-        if($this->refund_failed) {
+        if ($this->refund_failed) {
             throw new PaymentRefundFailed($this->refund_failed_message);
         }
-        
+
         return $this;
     }
 
@@ -102,21 +94,22 @@ class RefundPayment
             if ($this->payment->company_gateway) {
                 $response = $this->payment->company_gateway->driver($this->payment->client)->refund($this->payment, $net_refund);
 
-                if($response['amount'] ?? false) {
+                if ($response['amount'] ?? false) {
                     $net_refund = $response['amount'];
                 }
 
-                if($response['voided'] ?? false) {
+                if ($response['voided'] ?? false) {
                     //When a transaction is voided - all invoices attached to the payment need to be reversed, this
                     //block prevents the edge case where a partial refund was attempted.
                     $this->refund_data['invoices'] = $this->payment->invoices->map(function ($invoice) {
                         return [
+                            'date' => now()->addSeconds($invoice->client->timezone_offset())->format('Y-m-d'),
                             'invoice_id' => $invoice->id,
                             'amount' => $invoice->pivot->amount,
                         ];
                     })->toArray();
                 }
-                
+
                 $this->payment->refunded += $net_refund;
 
                 if ($response['success'] == false) {
@@ -142,7 +135,7 @@ class RefundPayment
      */
     private function createActivity($notes)
     {
-        $fields = new stdClass;
+        $fields = new stdClass();
         $activity_repo = new ActivityRepository();
 
         $fields->payment_id = $this->payment->id;
@@ -186,7 +179,7 @@ class RefundPayment
      */
     private function setStatus()
     {
-        if ($this->total_refund == $this->payment->amount) {
+        if ($this->total_refund == $this->payment->amount || floatval($this->payment->amount) == floatval($this->payment->refunded)) {
             $this->payment->status_id = Payment::STATUS_REFUNDED;
         } else {
             $this->payment->status_id = Payment::STATUS_PARTIALLY_REFUNDED;
@@ -224,9 +217,9 @@ class RefundPayment
      */
     private function updateCreditables()
     {
-        
+
         if ($this->payment->credits()->exists()) {
-        
+
             $amount_to_refund = $this->total_refund;
 
             //Adjust credits first!!!
@@ -292,7 +285,7 @@ class RefundPayment
                         ->save();
 
                 $invoice->ledger()
-                        ->updateInvoiceBalance($refunded_invoice['amount'], "Refund of payment # {$this->payment->number}")
+                        ->updateInvoiceBalance(abs($refunded_invoice['amount']), "Refund of payment # {$this->payment->number}")
                         ->save();
 
                 if ($invoice->amount == $invoice->balance) {

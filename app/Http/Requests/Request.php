@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -20,7 +20,7 @@ class Request extends FormRequest
     use MakesHash;
     use RuntimeFormRequest;
 
-    protected $file_validation = 'sometimes|file|mimes:png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx,webp,xml,zip,csv,ods,odt,odp|max:100000';
+    protected $file_validation = 'sometimes|file|max:100000|mimes:png,ai,jpeg,tiff,pdf,gif,psd,txt,doc,xls,ppt,xlsx,docx,pptx,webp,xml,zip,csv,ods,odt,odp';
     /**
      * Get the validation rules that apply to the request.
      *
@@ -31,11 +31,26 @@ class Request extends FormRequest
         return [];
     }
 
+    public function fileValidation()
+    {
+        if (config('ninja.upload_extensions')) {
+            return $this->file_validation. ",".config('ninja.upload_extensions');
+        }
+
+        return $this->file_validation;
+
+    }
+
     public function globalRules($rules)
     {
         $merge_rules = [];
 
         foreach ($this->all() as $key => $value) {
+
+            if ($key == 'user') {
+                continue;
+            }
+
             if (method_exists($this, $key)) {
                 $merge_rules = $this->{$key}($rules);
             }
@@ -86,7 +101,7 @@ class Request extends FormRequest
         if (array_key_exists('group_settings_id', $input) && is_string($input['group_settings_id'])) {
             $input['group_settings_id'] = $this->decodePrimaryKey($input['group_settings_id']);
         }
-        
+
         if (array_key_exists('group_id', $input) && is_string($input['group_id'])) {
             $input['group_id'] = $this->decodePrimaryKey($input['group_id']);
         }
@@ -107,6 +122,10 @@ class Request extends FormRequest
             $input['vendor_id'] = $this->decodePrimaryKey($input['vendor_id']);
         }
 
+        if (array_key_exists('location_id', $input) && is_string($input['location_id'])) {
+            $input['location_id'] = $this->decodePrimaryKey($input['location_id']);
+        }
+        
         if (array_key_exists('client_id', $input) && is_string($input['client_id'])) {
             $input['client_id'] = $this->decodePrimaryKey($input['client_id']);
         }
@@ -198,6 +217,22 @@ class Request extends FormRequest
             }
         }
 
+        if (isset($input['public_notes'])) {
+            $input['public_notes'] = str_replace("</sc", "<-", $input['public_notes']);
+        }
+
+        if (isset($input['footer'])) {
+            $input['footer'] = str_replace("</sc", "<-", $input['footer']);
+        }
+
+        if (isset($input['terms'])) {
+            $input['terms'] = str_replace("</sc", "<-", $input['terms']);
+        }
+
+        if (isset($input['private_notes'])) {
+            $input['private_notes'] = str_replace("</sc", "<-", $input['private_notes']);
+        }
+
         return $input;
     }
 
@@ -215,7 +250,7 @@ class Request extends FormRequest
     {
         return filter_var($bool, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
     }
-    
+
     public function checkTimeLog(array $log): bool
     {
         if (count($log) == 0) {
@@ -240,7 +275,7 @@ class Request extends FormRequest
             /*Flag which helps us know if there is a NEXT timelog*/
             $next = false;
             /* If there are more than 1 time log in the array, ensure the last timestamp is not zero*/
-            if (count($new_array) >1 && $array[1] == 0) {
+            if (count($new_array) > 1 && $array[1] == 0) {
                 return false;
             }
 
@@ -249,10 +284,10 @@ class Request extends FormRequest
             if ($array[0] > $array[1] && $array[1] != 0) {
                 return false;
             }
-            
+
             /* Find the next time log value - if it exists */
-            if (array_key_exists($key+1, $new_array)) {
-                $next = $new_array[$key+1];
+            if (array_key_exists($key + 1, $new_array)) {
+                $next = $new_array[$key + 1];
             }
 
             /* check the next time log and ensure the start time is GREATER than the end time of the previous record */
@@ -262,7 +297,7 @@ class Request extends FormRequest
 
             /* Get the last row of the timelog*/
             $last_row = end($new_array);
-            
+
             /*If the last value is NOT zero, ensure start time is not GREATER than the endtime */
             if ($last_row[1] != 0 && $last_row[0] > $last_row[1]) {
                 return false;

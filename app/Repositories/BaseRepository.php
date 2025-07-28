@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -41,7 +41,7 @@ class BaseRepository
      */
     private function getEventClass($entity, $type)
     {
-        return 'App\Events\\'.ucfirst(class_basename($entity)).'\\'.ucfirst(class_basename($entity)).'Was'.$type;
+        return 'App\Events\\' . ucfirst(class_basename($entity)) . '\\' . ucfirst(class_basename($entity)) . 'Was' . $type;
     }
 
     /**
@@ -58,7 +58,7 @@ class BaseRepository
         $className = $this->getEventClass($entity, 'Archived');
 
         if (class_exists($className)) {
-            event(new $className($entity, $entity->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+            event(new $className($entity, $entity->company, Ninja::eventVars(auth()->guard('api')->user() ? auth()->guard('api')->user()->id : null)));
         }
     }
 
@@ -67,7 +67,7 @@ class BaseRepository
      */
     public function restore($entity)
     {
-        if (! $entity->trashed()) {
+        if (!$entity->trashed()) {
             return;
         }
 
@@ -84,7 +84,7 @@ class BaseRepository
         $className = $this->getEventClass($entity, 'Restored');
 
         if (class_exists($className)) {
-            event(new $className($entity, $fromDeleted, $entity->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+            event(new $className($entity, $fromDeleted, $entity->company, Ninja::eventVars(auth()->guard('api')->user() ? auth()->guard('api')->user()->id : null)));
         }
     }
 
@@ -93,7 +93,7 @@ class BaseRepository
      */
     public function delete($entity)
     {
-        if ($entity->is_deleted) {
+        if (!$entity || $entity->is_deleted) {
             return;
         }
 
@@ -104,15 +104,15 @@ class BaseRepository
 
         $className = $this->getEventClass($entity, 'Deleted');
 
-        if (class_exists($className) && ! ($entity instanceof Company)) {
-            event(new $className($entity, $entity->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
+        if (class_exists($className) && !($entity instanceof Company)) {
+            event(new $className($entity, $entity->company, Ninja::eventVars(auth()->guard('api')->user() ? auth()->guard('api')->user()->id : null)));
         }
     }
 
     /* Returns an invoice if defined as a key in the $resource array*/
     public function getInvitation($invitation, $resource)
     {
-        if (is_array($invitation) && ! array_key_exists('key', $invitation)) {
+        if (is_array($invitation) && !array_key_exists('key', $invitation)) {
             return false;
         }
 
@@ -147,8 +147,7 @@ class BaseRepository
      * @throws \ReflectionException
      */
     protected function alternativeSave($data, $model)
-    {   //$start = microtime(true);
-        //forces the client_id if it doesn't exist
+    {
         if (array_key_exists('client_id', $data)) {
             $model->client_id = $data['client_id'];
         }
@@ -163,11 +162,12 @@ class BaseRepository
 
         $state['starting_amount'] = $model->balance;
 
-        if (! $model->id) {
+        if (!$model->id) {
             $company_defaults = $client->setCompanyDefaults($data, lcfirst($resource));
             $data['exchange_rate'] = $company_defaults['exchange_rate'];
             $model->uses_inclusive_taxes = $client->getSetting('inclusive_taxes');
-            $data = array_merge($company_defaults, $data);
+
+            $data = array_merge($data, $company_defaults);
         }
 
         $tmp_data = $data; //preserves the $data array
@@ -183,10 +183,10 @@ class BaseRepository
 
         $model->fill($tmp_data);
 
-        $model->custom_surcharge_tax1 = $client->company->custom_surcharge_taxes1;
-        $model->custom_surcharge_tax2 = $client->company->custom_surcharge_taxes2;
-        $model->custom_surcharge_tax3 = $client->company->custom_surcharge_taxes3;
-        $model->custom_surcharge_tax4 = $client->company->custom_surcharge_taxes4;
+        $model->custom_surcharge_tax1 = $client->getSetting('e_invoice_type') == 'PEPPOL' ? true : $client->company->custom_surcharge_taxes1;
+        $model->custom_surcharge_tax2 = $client->getSetting('e_invoice_type') == 'PEPPOL' ? true : $client->company->custom_surcharge_taxes2;
+        $model->custom_surcharge_tax3 = $client->getSetting('e_invoice_type') == 'PEPPOL' ? true : $client->company->custom_surcharge_taxes3;
+        $model->custom_surcharge_tax4 = $client->getSetting('e_invoice_type') == 'PEPPOL' ? true : $client->company->custom_surcharge_taxes4;
 
         if (!$model->id) {
             $this->new_model = true;
@@ -199,12 +199,16 @@ class BaseRepository
                 });
             }
         }
-        
+
         $model->saveQuietly();
+
+        if (method_exists($model, 'searchable')) {
+            $model->searchable();
+        }
 
         /* Model now persisted, now lets do some child tasks */
 
-        if ($model instanceof Invoice) {
+        if ($model instanceof Invoice || $model instanceof Quote) {
             $model->service()->setReminder()->save();
         }
 
@@ -233,7 +237,7 @@ class BaseRepository
 
             foreach ($data['invitations'] as $invitation) {
                 //if no invitations are present - create one.
-                if (! $this->getInvitation($invitation, $resource)) {
+                if (!$this->getInvitation($invitation, $resource)) {
                     if (isset($invitation['id'])) {
                         unset($invitation['id']);
                     }
@@ -245,9 +249,9 @@ class BaseRepository
                         $invitation_class = sprintf('App\\Models\\%sInvitation', $resource);
 
                         $new_invitation = $invitation_class::withTrashed()
-                                            ->where('client_contact_id', $contact->id)
-                                            ->where($lcfirst_resource_id, $model->id)
-                                            ->first();
+                            ->where('client_contact_id', $contact->id)
+                            ->where($lcfirst_resource_id, $model->id)
+                            ->first();
 
                         if ($new_invitation && $new_invitation->trashed()) {
                             $new_invitation->restore();
@@ -279,7 +283,7 @@ class BaseRepository
         $model = $model->service()->applyNumber()->save();
 
         /* Handle attempts where the deposit is greater than the amount/balance of the invoice */
-        if ((int)$model->balance != 0 && $model->partial > $model->amount && $model->amount > 0) {
+        if ((int) $model->balance != 0 && $model->partial > $model->amount && $model->amount > 0) {
             $model->partial = min($model->amount, $model->balance);
         }
 
@@ -293,14 +297,14 @@ class BaseRepository
             if ($model->status_id != Invoice::STATUS_DRAFT) {
                 $model->service()->updateStatus()->save();
                 $model->client->service()->calculateBalance($model);
-                
+
                 // $diff = $state['finished_amount'] - $state['starting_amount'];
                 // nlog("{$diff} - {$state['finished_amount']} - {$state['starting_amount']}");
                 // if(floatval($state['finished_amount']) != floatval($state['starting_amount']))
                 //     $model->ledger()->updateInvoiceBalance(($state['finished_amount'] - $state['starting_amount']), "Update adjustment for invoice {$model->number}");
             }
 
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = intval($this->decodePrimaryKey($client->getSetting('invoice_design_id')));
             }
 
@@ -316,16 +320,25 @@ class BaseRepository
             }
 
             /** If the client does not have tax_data - then populate this now */
-            if($client->country_id == 840 && !$client->tax_data && $model->company->calculate_taxes && !$model->company->account->isFreeHostedClient()) {
+            if ($client->country_id == 840 && !$client->tax_data && $model->company->calculate_taxes && !$model->company->account->isFreeHostedClient()) {
                 UpdateTaxData::dispatch($client, $client->company);
             }
 
+            /** If Peppol is enabled - we will save the e_invoice document here at this point, document will not update after being sent */
+            if ((!isset($model->backup) || !property_exists($model->backup, 'guid')) && $client->getSetting('e_invoice_type') == 'PEPPOL' && $model->company->legal_entity_id) {
+                try {
+                    $model->service()->getEInvoice();
+                } catch (\Throwable $e) {
+                    nlog("EXCEPTION:: BASEREPOSITORY:: Error generating e_invoice for model {$model->id}");
+                    nlog($e->getMessage());
+                }
+            }
         }
 
         if ($model instanceof Credit) {
             $model = $model->calc()->getCredit();
 
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = $this->decodePrimaryKey($client->getSetting('credit_design_id'));
             }
 
@@ -345,7 +358,7 @@ class BaseRepository
         }
 
         if ($model instanceof Quote) {
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = intval($this->decodePrimaryKey($client->getSetting('quote_design_id')));
             }
 
@@ -359,12 +372,13 @@ class BaseRepository
         }
 
         if ($model instanceof RecurringInvoice) {
-            if (! $model->design_id) {
+            if (!$model->design_id) {
                 $model->design_id = intval($this->decodePrimaryKey($client->getSetting('invoice_design_id')));
             }
 
             $model = $model->calc()->getRecurringInvoice();
 
+            $model->status_id = $model->calculateStatus($this->new_model);
 
             if ($this->new_model) {
                 event('eloquent.created: App\Models\RecurringInvoice', $model);
@@ -376,5 +390,42 @@ class BaseRepository
         $model->saveQuietly();
 
         return $model->fresh();
+    }
+
+    public function bulkUpdate(\Illuminate\Database\Eloquent\Builder $model, string $column, mixed $new_value): void
+    {
+        /** Handle taxes being updated */
+        if (in_array($column, ['tax1','tax2','tax3'])) {
+
+            $parts = explode("||", $new_value);
+            $tax_name_column = str_replace("tax", "tax_name", $column);
+            $tax_rate_column = str_replace("tax", "tax_rate", $column);
+
+            /** Harvest the tax name and rate */
+            if (count($parts) == 2) {
+
+                $rate = filter_var($parts[1], FILTER_VALIDATE_FLOAT);
+                $tax_name = $parts[0];
+
+                if ($rate === false) {
+                    return;
+                }
+
+            } else { //else we need to clear the value
+
+                $rate = 0;
+                $tax_name = "";
+
+            }
+
+            $model->update([
+                $tax_name_column => $tax_name,
+                $tax_rate_column => $rate,
+            ]);
+
+            return;
+        }
+
+        $model->update([$column => $new_value]);
     }
 }

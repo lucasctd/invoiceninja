@@ -5,28 +5,29 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Http\Controllers\ClientPortal;
 
-use App\Events\Misc\InvitationWasViewed;
+use App\Utils\Ninja;
+use App\Models\Quote;
+use App\Utils\HtmlEngine;
+use Illuminate\View\View;
+use Illuminate\Http\Request;
+use App\Models\QuoteInvitation;
+use App\Utils\Traits\MakesHash;
 use App\Events\Quote\QuoteWasViewed;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ClientPortal\Quotes\ProcessQuotesInBulkRequest;
+use App\Jobs\Invoice\InjectSignature;
+use Illuminate\Contracts\View\Factory;
+use App\Events\Misc\InvitationWasViewed;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuoteRequest;
 use App\Http\Requests\ClientPortal\Quotes\ShowQuotesRequest;
-use App\Jobs\Invoice\InjectSignature;
-use App\Models\Quote;
-use App\Models\QuoteInvitation;
-use App\Utils\Ninja;
-use App\Utils\Traits\MakesHash;
-use Illuminate\Contracts\View\Factory;
-use Illuminate\Http\Request;
-use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Http\Requests\ClientPortal\Quotes\ProcessQuotesInBulkRequest;
 
 class QuoteController extends Controller
 {
@@ -54,11 +55,13 @@ class QuoteController extends Controller
         /* If the quote is expired, convert the status here */
 
         $invitation = $quote->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
+        $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
 
         $data = [
             'quote' => $quote,
             'key' => $invitation ? $invitation->key : false,
-            'invitation' => $invitation
+            'invitation' => $invitation,
+            'variables' => $variables,
         ];
 
         if ($invitation && auth()->guard('contact') && ! request()->has('silent') && ! $invitation->viewed_date) {
@@ -175,6 +178,9 @@ class QuoteController extends Controller
             ->where('client_id', auth()->guard('contact')->user()->client->id)
             ->where('company_id', auth()->guard('contact')->user()->client->company_id)
             ->whereIn('status_id', [Quote::STATUS_DRAFT, Quote::STATUS_SENT])
+            ->where(function ($q) {
+                $q->whereNull('due_date')->orWhere('due_date', '>=', now());
+            })
             ->withTrashed()
             ->get();
 
@@ -192,7 +198,7 @@ class QuoteController extends Controller
                 }
 
                 $quote->service()->approve(auth()->user())->save();
-                
+
                 if (request()->has('signature') && ! is_null(request()->signature) && ! empty(request()->signature)) {
                     InjectSignature::dispatch($quote, auth()->guard('contact')->user()->id, request()->signature, request()->getClientIp());
                 }
@@ -212,8 +218,18 @@ class QuoteController extends Controller
                 ->withSuccess('Quote(s) approved successfully.');
         }
 
+
+        $variables = false;
+
+        if ($invitation = $quotes->first()->invitations()->first() ?? false) {
+            $variables = (new HtmlEngine($invitation))->generateLabelsAndValues();
+        }
+
+        $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_quote_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
+
         return $this->render('quotes.approve', [
             'quotes' => $quotes,
+            'variables' => $variables,
         ]);
     }
 }

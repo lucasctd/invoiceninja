@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -46,12 +46,14 @@ trait ClientGroupSettingsSaver
             unset($settings[$field]);
         }
 
+        $company_settings_stub = new CompanySettings();
+
         /*
          * for clients and group settings, if a field is not set or is set to a blank value,
          * we unset it from the settings object
          */
         foreach ($settings as $key => $value) {
-            if (! isset($settings->{$key}) || empty($settings->{$key}) || (! is_object($settings->{$key}) && strlen($settings->{$key}) == 0)) {
+            if (! isset($settings->{$key}) || empty($settings->{$key})  || !property_exists($company_settings_stub, $key) || (! is_object($settings->{$key}) && strlen($settings->{$key}) == 0)) {
                 unset($settings->{$key});
             }
         }
@@ -86,7 +88,7 @@ trait ClientGroupSettingsSaver
             unset($settings->translations);
         }
 
-        foreach(['translations','pdf_variables'] as $key) {
+        foreach (['translations','pdf_variables'] as $key) {
             if (property_exists($settings, $key)) {
                 unset($settings->{$key});
             }
@@ -115,8 +117,7 @@ trait ClientGroupSettingsSaver
 
                 continue;
             }
-            /*Separate loop if it is a _id field which is an integer cast as a string*/
-            elseif (substr($key, -3) == '_id' ||
+            /*Separate loop if it is a _id field which is an integer cast as a string*/ elseif (substr($key, -3) == '_id' ||
                 substr($key, -14) == 'number_counter' ||
                 ($key == 'payment_terms' && property_exists($settings, 'payment_terms') && strlen($settings->{$key}) >= 1) ||
                 ($key == 'valid_until' && property_exists($settings, 'valid_until') && strlen($settings->{$key}) >= 1)) {
@@ -156,7 +157,7 @@ trait ClientGroupSettingsSaver
      * @param  array $settings The settings request() array
      * @return stdClass          stdClass object
      */
-    private function checkSettingType($settings) : stdClass
+    private function checkSettingType($settings): stdClass
     {
         $settings = (object) $settings;
         $casts = CompanySettings::$casts;
@@ -216,7 +217,7 @@ trait ClientGroupSettingsSaver
      * @param  string $value The object property
      * @return bool        TRUE if the property is the expected type
      */
-    private function checkAttribute($key, $value) :bool
+    private function checkAttribute($key, $value): bool
     {
         switch ($key) {
             case 'int':

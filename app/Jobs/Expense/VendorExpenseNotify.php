@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -29,7 +29,11 @@ use Illuminate\Queue\SerializesModels;
 
 class VendorExpenseNotify implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, MakesDates;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+    use MakesDates;
 
     public $tries = 1;
 
@@ -41,7 +45,7 @@ class VendorExpenseNotify implements ShouldQueue
     {
         MultiDB::setDB($this->db);
 
-        if(!$this->expense->vendor) {
+        if (!$this->expense->vendor) {
             return;
         }
 
@@ -54,8 +58,13 @@ class VendorExpenseNotify implements ShouldQueue
 
     private function notify(VendorContact $contact)
     {
-        
-        $mo = new EmailObject;
+
+        \Illuminate\Support\Facades\App::forgetInstance('translator');
+        $t = app('translator');
+        $t->replace(\App\Utils\Ninja::transformTranslations($this->expense->company->settings));
+        \Illuminate\Support\Facades\App::setLocale($this->expense->vendor->locale());
+
+        $mo = new EmailObject();
         $mo->contact = $contact;
         $mo->vendor_contact_id = $contact->id;
         $mo->user_id = $this->expense->user_id;

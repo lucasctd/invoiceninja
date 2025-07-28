@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,7 +23,10 @@ use Illuminate\Support\Facades\Cache;
 
 class PreviewReport implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance
@@ -39,13 +42,11 @@ class PreviewReport implements ShouldQueue
         /** @var \App\Export\CSV\CreditExport $export */
         $export = new $this->report_class($this->company, $this->request);
 
-        if(isset($this->request['output']) && $this->request['output'] == 'json') {
+        if (isset($this->request['output']) && $this->request['output'] == 'json') {
             $report = $export->returnJson();
         } else {
             $report = $export->run();
         }
-            
-        // nlog($report);
 
         Cache::put($this->hash, $report, 60 * 60);
     }

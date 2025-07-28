@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -21,16 +21,15 @@ class ClientDecorator extends Decorator implements DecoratorInterface
     {
         $client = false;
 
-        if($entity instanceof Client) {
+        if ($entity instanceof Client) {
             $client = $entity;
-        } elseif($entity->client) {
+        } elseif ($entity->client) {
             $client = $entity->client;
         }
 
-        if($client && method_exists($this, $key)) {
+        if ($client && method_exists($this, $key)) {
             return $this->{$key}($client);
-        }
-        elseif($client && $client->{$key}) {
+        } elseif ($client && ($client->{$key} ?? false)) {
             return $client->{$key};
         }
 
@@ -41,7 +40,7 @@ class ClientDecorator extends Decorator implements DecoratorInterface
     {
         return $client->present()->name();
     }
-    
+
     public function user(Client $client)
     {
         return $client->user->present()->name();

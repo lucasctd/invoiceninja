@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -35,7 +35,7 @@ class UpdateDesignRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
@@ -79,7 +79,7 @@ class UpdateDesignRequest extends Request
             $input['design']['body'] = '';
         }
 
-        if(array_key_exists('entities', $input)) {
+        if (array_key_exists('entities', $input)) {
             $user_entities = explode(",", $input['entities']);
 
             $e = [];

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -32,7 +32,7 @@ class UserPresenter extends EntityPresenter
 
         return $first_name.' '.$last_name;
     }
-    
+
     /**
      * Returns a full name (with fallback) of the user
      *
@@ -61,7 +61,7 @@ class UserPresenter extends EntityPresenter
             return '';
         }
     }
-    
+
     /**
      * Returns the first name of the user
      *
@@ -73,10 +73,10 @@ class UserPresenter extends EntityPresenter
             return 'No First Name Available';
         }
 
-        return $this->entity->first_name ?? 'First Name';
+        return $this->entity->first_name ?? ' ';
 
     }
-    
+
     /**
      * Returns the last name of the user
      *
@@ -91,5 +91,13 @@ class UserPresenter extends EntityPresenter
         return $this->entity->last_name ?? 'Last Name';
     }
 
+    public function phone(): string
+    {
+        return $this->entity->phone ?? ' ';
+    }
 
+    public function email(): string
+    {
+        return $this->entity->email ?? ' ';
+    }
 }

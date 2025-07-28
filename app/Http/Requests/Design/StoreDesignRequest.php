@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -16,7 +16,6 @@ use App\Models\Account;
 
 class StoreDesignRequest extends Request
 {
-
     private array $valid_entities = [
         'invoice',
         'payment',
@@ -33,13 +32,13 @@ class StoreDesignRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
         return $user->isAdmin() && $user->account->hasFeature(Account::FEATURE_API);
-        
+
     }
 
     public function rules()
@@ -89,7 +88,7 @@ class StoreDesignRequest extends Request
             $input['design']['body'] = '';
         }
 
-        if(array_key_exists('entities', $input)) {
+        if (array_key_exists('entities', $input)) {
             $user_entities = explode(",", $input['entities']);
 
             $e = [];

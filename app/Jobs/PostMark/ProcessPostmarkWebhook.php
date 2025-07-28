@@ -4,35 +4,40 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Jobs\PostMark;
 
-use App\DataMapper\Analytics\Mail\EmailBounce;
-use App\DataMapper\Analytics\Mail\EmailSpam;
-use App\Jobs\Util\SystemLogger;
+use App\Models\Company;
+use App\Models\SystemLog;
 use App\Libraries\MultiDB;
+use Postmark\PostmarkClient;
+use Illuminate\Bus\Queueable;
+use App\Jobs\Util\SystemLogger;
+use App\Models\QuoteInvitation;
 use App\Models\CreditInvitation;
 use App\Models\InvoiceInvitation;
+use Illuminate\Queue\SerializesModels;
+use Turbo124\Beacon\Facades\LightLogs;
 use App\Models\PurchaseOrderInvitation;
-use App\Models\QuoteInvitation;
+use Illuminate\Queue\InteractsWithQueue;
 use App\Models\RecurringInvoiceInvitation;
-use App\Models\SystemLog;
-use App\Notifications\Ninja\EmailSpamNotification;
-use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Postmark\PostmarkClient;
-use Turbo124\Beacon\Facades\LightLogs;
+use App\DataMapper\Analytics\Mail\EmailSpam;
+use App\DataMapper\Analytics\Mail\EmailBounce;
+use App\Notifications\Ninja\EmailSpamNotification;
+use App\Notifications\Ninja\EmailBounceNotification;
 
 class ProcessPostmarkWebhook implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $tries = 1;
 
@@ -40,7 +45,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     private $entity;
 
-    private array $default_response =  [
+    private array $default_response = [
         'recipients' => '',
         'subject' => 'Message not found.',
         'entity' => '',
@@ -48,22 +53,27 @@ class ProcessPostmarkWebhook implements ShouldQueue
         'events' => [],
     ];
 
+    private ?Company $company = null;
+
     /**
      * Create a new job instance.
      *
      */
-    public function __construct(private array $request)
+    public function __construct(private array $request, private string $security_token)
     {
     }
 
     private function getSystemLog(string $message_id): ?SystemLog
     {
         return SystemLog::query()
-                ->where('company_id', $this->invitation->company_id)
-                ->where('type_id', SystemLog::TYPE_WEBHOOK_RESPONSE)
-                ->whereJsonContains('log', ['MessageID' => $message_id])
-                ->orderBy('id', 'desc')
-                ->first();
+            ->where('company_id', $this->invitation->company_id)
+            ->where('type_id', SystemLog::TYPE_WEBHOOK_RESPONSE)
+            ->where('category_id', SystemLog::CATEGORY_MAIL)
+            // ->where('client_id', $this->invitation->contact->client_id)
+            // ->whereJsonContains('log', ['MessageID' => $message_id])
+            ->where('log->MessageID', $message_id)
+            ->orderBy('id', 'desc')
+            ->first();
 
     }
 
@@ -76,14 +86,17 @@ class ProcessPostmarkWebhook implements ShouldQueue
     /**
      * Execute the job.
      *
-     *
-     * @return void
      */
     public function handle()
     {
         MultiDB::findAndSetDbByCompanyKey($this->request['Tag']);
-        
+        $this->company = Company::query()->where('company_key', $this->request['Tag'])->first(); /** @phpstan-ignore-line */
+
         $this->invitation = $this->discoverInvitation($this->request['MessageID']);
+
+        if ($this->company && $this->request['RecordType'] == 'SpamComplaint' && config('ninja.notification.slack')) {
+            $this->company->notification(new EmailSpamNotification($this->company))->ninja();
+        }
 
         if (!$this->invitation) {
             return;
@@ -92,11 +105,16 @@ class ProcessPostmarkWebhook implements ShouldQueue
         if (array_key_exists('Details', $this->request)) {
             $this->invitation->email_error = $this->request['Details'];
         }
-        
+
         switch ($this->request['RecordType']) {
             case 'Delivery':
                 return $this->processDelivery();
             case 'Bounce':
+
+                if ($this->request['Subject'] == ctrans('texts.confirmation_subject')) {
+                    $this->company->notification(new EmailBounceNotification($this->request['Email']))->ninja();
+                }
+
                 return $this->processBounce();
             case 'SpamComplaint':
                 return $this->processSpamComplaint();
@@ -148,25 +166,27 @@ class ProcessPostmarkWebhook implements ShouldQueue
     private function processOpen()
     {
         $this->invitation->opened_date = now();
-        $this->invitation->save();
+        $this->invitation->saveQuietly();
 
         $data = array_merge($this->request, ['history' => $this->fetchMessage()]);
 
         $sl = $this->getSystemLog($this->request['MessageID']);
 
-        if($sl) {
+        if ($sl) {
             $this->updateSystemLog($sl, $data);
             return;
         }
 
-        (new SystemLogger(
-            $data,
-            SystemLog::CATEGORY_MAIL,
-            SystemLog::EVENT_MAIL_OPENED,
-            SystemLog::TYPE_WEBHOOK_RESPONSE,
-            $this->invitation->contact->client,
-            $this->invitation->company
-        ))->handle();
+        (
+            new SystemLogger(
+                $data,
+                SystemLog::CATEGORY_MAIL,
+                SystemLog::EVENT_MAIL_OPENED,
+                SystemLog::TYPE_WEBHOOK_RESPONSE,
+                $this->invitation->contact->client,
+                $this->invitation->company
+            )
+        )->handle();
     }
 
     // {
@@ -186,25 +206,27 @@ class ProcessPostmarkWebhook implements ShouldQueue
     private function processDelivery()
     {
         $this->invitation->email_status = 'delivered';
-        $this->invitation->save();
+        $this->invitation->saveQuietly();
 
         $data = array_merge($this->request, ['history' => $this->fetchMessage()]);
 
         $sl = $this->getSystemLog($this->request['MessageID']);
 
-        if($sl) {
+        if ($sl) {
             $this->updateSystemLog($sl, $data);
             return;
         }
 
-        (new SystemLogger(
-            $data,
-            SystemLog::CATEGORY_MAIL,
-            SystemLog::EVENT_MAIL_DELIVERY,
-            SystemLog::TYPE_WEBHOOK_RESPONSE,
-            $this->invitation->contact->client,
-            $this->invitation->company
-        ))->handle();
+        (
+            new SystemLogger(
+                $data,
+                SystemLog::CATEGORY_MAIL,
+                SystemLog::EVENT_MAIL_DELIVERY,
+                SystemLog::TYPE_WEBHOOK_RESPONSE,
+                $this->invitation->contact->client,
+                $this->invitation->company
+            )
+        )->handle();
     }
 
     // {
@@ -236,7 +258,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
     private function processBounce()
     {
         $this->invitation->email_status = 'bounced';
-        $this->invitation->save();
+        $this->invitation->saveQuietly();
 
         $bounce = new EmailBounce(
             $this->request['Tag'],
@@ -250,15 +272,13 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         $sl = $this->getSystemLog($this->request['MessageID']);
 
-        if($sl) {
+        if ($sl) {
             $this->updateSystemLog($sl, $data);
             return;
         }
 
         (new SystemLogger($data, SystemLog::CATEGORY_MAIL, SystemLog::EVENT_MAIL_BOUNCED, SystemLog::TYPE_WEBHOOK_RESPONSE, $this->invitation->contact->client, $this->invitation->company))->handle();
 
-        // if(config('ninja.notification.slack'))
-        // $this->invitation->company->notification(new EmailBounceNotification($this->invitation->company->account))->ninja();
     }
 
     // {
@@ -289,7 +309,7 @@ class ProcessPostmarkWebhook implements ShouldQueue
     private function processSpamComplaint()
     {
         $this->invitation->email_status = 'spam';
-        $this->invitation->save();
+        $this->invitation->saveQuietly();
 
         $spam = new EmailSpam(
             $this->request['Tag'],
@@ -303,16 +323,10 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         $sl = $this->getSystemLog($this->request['MessageID']);
 
-        if($sl) {
+        if ($sl) {
             $this->updateSystemLog($sl, $data);
-            return;
         }
 
-        (new SystemLogger($data, SystemLog::CATEGORY_MAIL, SystemLog::EVENT_MAIL_SPAM_COMPLAINT, SystemLog::TYPE_WEBHOOK_RESPONSE, $this->invitation->contact->client, $this->invitation->company))->handle();
-
-        if (config('ninja.notification.slack')) {
-            $this->invitation->company->notification(new EmailSpamNotification($this->invitation->company->account))->ninja();
-        }
     }
 
     private function discoverInvitation($message_id)
@@ -342,10 +356,21 @@ class ProcessPostmarkWebhook implements ShouldQueue
     public function getRawMessage(string $message_id)
     {
 
-        $postmark = new PostmarkClient(config('services.postmark.token'));
+        $postmark = new PostmarkClient($this->security_token);
         $messageDetail = $postmark->getOutboundMessageDetails($message_id);
+
+        try {
+            $messageDetail = $postmark->getOutboundMessageDetails($message_id);
+        } catch (\Exception $e) {
+
+            $postmark_secret = config('services.postmark-outlook.token');
+            $postmark = new PostmarkClient($postmark_secret);
+            $messageDetail = $postmark->getOutboundMessageDetails($message_id);
+
+        }
+
         return $messageDetail;
-        
+
     }
 
 
@@ -354,8 +379,8 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         $messageDetail = $this->getRawMessage($message_id);
 
-        
-        $event =  collect($messageDetail->messageevents)->first(function ($event) {
+
+        $event = collect($messageDetail->messageevents)->first(function ($event) {
 
             return $event?->Details?->BounceID ?? false;
 
@@ -367,29 +392,38 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
     private function fetchMessage(): array
     {
-        if(strlen($this->request['MessageID']) < 1) {
+        if (strlen($this->request['MessageID']) < 1) {
             return $this->default_response;
         }
-    
+
         try {
 
-            $postmark = new PostmarkClient(config('services.postmark.token'));
-            $messageDetail = $postmark->getOutboundMessageDetails($this->request['MessageID']);
+            $postmark = new PostmarkClient($this->security_token);
+
+            try {
+                $messageDetail = $postmark->getOutboundMessageDetails($this->request['MessageID']);
+            } catch (\Exception $e) {
+
+                $postmark_secret = config('services.postmark-outlook.token');
+                $postmark = new PostmarkClient($postmark_secret);
+                $messageDetail = $postmark->getOutboundMessageDetails($this->request['MessageID']);
+
+            }
 
             $recipients = collect($messageDetail['recipients'])->flatten()->implode(',');
             $subject = $messageDetail->subject ?? '';
 
-            $events =  collect($messageDetail->messageevents)->map(function ($event) {
+            $events = collect($messageDetail->messageevents)->map(function ($event) {
 
                 return [
-                        'bounce_id' => $event?->Details?->BounceID ?? '',
-                        'recipient' => $event->Recipient ?? '',
-                        'status' => $event->Type ?? '',
-                        'delivery_message' => $event->Details->DeliveryMessage ?? $event->Details->Summary ?? '',
-                        'server' => $event->Details->DestinationServer ??  '',
-                        'server_ip' => $event->Details->DestinationIP ?? '',
-                        'date' => \Carbon\Carbon::parse($event->ReceivedAt)->format('Y-m-d H:i:s') ?? '',
-                    ];
+                    'bounce_id' => $event?->Details?->BounceID ?? '',
+                    'recipient' => $event->Recipient ?? '',
+                    'status' => $event->Type ?? '',
+                    'delivery_message' => $event->Details->DeliveryMessage ?? $event->Details->Summary ?? '',
+                    'server' => $event->Details->DestinationServer ?? '',
+                    'server_ip' => $event->Details->DestinationIP ?? '',
+                    'date' => \Carbon\Carbon::parse($event->ReceivedAt)->format('Y-m-d H:i:s') ?? '',
+                ];
 
             })->toArray();
 
@@ -407,4 +441,10 @@ class ProcessPostmarkWebhook implements ShouldQueue
 
         }
     }
+
+    public function middleware()
+    {
+        return [new \Illuminate\Queue\Middleware\WithoutOverlapping($this->request['Tag'])];
+    }
+
 }

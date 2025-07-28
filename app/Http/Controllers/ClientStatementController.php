@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Response;
 
 class ClientStatementController extends BaseController
 {
-    use MakesHash, PdfMaker;
+    use MakesHash;
+    use PdfMaker;
 
     /** @var \App\Models\Invoice|\App\Models\Payment */
     protected $entity;
@@ -32,7 +33,7 @@ class ClientStatementController extends BaseController
      * Update the specified resource in storage.
      *
      * @param CreateStatementRequest $request
-     * @return Response
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse | \Illuminate\Http\JsonResponse
      */
     public function statement(CreateStatementRequest $request)
     {

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -20,13 +20,11 @@ use App\Models\Expense;
  */
 class BankTransactionRepository extends BaseRepository
 {
-    
     public function save($data, BankTransaction $bank_transaction)
     {
         if (array_key_exists('bank_integration_id', $data)) {
             $bank_transaction->bank_integration_id = $data['bank_integration_id'];
         }
-
 
         $bank_transaction->fill($data);
         $bank_transaction->save();
@@ -48,9 +46,22 @@ class BankTransactionRepository extends BaseRepository
         $bts = (new MatchBankTransactions($user->company()->id, $user->company()->db, $data))->handle();
     }
 
+
+    public function delete($entity)
+    {
+        if (!$entity || $entity->is_deleted) {
+            return;
+        }
+
+        $bt = $this->unlink($entity);
+
+       parent::delete($bt);
+
+    }
+
     public function unlink($bt)
     {
-        if($bt->payment()->exists()) {
+        if ($bt->payment()->exists()) {
             $bt->payment->transaction_id = null;
             $bt->payment_id = null;
         }
@@ -58,18 +69,19 @@ class BankTransactionRepository extends BaseRepository
         $e = Expense::query()->whereIn('id', $this->transformKeys(explode(",", $bt->expense_id)))
         ->cursor()
         ->each(function ($expense) {
-            
+
             $expense->transaction_id = null;
             $expense->saveQuietly();
 
         });
-        
+
         $bt->expense_id = null;
         $bt->vendor_id = null;
         $bt->status_id = 1;
         $bt->invoice_ids = null;
         $bt->ninja_category_id = null;
         $bt->push();
-    
+
+        return $bt->fresh();
     }
 }

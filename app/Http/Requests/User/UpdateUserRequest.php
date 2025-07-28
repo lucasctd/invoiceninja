@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,7 +25,7 @@ class UpdateUserRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         return auth()->user()->id == $this->user->id || auth()->user()->isAdmin();
     }
@@ -38,9 +38,7 @@ class UpdateUserRequest extends Request
             'password' => 'nullable|string|min:6',
         ];
 
-        if (isset($input['email'])) {
-            $rules['email'] = ['email', 'sometimes', new UniqueUserRule($this->user, $input['email'])];
-        }
+        $rules['email'] = ['email', 'sometimes', new UniqueUserRule($this->user, $input['email'])];
 
         if (Ninja::isHosted() && $this->phone_has_changed && $this->phone && isset($this->phone)) {
             $rules['phone'] = ['sometimes', 'bail', 'string', new HasValidPhoneNumber()];
@@ -53,8 +51,10 @@ class UpdateUserRequest extends Request
     {
         $input = $this->all();
 
-        if (array_key_exists('email', $input)) {
+        if (isset($input['email']) && is_string($input['email']) && strlen($input['email']) > 2) {
             $input['email'] = trim($input['email']);
+        } elseif (isset($input['email'])) {
+            $input['email'] = false;
         }
 
         if (array_key_exists('first_name', $input)) {
@@ -77,6 +77,9 @@ class UpdateUserRequest extends Request
             unset($input['oauth_user_token']);
         }
 
+        if (isset($input['password']) && is_string($input['password'])) {
+            $input['password'] = trim($input['password']);
+        }
 
         $this->replace($input);
     }

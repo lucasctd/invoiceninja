@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -57,13 +57,34 @@ class InvoiceExport extends BaseExport
         $query = Invoice::query()
                         ->withTrashed()
                         ->with('client')
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->whereHas('client', function ($q) {
+                            $q->where('is_deleted', false);
+                        })
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
 
-        if(isset($this->input['status'])) {
+        if (!$this->input['include_deleted'] ?? false) {// @phpstan-ignore-line
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'invoices');
+
+        $clients = &$this->input['client_id'];
+
+        if ($clients) {
+            $query = $this->addClientFilter($query, $clients);
+        }
+
+        if ($this->input['status'] ?? false) {
             $query = $this->addInvoiceStatusFilter($query, $this->input['status']);
+        }
+
+        if ($this->input['document_email_attachment'] ?? false) {
+            $this->queueDocuments($query);
+        }
+
+        if ($this->input['pdf_email_attachment'] ?? false) {
+            $this->queuePdfs($query);
         }
 
         return $query;
@@ -82,10 +103,12 @@ class InvoiceExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($resource) {
+
+                    /** @var \App\Models\Invoice $resource */
                     $row = $this->buildRow($resource);
                     return $this->processMetaData($row, $resource);
                 })->toArray();
-        
+
         return array_merge(['columns' => $header], $report);
     }
 
@@ -95,19 +118,22 @@ class InvoiceExport extends BaseExport
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
+
+                /** @var \App\Models\Invoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 
         return $this->csv->toString();
     }
 
-    private function buildRow(Invoice $invoice) :array
+    private function buildRow(Invoice $invoice): array
     {
         $transformed_invoice = $this->invoice_transformer->transform($invoice);
 
@@ -120,35 +146,20 @@ class InvoiceExport extends BaseExport
             if (is_array($parts) && $parts[0] == 'invoice' && array_key_exists($parts[1], $transformed_invoice)) {
                 $entity[$key] = $transformed_invoice[$parts[1]];
             } else {
-                // nlog($key);
                 $entity[$key] = $this->decorator->transform($key, $invoice);
-                // $entity[$key] = '';
-                // $entity[$key] = $this->resolveKey($key, $invoice, $this->invoice_transformer);
             }
 
         }
-        
-        return $entity;
-        // return $this->decorateAdvancedFields($invoice, $entity);
+
+        $entity = $this->decorateAdvancedFields($invoice, $entity);
+        return  $this->convertFloats($entity);
     }
 
-    private function decorateAdvancedFields(Invoice $invoice, array $entity) :array
+    private function decorateAdvancedFields(Invoice $invoice, array $entity): array
     {
-        
-        if (in_array('invoice.country_id', $this->input['report_keys'])) {
-            $entity['invoice.country_id'] = $invoice->client->country ? ctrans("texts.country_{$invoice->client->country->name}") : '';
-        }
 
-        if (in_array('invoice.currency_id', $this->input['report_keys'])) {
-            $entity['invoice.currency_id'] = $invoice->client->currency() ? $invoice->client->currency()->code : $invoice->company->currency()->code;
-        }
-
-        if (in_array('invoice.client_id', $this->input['report_keys'])) {
-            $entity['invoice.client_id'] = $invoice->client->present()->name();
-        }
-
-        if (in_array('invoice.status', $this->input['report_keys'])) {
-            $entity['invoice.status'] = $invoice->stringStatus($invoice->status_id);
+        if (in_array('invoice.project', $this->input['report_keys'])) {
+            $entity['invoice.project'] = $invoice->project ? $invoice->project->name : '';
         }
 
         if (in_array('invoice.recurring_id', $this->input['report_keys'])) {
@@ -160,13 +171,13 @@ class InvoiceExport extends BaseExport
         }
 
         if (in_array('invoice.assigned_user_id', $this->input['report_keys'])) {
-            $entity['invoice.assigned_user_id'] = $invoice->assigned_user ? $invoice->assigned_user->present()->name(): '';
-        }
-       
-        if (in_array('invoice.user_id', $this->input['report_keys'])) {
-            $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name(): '';
+            $entity['invoice.assigned_user_id'] = $invoice->assigned_user ? $invoice->assigned_user->present()->name() : '';
         }
 
+        if (in_array('invoice.user_id', $this->input['report_keys'])) {
+            $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : ''; // @phpstan-ignore-line
+
+        }
 
         return $entity;
     }

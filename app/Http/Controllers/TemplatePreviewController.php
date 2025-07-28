@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -34,14 +34,14 @@ class TemplatePreviewController extends BaseController
 
         $report = Storage::disk(config('filesystems.default'))->exists($this->path_prefix.$hash.$this->path_suffix);
 
-        if(!$report) {
+        if (!$report) {
             return response()->json(['message' => 'Still working.....'], 409);
         }
-        
+
         Cache::forget($hash);
 
         return response()->streamDownload(function () use ($hash) {
-            
+
             echo Storage::get($this->path_prefix.$hash.$this->path_suffix);
             Storage::delete($this->path_prefix.$hash.$this->path_suffix);
 

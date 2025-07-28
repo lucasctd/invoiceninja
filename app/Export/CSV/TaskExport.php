@@ -4,34 +4,34 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Export\CSV;
 
-use App\Export\Decorators\Decorator;
-use App\Libraries\MultiDB;
-use App\Models\Company;
-use App\Models\DateFormat;
 use App\Models\Task;
-use App\Models\Timezone;
-use App\Transformers\TaskTransformer;
 use App\Utils\Ninja;
-use Illuminate\Database\Eloquent\Builder;
+use League\Csv\Writer;
+use App\Models\Company;
+use App\Models\Timezone;
+use App\Libraries\MultiDB;
+use App\Models\DateFormat;
+use Carbon\CarbonInterval;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\App;
-use League\Csv\Writer;
+use App\Export\Decorators\Decorator;
+use App\Transformers\TaskTransformer;
+use Illuminate\Database\Eloquent\Builder;
 
 class TaskExport extends BaseExport
 {
-
     private $entity_transformer;
 
-    public string $date_key = 'created_at';
+    public string $date_key = 'calculated_start_date';
 
-    private string $date_format = 'YYYY-MM-DD';
+    private string $date_format = 'Y-m-d';
 
     public Writer $csv;
 
@@ -62,16 +62,30 @@ class TaskExport extends BaseExport
 
         if (count($this->input['report_keys']) == 0) {
             $this->input['report_keys'] = array_values($this->task_report_keys);
+            $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
         }
-
-        $this->input['report_keys'] = array_merge($this->input['report_keys'], array_diff($this->forced_client_fields, $this->input['report_keys']));
 
         $query = Task::query()
                         ->withTrashed()
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
+        if (!$this->input['include_deleted'] ?? false) {
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'tasks');
+
+        $clients = &$this->input['client_id'];
+
+        if ($clients) {
+            $query = $this->addClientFilter($query, $clients);
+        }
+
+        $document_attachments = &$this->input['document_email_attachment'];
+
+        if ($document_attachments) {
+            $this->queueDocuments($query);
+        }
 
         return $query;
 
@@ -84,12 +98,15 @@ class TaskExport extends BaseExport
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
               ->each(function ($entity) {
+
+                  /** @var \App\Models\Task $entity*/
                   $this->buildRow($entity);
               });
 
@@ -111,16 +128,17 @@ class TaskExport extends BaseExport
 
         $query->cursor()
                 ->each(function ($resource) {
-        
+
+                    /** @var \App\Models\Task $resource*/
                     $this->buildRow($resource);
-        
-                    foreach($this->storage_array as $row) {
+
+                    foreach ($this->storage_array as $row) {
                         $this->storage_item_array[] = $this->processMetaData($row, $resource);
                     }
 
                     $this->storage_array = [];
                 });
-        // nlog($this->storage_item_array);
+
         return array_merge(['columns' => $header], $this->storage_item_array);
     }
 
@@ -137,78 +155,131 @@ class TaskExport extends BaseExport
                 $entity[$key] = $transformed_entity[$parts[1]];
             } elseif (array_key_exists($key, $transformed_entity)) {
                 $entity[$key] = $transformed_entity[$key];
-            } elseif (in_array($key, ['task.start_date', 'task.end_date', 'task.duration'])) {
+            } elseif (in_array($key, ['task.start_date', 'task.end_date', 'task.duration', 'task.billable', 'task.item_notes', 'task.time_log'])) {
                 $entity[$key] = '';
             } else {
-                // nlog($key);
                 $entity[$key] = $this->decorator->transform($key, $task);
-                // $entity[$key] = $this->resolveKey($key, $task, $this->entity_transformer);
             }
-
-            // $entity['task.start_date'] = '';
-            // $entity['task.end_date'] = '';
-            // $entity['task.duration'] = '';
 
         }
 
+        $entity = $this->decorateAdvancedFields($task, $entity);
 
+        $entity = $this->convertFloats($entity);
 
-        if (is_null($task->time_log) || (is_array(json_decode($task->time_log, 1)) && count(json_decode($task->time_log, 1)) == 0)) {
+        if (is_null($task->time_log) || (is_array(json_decode($task->time_log, true)) && count(json_decode($task->time_log, true)) == 0)) {
             $this->storage_array[] = $entity;
         } else {
             $this->iterateLogs($task, $entity);
         }
-        
+
     }
 
     private function iterateLogs(Task $task, array $entity)
     {
         $timezone = Timezone::find($task->company->settings->timezone_id);
-        $timezone_name = 'US/Eastern';
+        $timezone_name = 'America/New_York';
 
         if ($timezone) {
             $timezone_name = $timezone->name;
         }
 
-        $logs = json_decode($task->time_log, 1);
+        $logs = json_decode($task->time_log, true);
 
-        $date_format_default = 'Y-m-d';
-
-        $date_format = DateFormat::find($task->company->settings->date_format_id);
-
-        if ($date_format) {
-            $date_format_default = $date_format->format;
-        }
+        $date_format_default = $this->date_format;
 
         foreach ($logs as $key => $item) {
             if (in_array('task.start_date', $this->input['report_keys']) || in_array('start_date', $this->input['report_keys'])) {
-                $entity['task.start_date'] = Carbon::createFromTimeStamp($item[0])->setTimezone($timezone_name)->format($date_format_default);
+                $carbon_object = Carbon::createFromTimeStamp((int)$item[0])->setTimezone($timezone_name);
+                $entity['task.start_date'] = $carbon_object->format($date_format_default);
+                $entity['task.start_time'] = $carbon_object->format('H:i:s');
             }
 
             if ((in_array('task.end_date', $this->input['report_keys']) || in_array('end_date', $this->input['report_keys'])) && $item[1] > 0) {
-                $entity['task.end_date'] = Carbon::createFromTimeStamp($item[1])->setTimezone($timezone_name)->format($date_format_default);
+                $carbon_object = Carbon::createFromTimeStamp((int)$item[1])->setTimezone($timezone_name);
+                $entity['task.end_date'] = $carbon_object->format($date_format_default);
+                $entity['task.end_time'] = $carbon_object->format('H:i:s');
             }
 
             if ((in_array('task.end_date', $this->input['report_keys']) || in_array('end_date', $this->input['report_keys'])) && $item[1] == 0) {
                 $entity['task.end_date'] = ctrans('texts.is_running');
+                $entity['task.end_time'] = ctrans('texts.is_running');
             }
 
+            $seconds = $task->calcDuration();
+            $time_log_entry = (isset($item[1]) && $item[1] != 0) ? $item[1] - $item[0] : ctrans('texts.is_running');
+
             if (in_array('task.duration', $this->input['report_keys']) || in_array('duration', $this->input['report_keys'])) {
-                $entity['task.duration'] = $task->calcDuration();
+                $entity['task.duration'] = $seconds;
             }
-            
-            // $entity = $this->decorateAdvancedFields($task, $entity);
-            
+
+            if (in_array('task.time_log', $this->input['report_keys']) || in_array('time_log', $this->input['report_keys'])) {
+                $entity['task.time_log'] = $time_log_entry;
+            }
+
+            if (in_array('task.time_log_duration_words', $this->input['report_keys']) || in_array('time_log_duration_words', $this->input['report_keys'])) {
+                $entity['task.time_log_duration_words'] =  is_int($time_log_entry) ? CarbonInterval::seconds($time_log_entry)->locale($this->company->locale())->cascade()->forHumans() : $time_log_entry;
+            }
+
+            if (in_array('task.duration_words', $this->input['report_keys']) || in_array('duration_words', $this->input['report_keys'])) {
+                $entity['task.duration_words'] =  $seconds > 86400 ? CarbonInterval::seconds($seconds)->locale($this->company->locale())->cascade()->forHumans() : now()->startOfDay()->addSeconds($seconds)->format('H:i:s');
+            }
+
+            if (in_array('task.billable', $this->input['report_keys']) || in_array('billable', $this->input['report_keys'])) {
+                $entity['task.billable'] = isset($item[3]) && $item[3] == 'true' ? ctrans('texts.yes') : ctrans('texts.no');
+            }
+
+            if (in_array('task.item_notes', $this->input['report_keys']) || in_array('item_notes', $this->input['report_keys'])) {
+                $entity['task.item_notes'] = isset($item[2]) ? (string)$item[2] : '';
+            }
+
+
             $this->storage_array[] = $entity;
-            
-            unset($entity['task.start_date']);
-            unset($entity['task.end_date']);
-            unset($entity['task.duration']);
+
+            $entity['task.start_date'] = '';
+            $entity['task.start_time'] = '';
+            $entity['task.end_date'] = '';
+            $entity['task.end_time'] = '';
+            $entity['task.duration'] = '';
+            $entity['task.duration_words'] = '';
+            $entity['task.time_log'] = '';
+            $entity['task.time_log_duration_words'] = '';
+            $entity['task.billable'] = '';
+            $entity['task.item_notes'] = '';
+
         }
 
     }
 
-    private function decorateAdvancedFields(Task $task, array $entity) :array
+    /**
+     * Add Task Status Filter
+     *
+     * @param  Builder $query
+     * @param  string $status
+     * @return Builder
+     */
+    protected function addTaskStatusFilter(Builder $query, string $status): Builder
+    {
+        /** @var array $status_parameters */
+        $status_parameters = explode(',', $status);
+
+        if (in_array('all', $status_parameters) || count($status_parameters) == 0) {
+            return $query;
+        }
+
+        if (in_array('invoiced', $status_parameters)) {
+            $query->whereNotNull('invoice_id');
+        }
+
+        if (in_array('uninvoiced', $status_parameters)) {
+            $query->whereNull('invoice_id');
+        }
+
+        return $query;
+
+    }
+
+    private function decorateAdvancedFields(Task $task, array $entity): array
     {
         if (in_array('task.status_id', $this->input['report_keys'])) {
             $entity['task.status_id'] = $task->status()->exists() ? $task->status->name : '';
@@ -217,7 +288,16 @@ class TaskExport extends BaseExport
         if (in_array('task.project_id', $this->input['report_keys'])) {
             $entity['task.project_id'] = $task->project()->exists() ? $task->project->name : '';
         }
-        
+
+        if (in_array('task.user_id', $this->input['report_keys'])) {
+            $entity['task.user_id'] = $task->user ? $task->user->present()->name() : '';
+        }
+
+        if (in_array('task.assigned_user_id', $this->input['report_keys'])) {
+            $entity['task.assigned_user_id'] = $task->assigned_user ? $task->assigned_user->present()->name() : '';
+        }
+
+
         return $entity;
     }
 }

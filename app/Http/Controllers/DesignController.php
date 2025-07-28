@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -82,7 +82,7 @@ class DesignController extends BaseController
      *       ),
      *     )
      * @param DesignFilters $filters
-     * @return Response|mixed
+     * @return Response| \Illuminate\Http\JsonResponse|mixed
      */
     public function index(DesignFilters $filters)
     {
@@ -96,7 +96,7 @@ class DesignController extends BaseController
      *
      * @param ShowDesignRequest $request
      * @param Design $design
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -150,7 +150,7 @@ class DesignController extends BaseController
      *
      * @param EditDesignRequest $request
      * @param Design $design
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -204,7 +204,7 @@ class DesignController extends BaseController
      *
      * @param UpdateDesignRequest $request
      * @param Design $design
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -265,7 +265,7 @@ class DesignController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateDesignRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -313,7 +313,7 @@ class DesignController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param StoreDesignRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -415,7 +415,7 @@ class DesignController extends BaseController
      *
      * @param DestroyDesignRequest $request
      * @param Design $design
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @throws \Exception
@@ -473,7 +473,7 @@ class DesignController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Post(
@@ -544,6 +544,10 @@ class DesignController extends BaseController
     {
         $design_id = $request->input('design_id');
         $entity = $request->input('entity');
+        $settings_level = $request->input('settings_level', 'company');
+        $group_settings_id = $request->input('group_settings_id', false);
+        $client_id = $request->input('client_id', false);
+
 
         /** @var \App\Models\User $user */
         $user = auth()->user();
@@ -561,19 +565,107 @@ class DesignController extends BaseController
 
         switch ($entity) {
             case 'invoice':
-                $company->invoices()->update(['design_id' => $design_id]);
+
+                $company->invoices()
+                        ->withTrashed()
+                        ->when($settings_level == 'company', function ($query) {
+                            $query->where(function ($query) {
+                                $query->whereDoesntHave('client.group_settings')
+                                    ->orWhereHas('client.group_settings', function ($q) {
+
+                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                        ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
+
+                                    });
+                            });
+                        })
+                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+
+                            $query->whereHas('client', function ($q) use ($group_settings_id) {
+                                $q->where('group_settings_id', $group_settings_id);
+                            });
+
+                        })
+                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+
+                            $query->where('client_id', $client_id);
+
+                        })->update(['design_id' => $design_id]);
+
+                
+                // Recurring Invoice Designs are set using the global company level.
+                if ($settings_level == 'company') {
+                    $company->recurring_invoices()->withTrashed()->update(['design_id' => $design_id]);
+                }
+
                 break;
             case 'quote':
-                $company->quotes()->update(['design_id' => $design_id]);
+
+                $company->quotes()
+                        ->withTrashed()
+                        ->when($settings_level == 'company', function ($query) {
+                            $query->where(function ($query) {
+                                $query->whereDoesntHave('client.group_settings')
+                                    ->orWhereHas('client.group_settings', function ($q) {
+
+                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                        ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
+
+                                    });
+                            });
+                        })
+                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+
+                            $query->whereHas('client', function ($q) use ($group_settings_id) {
+                                $q->where('group_settings_id', $group_settings_id);
+                            });
+
+                        })
+                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+
+                            $query->where('client_id', $client_id);
+
+                        })
+                        ->update(['design_id' => $design_id]);
+
                 break;
             case 'credit':
-                $company->credits()->update(['design_id' => $design_id]);
+
+                $company->credits()
+                        ->withTrashed()
+                        ->when($settings_level == 'company', function ($query) {
+                            $query->where(function ($query) {
+                                $query->whereDoesntHave('client.group_settings')
+                                    ->orWhereHas('client.group_settings', function ($q) {
+
+                                        $q->whereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') IS NULL")
+                                        ->orWhereRaw("JSON_EXTRACT(settings, '$.invoice_design_id') = ''");
+
+                                    });
+                            });
+                        })
+                        ->when($settings_level == 'group_settings' && $group_settings_id, function ($query) use ($group_settings_id) {
+
+                            $query->whereHas('client', function ($q) use ($group_settings_id) {
+                                $q->where('group_settings_id', $group_settings_id);
+                            });
+
+                        })
+                        ->when($settings_level == 'client' && $client_id, function ($query) use ($client_id) {
+
+                            $query->where('client_id', $client_id);
+
+                        })
+                        ->update(['design_id' => $design_id]);
+
                 break;
+
             case 'purchase_order':
-                $company->purchase_orders()->update(['design_id' => $design_id]);
+                $company->purchase_orders()->withTrashed()->update(['design_id' => $design_id]);
                 break;
             case 'recurring_invoice':
-                $company->recurring_invoices()->update(['design_id' => $design_id]);
+                $company->recurring_invoices()->withTrashed()->update(['design_id' => $design_id]);
+
                 break;
             default:
                 // code...

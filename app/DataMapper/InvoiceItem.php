@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -14,6 +14,8 @@ namespace App\DataMapper;
 class InvoiceItem
 {
     public $quantity = 0;
+
+    public $net_cost = 0;
 
     public $cost = 0;
 
@@ -44,7 +46,7 @@ class InvoiceItem
     public $line_total = 0;
 
     public $gross_line_total = 0;
-    
+
     public $tax_amount = 0;
 
     public $date = '';
@@ -65,7 +67,10 @@ class InvoiceItem
 
     public $expense_id = '';
 
+    public $unit_code = 'C62';
+
     public static $casts = [
+        'net_cost' => 'float',
         'task_id' => 'string',
         'expense_id' => 'string',
         'tax_id' => 'string',
@@ -92,5 +97,6 @@ class InvoiceItem
         'custom_value2' => 'string',
         'custom_value3' => 'string',
         'custom_value4' => 'string',
+        'unit_code' => 'string',
     ];
 }

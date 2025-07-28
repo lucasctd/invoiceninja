@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -56,6 +56,7 @@ class MarkPaid extends AbstractService
                     ->updateBalance($this->payable_balance * -1)
                     ->updatePaidToDate($this->payable_balance)
                     ->setStatus(Invoice::STATUS_PAID)
+                    ->unlockDocuments()
                     ->save();
             }
         }, 1);
@@ -84,7 +85,7 @@ class MarkPaid extends AbstractService
         $payment->saveQuietly();
 
         $payment->service()->applyNumber()->save();
-        
+
         /* Create a payment relationship to the invoice entity */
         $payment->invoices()->attach($this->invoice->id, [
             'amount' => $this->payable_balance,
@@ -103,17 +104,16 @@ class MarkPaid extends AbstractService
         $this->invoice
                 ->service()
                 ->applyNumber()
-                // ->deletePdf()
                 ->save();
 
         $payment->ledger()
-                ->updatePaymentBalance($this->payable_balance * -1);
+                ->updatePaymentBalance($this->payable_balance * -1, "Marked Paid Activity");
 
         //06-09-2022
         $this->invoice
              ->client
              ->service()
-             ->updateBalanceAndPaidToDate($payment->amount*-1, $payment->amount)
+             ->updateBalanceAndPaidToDate($payment->amount * -1, $payment->amount)
              ->save();
 
         $this->invoice = $this->invoice
@@ -126,7 +126,7 @@ class MarkPaid extends AbstractService
         event(new InvoiceWasPaid($this->invoice, $payment, $payment->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
 
         event('eloquent.updated: App\Models\Invoice', $this->invoice);
-        
+
         return $this->invoice;
     }
 

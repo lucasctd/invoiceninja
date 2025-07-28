@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -77,7 +77,7 @@ class TaxRateController extends BaseController
      *
      * Display a listing of the resource.
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function index(TaxRateFilters $filters)
     {
@@ -90,7 +90,7 @@ class TaxRateController extends BaseController
      * Show the form for creating a new resource.
      *
      * @param CreateTaxRateRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -137,7 +137,7 @@ class TaxRateController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param StoreTaxRateRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function store(StoreTaxRateRequest $request)
     {
@@ -156,7 +156,7 @@ class TaxRateController extends BaseController
      *
      * @param ShowTaxRateRequest $request
      * @param TaxRate $tax_rate
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -209,7 +209,7 @@ class TaxRateController extends BaseController
      *
      * @param EditTaxRateRequest $request
      * @param TaxRate $tax_rate
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -262,7 +262,7 @@ class TaxRateController extends BaseController
      *
      * @param UpdateTaxRateRequest $request
      * @param TaxRate $tax_rate
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -319,7 +319,7 @@ class TaxRateController extends BaseController
      *
      * @param DestroyTaxRateRequest $request
      * @param TaxRate $tax_rate
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @throws \Exception
@@ -374,7 +374,7 @@ class TaxRateController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Post(
@@ -434,12 +434,12 @@ class TaxRateController extends BaseController
         $tax_rates->each(function ($tax_rate, $key) use ($action, $user) {
             if ($user->can('edit', $tax_rate)) {
 
-                if(in_array($action, ['archive','delete'])) {
+                if (in_array($action, ['archive','delete'])) {
                     $settings = $user->company()->settings;
 
-                    foreach(['tax_name1','tax_name2','tax_name3'] as $tax_name) {
+                    foreach (['tax_name1','tax_name2','tax_name3'] as $tax_name) {
 
-                        if($settings->{$tax_name} == $tax_rate->name) {
+                        if ($settings->{$tax_name} == $tax_rate->name) {
                             $settings->{$tax_name} = '';
                             $settings->{str_replace("name", "rate", $tax_name)} = '';
                         }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -15,7 +15,6 @@ use Illuminate\Mail\Mailable;
 
 class TestMailServer extends Mailable
 {
-
     public $support_messages;
 
     public $from_email;
@@ -33,11 +32,11 @@ class TestMailServer extends Mailable
      */
     public function build()
     {
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->primary_color = '#4caf50';
         $settings->email_style = 'dark';
         $settings->email_alignment = 'left';
-        
+
         return $this->from(config('mail.from.address'), config('mail.from.name'))
             ->subject(ctrans('texts.email'))
             ->markdown('email.support.message', [

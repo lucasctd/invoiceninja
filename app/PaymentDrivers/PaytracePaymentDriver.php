@@ -4,26 +4,31 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\Exceptions\SystemError;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use App\Jobs\Util\SystemLogger;
-use App\Models\ClientGatewayToken;
-use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Utils\CurlUtils;
+use App\Models\SystemLog;
+use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Models\SystemLog;
-use App\PaymentDrivers\PayTrace\CreditCard;
-use App\Utils\CurlUtils;
+use App\Factory\ClientFactory;
+use App\Exceptions\SystemError;
+use App\Jobs\Util\SystemLogger;
 use App\Utils\Traits\MakesHash;
+use App\Models\ClientGatewayToken;
+use App\Repositories\ClientRepository;
+use App\PaymentDrivers\PayTrace\CreditCard;
+use App\Repositories\ClientContactRepository;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
+use App\Models\ClientContact;
+use App\PaymentDrivers\Factory\PaytraceCustomerFactory;
 
 class PaytracePaymentDriver extends BaseDriver
 {
@@ -43,7 +48,7 @@ class PaytracePaymentDriver extends BaseDriver
         GatewayType::CREDIT_CARD => CreditCard::class, //maps GatewayType => Implementation class
     ];
 
-    const SYSTEM_LOG_TYPE = SystemLog::TYPE_PAYTRACE; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_PAYTRACE; //define a constant for your gateway ie TYPE_YOUR_CUSTOM_GATEWAY - set the const in the SystemLog model
 
     public function init()
     {
@@ -187,7 +192,7 @@ class PaytracePaymentDriver extends BaseDriver
         $api_endpoint = $this->company_gateway->getConfigField('testMode') ? 'https://api.sandbox.paytrace.com' : 'https://api.paytrace.com';
 
         $url = "{$api_endpoint}/oauth/token";
-        
+
         $data = [
             'grant_type' => 'password',
             'username' => $this->company_gateway->getConfigField('username'),
@@ -229,7 +234,7 @@ class PaytracePaymentDriver extends BaseDriver
 
     public function gatewayRequest($uri, $data, $headers = false)
     {
-        
+
         $api_endpoint = $this->company_gateway->getConfigField('testMode') ? 'https://api.sandbox.paytrace.com' : 'https://api.paytrace.com';
 
         $base_url = "{$api_endpoint}{$uri}";
@@ -245,5 +250,131 @@ class PaytracePaymentDriver extends BaseDriver
         }
 
         return false;
+    }
+
+    public function getClientRequiredFields(): array
+    {
+
+        $fields = [];
+
+        if ($this->company_gateway->require_client_name) {
+            $fields[] = ['name' => 'client_name', 'label' => ctrans('texts.client_name'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+        $fields[] = ['name' => 'contact_first_name', 'label' => ctrans('texts.first_name'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'contact_last_name', 'label' => ctrans('texts.last_name'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'contact_email', 'label' => ctrans('texts.email'), 'type' => 'text', 'validation' => 'required,email:rfc'];
+
+        if ($this->company_gateway->require_client_phone) {
+            $fields[] = ['name' => 'client_phone', 'label' => ctrans('texts.client_phone'), 'type' => 'tel', 'validation' => 'required'];
+        }
+
+        $fields[] = ['name' => 'client_address_line_1', 'label' => ctrans('texts.address1'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'client_city', 'label' => ctrans('texts.city'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'client_postal_code', 'label' => ctrans('texts.postal_code'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'client_state', 'label' => ctrans('texts.state'), 'type' => 'text', 'validation' => 'required'];
+        $fields[] = ['name' => 'client_country_id', 'label' => ctrans('texts.country'), 'type' => 'text', 'validation' => 'required'];
+
+
+        if ($this->company_gateway->require_shipping_address) {
+            $fields[] = ['name' => 'client_shipping_address_line_1', 'label' => ctrans('texts.shipping_address1'), 'type' => 'text', 'validation' => 'required'];
+            $fields[] = ['name' => 'client_shipping_city', 'label' => ctrans('texts.shipping_city'), 'type' => 'text', 'validation' => 'required'];
+            $fields[] = ['name' => 'client_shipping_state', 'label' => ctrans('texts.shipping_state'), 'type' => 'text', 'validation' => 'required'];
+            $fields[] = ['name' => 'client_shipping_postal_code', 'label' => ctrans('texts.shipping_postal_code'), 'type' => 'text', 'validation' => 'required'];
+            $fields[] = ['name' => 'client_shipping_country_id', 'label' => ctrans('texts.shipping_country'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+        if ($this->company_gateway->require_custom_value1) {
+            $fields[] = ['name' => 'client_custom_value1', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client1'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+        if ($this->company_gateway->require_custom_value2) {
+            $fields[] = ['name' => 'client_custom_value2', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client2'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+
+        if ($this->company_gateway->require_custom_value3) {
+            $fields[] = ['name' => 'client_custom_value3', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client3'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+        if ($this->company_gateway->require_custom_value4) {
+            $fields[] = ['name' => 'client_custom_value4', 'label' => $this->helpers->makeCustomField($this->client->company->custom_fields, 'client4'), 'type' => 'text', 'validation' => 'required'];
+        }
+
+
+
+
+        return $fields;
+    }
+
+    public function auth(): bool
+    {
+        try {
+            $this->init()->generateAuthHeaders() && strlen($this->company_gateway->getConfigField('integratorId')) > 2;
+            return true;
+        } catch (\Exception $e) {
+
+        }
+
+        return false;
+
+    }
+
+    public function importCustomers()
+    {
+
+        $data = [
+            'integrator_id' =>  $this->company_gateway->getConfigField('integratorId'),
+        ];
+
+        $response = $this->gatewayRequest('/v1/customer/export', $data);
+
+        nlog($response);
+
+        if ($response && $response->success) {
+
+            $client_repo = new ClientRepository(new ClientContactRepository());
+            $factory = new PaytraceCustomerFactory();
+
+            foreach ($response->customers as $customer) {
+                $data = $factory->convertToNinja($customer, $this->company_gateway->company);
+
+                $client = false;
+
+                if (str_contains($data['contacts'][0]['email'], "@")) {
+                    $client = ClientContact::query()
+                                    ->where('company_id', $this->company_gateway->company_id)
+                                    ->where('email', $data['contacts'][0]['email'])
+                                    ->first()->client ?? false;
+                }
+
+                if (!$client) {
+                    $client = $client_repo->save($data, ClientFactory::create($this->company_gateway->company_id, $this->company_gateway->user_id));
+                }
+
+                $this->client = $client;
+
+                if (ClientGatewayToken::query()->where('client_id', $client->id)->where('token', $data['card']['token'])->exists()) {
+                    continue;
+                }
+
+                $cgt = [];
+                $cgt['token'] = $data['card']['token'];
+                $cgt['payment_method_id'] = GatewayType::CREDIT_CARD;
+
+                $payment_meta = new \stdClass();
+                $payment_meta->exp_month = $data['card']['expiry_month'];
+                $payment_meta->exp_year = $data['card']['expiry_year'];
+                $payment_meta->brand = 'CC';
+                $payment_meta->last4 = $data['card']['last4'];
+                $payment_meta->type = GatewayType::CREDIT_CARD;
+
+                $cgt['payment_meta'] = $payment_meta;
+
+                $token = $this->storeGatewayToken($cgt, []);
+
+            }
+        }
+
     }
 }

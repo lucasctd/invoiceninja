@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -108,7 +108,7 @@ class Csv extends BaseImport implements ImportInterface
         $this->transformer = new BankTransformer($this->company);
         $bank_transaction_count = $this->ingest($data, $entity_type);
         $this->entity_count['bank_transactions'] = $bank_transaction_count;
-        
+
         nlog("bank matching co id = {$this->company->id}");
 
         (new BankMatchingService($this->company->id, $this->company->db))->handle();
@@ -137,6 +137,8 @@ class Csv extends BaseImport implements ImportInterface
         $this->repository->import_mode = true;
 
         $this->transformer = new ClientTransformer($this->company);
+
+        $data = $this->groupClients($data, 'client.name');
 
         $client_count = $this->ingest($data, $entity_type);
 
@@ -201,7 +203,7 @@ class Csv extends BaseImport implements ImportInterface
 
         $this->entity_count['recurring_invoices'] = $invoice_count;
     }
-    
+
     public function invoice()
     {
         $entity_type = 'invoice';
@@ -276,7 +278,7 @@ class Csv extends BaseImport implements ImportInterface
 
             return;
         }
-        
+
         $this->request_name = StorePaymentRequest::class;
         $this->repository_name = PaymentRepository::class;
         $this->factory_name = PaymentFactory::class;

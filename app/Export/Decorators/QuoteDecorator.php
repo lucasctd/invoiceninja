@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,15 +19,15 @@ class QuoteDecorator extends Decorator implements DecoratorInterface
     {
         $quote = false;
 
-        if($entity instanceof Quote) {
+        if ($entity instanceof Quote) {
             $quote = $entity;
-        } elseif($entity->quote) {
+        } elseif ($entity->quote) {
             $quote = $entity->quote;
         }
 
-        if($quote && method_exists($this, $key)) {
+        if ($quote && method_exists($this, $key)) {
             return $this->{$key}($quote);
-        } elseif($quote->{$key}) {
+        } elseif ($quote->{$key} ?? false) {
             return $quote->{$key} ?? '';
         }
 
@@ -39,7 +39,7 @@ class QuoteDecorator extends Decorator implements DecoratorInterface
     {
         return $quote->stringStatus($quote->status_id);
     }
-    
+
     public function uses_inclusive_taxes(Quote $quote)
     {
         return $quote->uses_inclusive_taxes ? ctrans('texts.yes') : ctrans('texts.no');

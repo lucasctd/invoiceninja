@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -26,7 +26,7 @@ class StoreTaskRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
@@ -57,19 +57,19 @@ class StoreTaskRequest extends Request
         $rules['hash'] = 'bail|sometimes|string|nullable';
 
         $rules['time_log'] = ['bail',function ($attribute, $values, $fail) {
-            
-            if(is_string($values)) {
+
+            if (is_string($values)) {
                 $values = json_decode($values, true);
             }
 
-            if(!is_array($values)) {
+            if (!is_array($values)) {
                 $fail('The '.$attribute.' must be a valid array.');
                 return;
             }
 
             foreach ($values as $k) {
                 if (!is_int($k[0]) || !is_int($k[1])) {
-                    return $fail('The '.$attribute.' - '.print_r($k, 1).' is invalid. Unix timestamps only.');
+                    return $fail('The '.$attribute.' - '.print_r($k, true).' is invalid. Unix timestamps only.');
                 }
             }
 
@@ -77,19 +77,20 @@ class StoreTaskRequest extends Request
                 return $fail('Please correct overlapping values');
             }
         }];
-        
+
         if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->file_validation;
+            $rules['documents.*'] = $this->fileValidation();
         } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->file_validation;
+            $rules['documents'] = $this->fileValidation();
+        } else {
+            $rules['documents'] = 'bail|sometimes|array';
         }
 
         if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->file_validation;
+            $rules['file.*'] = $this->fileValidation();
         } elseif ($this->file('file')) {
-            $rules['file'] = $this->file_validation;
+            $rules['file'] = $this->fileValidation();
         }
-
 
         return $this->globalRules($rules);
     }
@@ -98,7 +99,7 @@ class StoreTaskRequest extends Request
     {
 
         $input = $this->decodePrimaryKeys($this->all());
-        
+
         if (array_key_exists('status_id', $input) && is_string($input['status_id'])) {
             $input['status_id'] = $this->decodePrimaryKey($input['status_id']);
         }
@@ -122,7 +123,7 @@ class StoreTaskRequest extends Request
             }
         }
 
-        if(!isset($input['time_log']) || empty($input['time_log']) || $input['time_log'] == '{}') {
+        if (!isset($input['time_log']) || empty($input['time_log']) || $input['time_log'] == '{}') {
             $input['time_log'] = json_encode([]);
         }
 

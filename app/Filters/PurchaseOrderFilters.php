@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -63,7 +63,7 @@ class PurchaseOrderFilters extends QueryFilters
                 $po_status[] = PurchaseOrder::STATUS_CANCELLED;
             }
 
-            if (count($po_status) >=1) {
+            if (count($po_status) >= 1) {
                 $query->whereIn('status_id', $po_status);
             }
         });
@@ -96,7 +96,14 @@ class PurchaseOrderFilters extends QueryFilters
                 ->orWhere('custom_value4', 'like', '%'.$filter.'%')
                 ->orWhereHas('vendor', function ($q) use ($filter) {
                     $q->where('name', 'like', '%'.$filter.'%');
-                });
+                })
+                ->orWhereRaw("
+                JSON_UNQUOTE(JSON_EXTRACT(
+                    JSON_ARRAY(
+                        JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].notes')), 
+                        JSON_UNQUOTE(JSON_EXTRACT(line_items, '$[*].product_key'))
+                    ), '$[*]')
+                ) LIKE ?", ['%'.$filter.'%']);
         });
     }
 
@@ -119,16 +126,22 @@ class PurchaseOrderFilters extends QueryFilters
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing('purchase_orders'))) {
             return $this->builder;
         }
 
+        $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
+
         if ($sort_col[0] == 'vendor_id') {
             return $this->builder->orderBy(\App\Models\Vendor::select('name')
-                    ->whereColumn('vendors.id', 'purchase_orders.vendor_id'), $sort_col[1]);
+                    ->whereColumn('vendors.id', 'purchase_orders.vendor_id'), $dir);
         }
 
-        return $this->builder->orderBy($sort_col[0], $sort_col[1]);
+        if ($sort_col[0] == 'number') {
+            return $this->builder->orderByRaw("REGEXP_REPLACE(number,'[^0-9]+','')+0 " . $dir);
+        }
+
+        return $this->builder->orderBy($sort_col[0], $dir);
     }
 
     /**

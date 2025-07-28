@@ -23,7 +23,6 @@ use League\Csv\Writer;
 
 class QuoteExport extends BaseExport
 {
-
     private $quote_transformer;
 
     public string $date_key = 'date';
@@ -31,12 +30,6 @@ class QuoteExport extends BaseExport
     public Writer $csv;
 
     private Decorator $decorator;
-
-    private array $decorate_keys = [
-        'client',
-        'currency',
-        'invoice',
-    ];
 
     public function __construct(Company $company, array $input)
     {
@@ -65,10 +58,32 @@ class QuoteExport extends BaseExport
         $query = Quote::query()
                         ->withTrashed()
                         ->with('client')
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->whereHas('client', function ($q) {
+                            $q->where('is_deleted', false);
+                        })
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
+        if (!$this->input['include_deleted'] ?? false) {
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'quotes');
+
+        $clients = &$this->input['client_id'];
+
+        if ($clients) {
+            $query = $this->addClientFilter($query, $clients);
+        }
+
+        $query = $this->addQuoteStatusFilter($query, $this->input['status'] ?? '');
+
+        if ($this->input['document_email_attachment'] ?? false) {
+            $this->queueDocuments($query);
+        }
+
+        if ($this->input['pdf_email_attachment'] ?? false) {
+            $this->queuePdfs($query);
+        }
 
         return $query;
 
@@ -86,10 +101,12 @@ class QuoteExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($resource) {
+
+                    /** @var \App\Models\Quote $resource */
                     $row = $this->buildRow($resource);
                     return $this->processMetaData($row, $resource);
                 })->toArray();
-                
+
         return array_merge(['columns' => $header], $report);
 
 
@@ -99,6 +116,7 @@ class QuoteExport extends BaseExport
     {
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
 
@@ -107,13 +125,15 @@ class QuoteExport extends BaseExport
 
         $query->cursor()
             ->each(function ($quote) {
+
+                /** @var \App\Models\Quote $quote */
                 $this->csv->insertOne($this->buildRow($quote));
             });
 
         return $this->csv->toString();
     }
 
-    private function buildRow(Quote $quote) :array
+    private function buildRow(Quote $quote): array
     {
         $transformed_invoice = $this->quote_transformer->transform($quote);
 
@@ -126,18 +146,18 @@ class QuoteExport extends BaseExport
             if (is_array($parts) && $parts[0] == 'quote' && array_key_exists($parts[1], $transformed_invoice)) {
                 $entity[$key] = $transformed_invoice[$parts[1]];
             } else {
-                // nlog($key);
                 $entity[$key] = $this->decorator->transform($key, $quote);
-                // $entity[$key] = '';
-                // $entity[$key] = $this->resolveKey($key, $quote, $this->quote_transformer);
             }
 
         }
-        return $entity;
-        // return $this->decorateAdvancedFields($quote, $entity);
+
+        $entity = $this->decorateAdvancedFields($quote, $entity);
+        return $this->convertFloats($entity);
+
+
     }
 
-    private function decorateAdvancedFields(Quote $quote, array $entity) :array
+    private function decorateAdvancedFields(Quote $quote, array $entity): array
     {
         if (in_array('quote.currency_id', $this->input['report_keys'])) {
             $entity['quote.currency'] = $quote->client->currency()->code;
@@ -156,11 +176,11 @@ class QuoteExport extends BaseExport
         }
 
         if (in_array('quote.assigned_user_id', $this->input['report_keys'])) {
-            $entity['quote.assigned_user_id'] = $quote->assigned_user ? $quote->assigned_user->present()->name(): '';
+            $entity['quote.assigned_user_id'] = $quote->assigned_user ? $quote->assigned_user->present()->name() : '';
         }
-            
+
         if (in_array('quote.user_id', $this->input['report_keys'])) {
-            $entity['quote.user_id'] = $quote->user ? $quote->user->present()->name(): '';
+            $entity['quote.user_id'] = $quote->user ? $quote->user->present()->name() : '';
         }
 
 

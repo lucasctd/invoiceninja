@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,15 +19,15 @@ class VendorDecorator extends Decorator implements DecoratorInterface
     {
         $vendor = false;
 
-        if($entity instanceof Vendor) {
+        if ($entity instanceof Vendor) {
             $vendor = $entity;
-        } elseif($entity->vendor) {
+        } elseif ($entity->vendor) {
             $vendor = $entity->vendor;
         }
 
-        if($vendor && method_exists($this, $key)) {
+        if ($vendor && method_exists($this, $key)) {
             return $this->{$key}($vendor);
-        } elseif($vendor->{$key}) {
+        } elseif ($vendor->{$key} ?? false) {
             return $vendor->{$key} ?? '';
         }
 
@@ -39,7 +39,7 @@ class VendorDecorator extends Decorator implements DecoratorInterface
     {
         return $vendor->country ? $vendor->country->name : '';
     }
-    
+
     public function name(Vendor $vendor)
     {
         return $vendor->present()->name();

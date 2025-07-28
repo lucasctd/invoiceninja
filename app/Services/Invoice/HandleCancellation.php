@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -34,7 +34,7 @@ class HandleCancellation extends AbstractService
             return $this->invoice;
         }
 
-        $adjustment =($this->invoice->balance < 0) ? abs($this->invoice->balance) : $this->invoice->balance * -1;
+        $adjustment = ($this->invoice->balance < 0) ? abs($this->invoice->balance) : $this->invoice->balance * -1;
 
         $this->backupCancellation($adjustment);
 
@@ -96,11 +96,11 @@ class HandleCancellation extends AbstractService
     private function backupCancellation($adjustment)
     {
         if (! is_object($this->invoice->backup)) {
-            $backup = new stdClass;
+            $backup = new stdClass();
             $this->invoice->backup = $backup;
         }
 
-        $cancellation = new stdClass;
+        $cancellation = new stdClass();
         $cancellation->adjustment = $adjustment;
         $cancellation->status_id = $this->invoice->status_id;
 

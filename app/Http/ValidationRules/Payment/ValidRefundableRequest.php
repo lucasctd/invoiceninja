@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -57,9 +57,6 @@ class ValidRefundableRequest implements Rule
 
         if ($payment->invoices()->exists()) {
             $this->checkInvoice($payment->invoices, $request_invoices);
-            // foreach ($payment->invoices as $paymentable_invoice) {
-            //     $this->checkInvoice($paymentable_invoice, $request_invoices);
-            // }
         }
 
         foreach ($request_invoices as $request_invoice) {
@@ -103,7 +100,7 @@ class ValidRefundableRequest implements Rule
     {
         $record_found = false;
 
-        foreach($paymentables as $paymentable) {
+        foreach ($paymentables as $paymentable) {
             foreach ($request_invoices as $request_invoice) {
 
                 if ($request_invoice['invoice_id'] == $paymentable->pivot->paymentable_id) {

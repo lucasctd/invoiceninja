@@ -4,13 +4,15 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use App\Casts\AsReferralEarningCollection;
+use App\DataMapper\Referral\ReferralEarning;
 use App\Jobs\Mail\NinjaMailer;
 use App\Jobs\Mail\NinjaMailerJob;
 use App\Jobs\Mail\NinjaMailerObject;
@@ -49,7 +51,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property int|null $failed_logins
  * @property string|null $referral_code
  * @property string|null $oauth_user_id
- * @property object|null $oauth_user_token
+ * @property object|array|null $oauth_user_token
  * @property string|null $oauth_provider_id
  * @property string|null $google_2fa_secret
  * @property string|null $accepted_terms_version
@@ -60,16 +62,17 @@ use Laracasts\Presenter\PresentableTrait;
  * @property bool $is_deleted
  * @property string|null $last_login
  * @property string|null $signature
- * @property string $password
+ * @property string|null $password
  * @property string $language_id
  * @property string|null $remember_token
  * @property string|null $custom_value1
  * @property string|null $custom_value2
  * @property string|null $custom_value3
  * @property string|null $custom_value4
+ * @property object|null $referral_meta
  * @property int|null $created_at
  * @property int|null $updated_at
- * @property int|null $deleted_at
+ * @property int|null|Carbon $deleted_at
  * @property string|null $oauth_user_refresh_token
  * @property string|null $last_confirmed_email_address
  * @property bool $has_password
@@ -77,6 +80,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property Carbon|null $oauth_user_token_expiry
  * @property string|null $sms_verification_code
  * @property bool $verified_phone_number
+ * @property array|null $referral_earnings
  * @property-read \App\Models\Account $account
  * @property-read \App\Models\Company $company
  * @property-read mixed $hashed_id
@@ -98,6 +102,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyToken> $tokens
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Company> $companies
+ * @method static \Illuminate\Database\Eloquent\Builder|BaseModel companies()
  * @method bool hasPermissionTo(string $permission)
  * @method \App\Models\Company getCompany()
  * @method \App\Models\Company company()
@@ -171,6 +176,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_2fa_phone',
         'remember_2fa_token',
         'slack_webhook_url',
+        'referral_earnings',
     ];
 
     protected $casts = [
@@ -180,6 +186,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'created_at'       => 'timestamp',
         'deleted_at'       => 'timestamp',
         'oauth_user_token_expiry' => 'datetime',
+        'referral_meta' => 'object',
+        'referral_earnings' => AsReferralEarningCollection::class,
     ];
 
     public function name()
@@ -225,6 +233,7 @@ class User extends Authenticatable implements MustVerifyEmail
             return $truth->getCompanyToken();
         }
 
+        // if (request()->header('X-API-TOKEN')) {
         if (request()->header('X-API-TOKEN')) {
             return CompanyToken::with(['cu'])->where('token', request()->header('X-API-TOKEN'))->first();
         }
@@ -262,6 +271,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $truth = app()->make(TruthSource::class);
 
+        // @phpstan-ignore-next-line
         if ($this->company) {
             return $this->company;
         } elseif ($truth->getCompany()) {
@@ -326,7 +336,7 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return int
      */
-    public function companyId() :int
+    public function companyId(): int
     {
         return $this->company()->id;
     }
@@ -363,24 +373,27 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @return bool
      */
-    public function isAdmin() : bool
+    public function isAdmin(): bool
     {
         return $this->token()->cu->is_admin;
 
     }
 
-    public function isOwner() : bool
+    public function isOwner(): bool
     {
         return $this->token()->cu->is_owner;
-
     }
 
+    public function hasOwnerFlag(): bool
+    {
+        return $this->company_users()->where('is_owner', true)->exists();
+    }
     /**
      * Returns true is user is an admin _or_ owner
      *
      * @return boolean
      */
-    public function isSuperUser() :bool
+    public function isSuperUser(): bool
     {
         return $this->token()->cu->is_owner || $this->token()->cu->is_admin;
     }
@@ -401,7 +414,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @param  mixed $entity
      * @return bool
      */
-    public function owns($entity) : bool
+    public function owns($entity): bool
     {
         return ! empty($entity->user_id) && $entity->user_id == $this->id;
     }
@@ -412,7 +425,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @param  mixed $entity
      * @return bool
      */
-    public function assigned($entity) : bool
+    public function assigned($entity): bool
     {
         return ! empty($entity->assigned_user_id) && $entity->assigned_user_id == $this->id;
     }
@@ -423,7 +436,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @param  string $permission
      * @return bool
      */
-    public function hasPermission($permission) : bool
+    public function hasPermission($permission): bool
     {
         /**
          * We use the limit parameter here to ensure we don't split on permissions that have multiple underscores.
@@ -515,7 +528,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function hasExactPermission(string $permission = '___'): bool
     {
-        return  (stripos($this->token()->cu->permissions, $permission) !== false);
+        return  (stripos($this->token()->cu->permissions ?? '', $permission) !== false);
     }
 
 
@@ -543,7 +556,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         return false;
     }
-    
+
     /**
      * Used when we need to filter permissions carefully.
      *
@@ -566,7 +579,7 @@ class User extends Authenticatable implements MustVerifyEmail
         if ($this->isSuperUser()) {
             return false;
         }
-        
+
         foreach ($excluded_permissions as $permission) {
             if ($this->hasExactPermission($permission)) {
                 return false;
@@ -639,7 +652,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $is_react = request()->has('react') || request()->hasHeader('X-React') ? true : false;
 
-        $nmo = new NinjaMailerObject;
+        $nmo = new NinjaMailerObject();
         $nmo->mailable = new NinjaMailer((new ResetPasswordObject($token, $this, $this->account->default_company, $is_react))->build());
         $nmo->to_user = $this;
         $nmo->settings = $this->account->default_company->settings;
@@ -662,8 +675,8 @@ class User extends Authenticatable implements MustVerifyEmail
     public function getLocale()
     {
         $locale = $this->language->locale ?? null;
-    
-        if($locale) {
+
+        if ($locale) {
             App::setLocale($locale);
         }
 
@@ -674,4 +687,65 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return ctrans('texts.user');
     }
+
+
+
+    ////////////////////// Referral earnings ////////////////////////////////////
+
+
+
+    /**
+     * addEntity
+     *
+     * @param  ReferralEarning $entity
+     * @return void
+     */
+    public function addReferral(ReferralEarning $entity)
+    {
+        $entities = $this->referral_earnings;
+
+        if (is_array($entities)) {
+            $entities[] = $entity;
+        } else {
+            $entities = [$entity];
+        }
+
+        $this->referral_earnings = $entities;
+
+        $this->save();
+
+    }
+
+    public function findLatestReferral(string $account_key)
+    {
+
+        return collect($this->referral_earnings)
+                    ->filter(function ($earning) use ($account_key) {
+                        return $earning->account_key === $account_key;
+                    })
+                    ->sortByDesc('period_ending')
+                    ->first();
+
+    }
+
+    public function updateReferral(ReferralEarning $entity)
+    {
+        
+        $earnings = collect($this->referral_earnings);
+
+        $updated_earnings = $earnings->map(function ($earning) use ($entity) {
+            if ($earning->account_key === $entity->account_key &&
+                $earning->period_ending === $entity->period_ending) {
+                return $entity;
+            }
+
+            return $earning;
+        })->toArray();
+
+        $this->referral_earnings = $updated_earnings;
+
+        $this->save();
+
+    }
+
 }

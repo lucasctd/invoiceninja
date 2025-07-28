@@ -4,25 +4,26 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Listeners\Mail;
 
+use App\Utils\Ninja;
+use App\Models\Webhook;
 use App\Libraries\MultiDB;
+use App\Models\QuoteInvitation;
 use App\Models\CreditInvitation;
 use App\Models\InvoiceInvitation;
 use App\Models\PurchaseOrderInvitation;
-use App\Models\QuoteInvitation;
-use App\Models\RecurringInvoiceInvitation;
-use App\Utils\Ninja;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Events\MessageSent;
+use App\Models\RecurringInvoiceInvitation;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Symfony\Component\Mime\MessageConverter;
 
-class MailSentListener implements ShouldQueue
+class MailSentListener
 {
     /**
      * Create the event listener.
@@ -42,29 +43,31 @@ class MailSentListener implements ShouldQueue
     public function handle(MessageSent $event)
     {
         
-        if (!Ninja::isHosted()) {
-            return;
-        }
-            
-        $message_id = $event->sent->getMessageId();
+        try {
+            $message_id = $event->sent->getMessageId();
 
-        $message = MessageConverter::toEmail($event->sent->getOriginalMessage());
+            $message = MessageConverter::toEmail($event->sent->getOriginalMessage()); //@phpstan-ignore-line
 
-        if (!$message->getHeaders()->get('x-invitation')) {
-            return;
-        }
-
-        $invitation_key = $message->getHeaders()->get('x-invitation')->getValue();
-
-        if ($message_id && $invitation_key) {
-            $invitation = $this->discoverInvitation($invitation_key);
-
-            if (!$invitation) {
+            if (!$message->getHeaders()->get('x-invitation')) {
                 return;
             }
 
-            $invitation->message_id = $message_id;
-            $invitation->save();
+            $invitation_key = $message->getHeaders()->get('x-invitation')->getValue();
+
+            if ($message_id && $invitation_key) {
+                $invitation = $this->discoverInvitation($invitation_key);
+
+                if (!$invitation) {
+                    return;
+                }
+
+                $invitation->sent_date = now();
+                $invitation->message_id = str_replace(["<",">"], "", $message_id);
+                $invitation->save();
+            }
+        } catch (\Exception $e) {
+            nlog("Mail Sent Listener Exception");
+            nlog($e->getMessage());
         }
     }
 

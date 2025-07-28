@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -135,7 +135,7 @@ class HandleRestore extends AbstractService
             $payment_adjustment -= $payment->paymentables
                         ->where('paymentable_type', '=', 'App\Models\Credit')
                         ->sum('amount');
- 
+
             $payment->amount += $payment_adjustment;
             $payment->applied += $payment_adjustment;
             $payment->is_deleted = false;
@@ -143,7 +143,7 @@ class HandleRestore extends AbstractService
             $payment->saveQuietly();
 
         });
-        
+
         return $this;
     }
 

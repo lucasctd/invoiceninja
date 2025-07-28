@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -59,7 +59,7 @@ class PaymentNotification implements ShouldQueue
         }
 
         /* Manual Payment Notifications */
-        if($payment->is_manual) {
+        if ($payment->is_manual) {
 
             foreach ($payment->company->company_users as $company_user) {
                 $user = $company_user->user;
@@ -77,7 +77,7 @@ class PaymentNotification implements ShouldQueue
                 if (($key = array_search('mail', $methods)) !== false) {
                     unset($methods[$key]);
 
-                    $nmo = new NinjaMailerObject;
+                    $nmo = new NinjaMailerObject();
                     $nmo->mailable = new NinjaMailer((new EntityPaidObject($payment, $company_user->portalType()))->build());
                     $nmo->company = $event->company;
                     $nmo->settings = $event->company->settings;
@@ -109,7 +109,7 @@ class PaymentNotification implements ShouldQueue
             if (($key = array_search('mail', $methods)) !== false) {
                 unset($methods[$key]);
 
-                $nmo = new NinjaMailerObject;
+                $nmo = new NinjaMailerObject();
                 $nmo->mailable = new NinjaMailer((new EntityPaidObject($payment, $company_user->portalType()))->build());
                 $nmo->company = $event->company;
                 $nmo->settings = $event->company->settings;

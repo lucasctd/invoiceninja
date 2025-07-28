@@ -4,67 +4,69 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Console\Commands;
 
-use App\DataMapper\ClientRegistrationFields;
-use App\DataMapper\CompanySettings;
-use App\DataMapper\FeesAndLimits;
-use App\Events\Invoice\InvoiceWasCreated;
-use App\Events\RecurringInvoice\RecurringInvoiceWasCreated;
-use App\Factory\GroupSettingFactory;
-use App\Factory\InvoiceFactory;
-use App\Factory\InvoiceItemFactory;
-use App\Factory\RecurringInvoiceFactory;
-use App\Factory\SubscriptionFactory;
-use App\Helpers\Invoice\InvoiceSum;
-use App\Jobs\Company\CreateCompanyTaskStatuses;
-use App\Libraries\MultiDB;
-use App\Models\Account;
-use App\Models\BankIntegration;
-use App\Models\BankTransaction;
-use App\Models\BankTransactionRule;
+use stdClass;
+use Carbon\Carbon;
+use Faker\Factory;
+use App\Models\Task;
+use App\Models\User;
+use App\Utils\Ninja;
+use App\Models\Quote;
 use App\Models\Client;
-use App\Models\ClientContact;
-use App\Models\Company;
-use App\Models\CompanyGateway;
-use App\Models\CompanyToken;
-use App\Models\Country;
 use App\Models\Credit;
+use App\Models\Vendor;
+use App\Models\Account;
+use App\Models\Company;
+use App\Models\Country;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Project;
-use App\Models\Quote;
-use App\Models\RecurringInvoice;
-use App\Models\Task;
-use App\Models\TaskStatus;
 use App\Models\TaxRate;
-use App\Models\User;
-use App\Models\Vendor;
+use App\Libraries\MultiDB;
+use App\Models\TaskStatus;
+use App\Models\CompanyToken;
+use App\Models\ClientContact;
 use App\Models\VendorContact;
-use App\Repositories\InvoiceRepository;
-use App\Utils\Ninja;
-use App\Utils\Traits\GeneratesCounter;
+use App\Models\CompanyGateway;
+use App\Factory\InvoiceFactory;
+use App\Models\BankIntegration;
+use App\Models\BankTransaction;
 use App\Utils\Traits\MakesHash;
-use Carbon\Carbon;
-use Faker\Factory;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
+use App\Models\RecurringInvoice;
+use App\DataMapper\FeesAndLimits;
+use App\DataMapper\ClientSettings;
+use App\DataMapper\CompanySettings;
+use App\Factory\InvoiceItemFactory;
+use App\Helpers\Invoice\InvoiceSum;
+use App\Models\BankTransactionRule;
+use App\Factory\GroupSettingFactory;
+use App\Factory\SubscriptionFactory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Cache;
+use App\Utils\Traits\GeneratesCounter;
 use Illuminate\Support\Facades\Schema;
-use stdClass;
+use App\Repositories\InvoiceRepository;
+use App\Factory\RecurringInvoiceFactory;
+use App\Events\Invoice\InvoiceWasCreated;
+use App\DataMapper\ClientRegistrationFields;
+use App\Jobs\Company\CreateCompanyTaskStatuses;
+use App\Events\RecurringInvoice\RecurringInvoiceWasCreated;
 
 class CreateSingleAccount extends Command
 {
-    use MakesHash, GeneratesCounter;
-    
+    use MakesHash;
+    use GeneratesCounter;
+
     protected $description = 'Create Single Sample Account';
-    
+
     protected $signature = 'ninja:create-single-account {gateway=all} {--database=db-ninja-01}';
 
     protected $invoice_repo;
@@ -95,11 +97,32 @@ class CreateSingleAccount extends Command
         $this->count = 5;
         $this->gateway = $this->argument('gateway');
 
-        $this->info('Warming up cache');
-
-        $this->warmCache();
-
         $this->createSmallAccount();
+
+
+        try {
+            $pdo = \DB::connection('ronin')->getPdo();
+
+            if (class_exists(\Modules\Ronin\app\Models\Admin::class)) {
+                $this->info('Creating Ronin Account');
+                $this->createRoninAccount();
+            }
+
+        } catch (\Exception $e) {
+
+        }
+
+    }
+
+    private function createRoninAccount()
+    {
+        $admin = \Modules\Ronin\app\Models\Admin::create([
+            'first_name' => 'small',
+            'last_name' => 'example',
+            'email' => 'small@example.com',
+            'password' => Hash::make('password'),
+        ]);
+
     }
 
     private function createSmallAccount()
@@ -114,7 +137,7 @@ class CreateSingleAccount extends Command
         $company = Company::factory()->create([
             'account_id' => $account->id,
             'slack_webhook_url' => config('ninja.notification.slack'),
-            'default_password_timeout' => 30*60000,
+            'default_password_timeout' => 30 * 60000,
             'portal_mode' => 'domain',
             'portal_domain' => 'http://ninja.test:8000',
             'track_inventory' => true
@@ -163,7 +186,7 @@ class CreateSingleAccount extends Command
             ]);
         }
 
-        $company_token = new CompanyToken;
+        $company_token = new CompanyToken();
         $company_token->user_id = $user->id;
         $company_token->company_id = $company->id;
         $company_token->account_id = $account->id;
@@ -352,18 +375,24 @@ class CreateSingleAccount extends Command
             $repo->save([], $t);
         });
 
-        
+
         Project::query()->with('client')->whereNotNull('client_id')->cursor()->each(function ($p) {
-            
-            if($p && $p->client && !isset($p->number)) {
+
+            if ($p && $p->client && !isset($p->number)) {
                 $p->number = $this->getNextProjectNumber($p);
                 $p->save();
             }
 
         });
 
+        $this->countryClients($company, $user);
+
+        $cc = ClientContact::where('company_id', $company->id)->latest()->first();
+        $cc->email = 'user@example.com';
+        $cc->save();
+
         $this->info("finished");
-        
+
     }
 
     private function createSubsData($company, $user)
@@ -446,13 +475,13 @@ class CreateSingleAccount extends Command
                 'company_id' => $company->id,
             ]);
 
-        ClientContact::factory()->create([
-                    'user_id' => $user->id,
-                    'client_id' => $client->id,
-                    'company_id' => $company->id,
-                    'is_primary' => 1,
-                    'email' => 'user@example.com',
-                ]);
+        // ClientContact::factory()->create([
+        //             'user_id' => $user->id,
+        //             'client_id' => $client->id,
+        //             'company_id' => $company->id,
+        //             'is_primary' => 1,
+        //             'email' => 'user@example.com',
+        //         ]);
 
         ClientContact::factory()->count(rand(1, 2))->create([
                     'user_id' => $user->id,
@@ -464,7 +493,6 @@ class CreateSingleAccount extends Command
 
         $settings = $client->settings;
         $settings->currency_id = "1";
-        //        $settings->use_credits_payment = "always";
 
         $client->settings = $settings;
 
@@ -509,7 +537,7 @@ class CreateSingleAccount extends Command
     {
         $time_log = $this->createTimeLog(rand(1, 20));
         $status = TaskStatus::where('company_id', $client->company_id)->get()->random();
-        
+
         return Task::factory()->create([
                 'user_id' => $client->user->id,
                 'company_id' => $client->company->id,
@@ -556,7 +584,7 @@ class CreateSingleAccount extends Command
                 'task_rate' => rand(1, 200),
             ]);
 
-        for($x=0; $x < rand(2, 5); $x++) {
+        for ($x = 0; $x < rand(2, 5); $x++) {
             $task = $this->createTask($client);
             $task->project_id = $project->id;
             $task->save();
@@ -747,36 +775,10 @@ class CreateSingleAccount extends Command
         return $line_items;
     }
 
-    private function warmCache()
-    {
-        /* Warm up the cache !*/
-        $cached_tables = config('ninja.cached_tables');
-
-        foreach ($cached_tables as $name => $class) {
-            // check that the table exists in case the migration is pending
-            if (! Schema::hasTable((new $class())->getTable())) {
-                continue;
-            }
-            if ($name == 'payment_terms') {
-                $orderBy = 'num_days';
-            } elseif ($name == 'fonts') {
-                $orderBy = 'sort_order';
-            } elseif (in_array($name, ['currencies', 'industries', 'languages', 'countries', 'banks'])) {
-                $orderBy = 'name';
-            } else {
-                $orderBy = 'id';
-            }
-            $tableData = $class::orderBy($orderBy)->get();
-            if ($tableData->count()) {
-                Cache::forever($name, $tableData);
-            }
-        }
-    }
-
     private function createGateways($company, $user)
     {
         if (config('ninja.testvars.stripe') && ($this->gateway == 'all' || $this->gateway == 'stripe')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'd14dd26a37cecc30fdd65700bfb55b23';
@@ -789,36 +791,36 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
-        if (config('ninja.testvars.paypal') && ($this->gateway == 'all' || $this->gateway == 'paypal')) {
-            $cg = new CompanyGateway;
-            $cg->company_id = $company->id;
-            $cg->user_id = $user->id;
-            $cg->gateway_key = '38f2c48af60c7dd69e04248cbb24c36e';
-            $cg->require_cvv = true;
-            $cg->require_billing_address = true;
-            $cg->require_shipping_address = true;
-            $cg->update_details = true;
-            $cg->config = encrypt(config('ninja.testvars.paypal'));
-            $cg->save();
+        // if (config('ninja.testvars.paypal') && ($this->gateway == 'all' || $this->gateway == 'paypal')) {
+        //     $cg = new CompanyGateway();
+        //     $cg->company_id = $company->id;
+        //     $cg->user_id = $user->id;
+        //     $cg->gateway_key = '38f2c48af60c7dd69e04248cbb24c36e';
+        //     $cg->require_cvv = true;
+        //     $cg->require_billing_address = true;
+        //     $cg->require_shipping_address = true;
+        //     $cg->update_details = true;
+        //     $cg->config = encrypt(config('ninja.testvars.paypal'));
+        //     $cg->save();
 
-            $gateway_types = $cg->driver()->gatewayTypes();
+        //     $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+        //     $fees_and_limits = new stdClass();
+        //     $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
-            $cg->fees_and_limits = $fees_and_limits;
-            $cg->save();
-        }
+        //     $cg->fees_and_limits = $fees_and_limits;
+        //     $cg->save();
+        // }
 
         if (config('ninja.testvars.paypal_rest') && ($this->gateway == 'all' || $this->gateway == 'paypal_rest')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '80af24a6a691230bbec33e930ab40665';
@@ -831,8 +833,8 @@ class CreateSingleAccount extends Command
 
             // $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{3} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{3} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
@@ -841,7 +843,7 @@ class CreateSingleAccount extends Command
 
 
         if (config('ninja.testvars.checkout') && ($this->gateway == 'all' || $this->gateway == 'checkout')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '3758e7f7c6f4cecf0f4f348b9a00f456';
@@ -852,17 +854,17 @@ class CreateSingleAccount extends Command
             $cg->config = encrypt(config('ninja.testvars.checkout'));
             $cg->save();
 
-            $gateway_types = $cg->driver(new Client)->gatewayTypes();
+            $gateway_types = $cg->driver(new Client())->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.authorize') && ($this->gateway == 'all' || $this->gateway == 'authorizenet')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '3b6621f970ab18887c4f6dca78d3f8bb';
@@ -873,38 +875,17 @@ class CreateSingleAccount extends Command
             $cg->config = encrypt(config('ninja.testvars.authorize'));
             $cg->save();
 
-            $gateway_types = $cg->driver(new Client)->gatewayTypes();
+            $gateway_types = $cg->driver(new Client())->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
-
-            $cg->fees_and_limits = $fees_and_limits;
-            $cg->save();
-        }
-
-        if (config('ninja.testvars.wepay') && ($this->gateway == 'all' || $this->gateway == 'wepay')) {
-            $cg = new CompanyGateway;
-            $cg->company_id = $company->id;
-            $cg->user_id = $user->id;
-            $cg->gateway_key = '8fdeed552015b3c7b44ed6c8ebd9e992';
-            $cg->require_cvv = true;
-            $cg->require_billing_address = true;
-            $cg->require_shipping_address = true;
-            $cg->update_details = true;
-            $cg->config = encrypt(config('ninja.testvars.wepay'));
-            $cg->save();
-
-            $gateway_types = $cg->driver()->gatewayTypes();
-
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.braintree') && ($this->gateway == 'all' || $this->gateway == 'braintree')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'f7ec488676d310683fb51802d076d713';
@@ -917,16 +898,16 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
 
-        if (config('ninja.testvars.paytrace.decrypted') && ($this->gateway == 'all' || $this->gateway == 'paytrace')) {
-            $cg = new CompanyGateway;
+        if (config('ninja.testvars.paytrace') && ($this->gateway == 'all' || $this->gateway == 'paytrace')) {
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = 'bbd736b3254b0aabed6ad7fda1298c88';
@@ -934,22 +915,22 @@ class CreateSingleAccount extends Command
             $cg->require_billing_address = true;
             $cg->require_shipping_address = true;
             $cg->update_details = true;
-            $cg->config = encrypt(config('ninja.testvars.paytrace.decrypted'));
+            $cg->config = encrypt(config('ninja.testvars.paytrace'));
 
             $cg->save();
 
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.mollie') && ($this->gateway == 'all' || $this->gateway == 'mollie')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '1bd651fb213ca0c9d66ae3c336dc77e8';
@@ -962,15 +943,15 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
 
         if (config('ninja.testvars.square') && ($this->gateway == 'all' || $this->gateway == 'square')) {
-            $cg = new CompanyGateway;
+            $cg = new CompanyGateway();
             $cg->company_id = $company->id;
             $cg->user_id = $user->id;
             $cg->gateway_key = '65faab2ab6e3223dbe848b1686490baz';
@@ -983,12 +964,91 @@ class CreateSingleAccount extends Command
 
             $gateway_types = $cg->driver()->gatewayTypes();
 
-            $fees_and_limits = new stdClass;
-            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits;
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
 
             $cg->fees_and_limits = $fees_and_limits;
             $cg->save();
         }
+
+        if (config('ninja.testvars.eway') && ($this->gateway == 'all' || $this->gateway == 'eway')) {
+            $cg = new CompanyGateway();
+            $cg->company_id = $company->id;
+            $cg->user_id = $user->id;
+            $cg->gateway_key = '944c20175bbe6b9972c05bcfe294c2c7';
+            $cg->require_cvv = true;
+            $cg->require_billing_address = true;
+            $cg->require_shipping_address = true;
+            $cg->update_details = true;
+            $cg->config = encrypt(config('ninja.testvars.eway'));
+            $cg->save();
+
+            $gateway_types = $cg->driver()->gatewayTypes();
+
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+
+            $cg->fees_and_limits = $fees_and_limits;
+            $cg->save();
+        }
+
+
+        if (config('ninja.testvars.gocardless') && ($this->gateway == 'all' || $this->gateway == 'gocardless')) {
+
+            $c_settings = ClientSettings::defaults();
+            $c_settings->currency_id = '2';
+
+            $client = Client::factory()->create([
+                'user_id' => $user->id,
+                'company_id' => $company->id,
+                'name' => 'cypress',
+                'country_id' => 826,
+                'settings' => $c_settings
+            ]);
+
+            $cg = new CompanyGateway();
+            $cg->company_id = $company->id;
+            $cg->user_id = $user->id;
+            $cg->gateway_key = 'b9886f9257f0c6ee7c302f1c74475f6c';
+            $cg->require_cvv = true;
+            $cg->require_billing_address = true;
+            $cg->require_shipping_address = true;
+            $cg->update_details = true;
+            $cg->config = encrypt(config('ninja.testvars.gocardless'));
+            $cg->save();
+
+            $gateway_types = $cg->driver($client)->gatewayTypes();
+
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+
+            $cg->fees_and_limits = $fees_and_limits;
+            $cg->save();
+        }
+
+        if (config('ninja.testvars.forte') && ($this->gateway == 'all' || $this->gateway == 'forte')) {
+            $cg = new CompanyGateway();
+            $cg->company_id = $company->id;
+            $cg->user_id = $user->id;
+            $cg->gateway_key = 'kivcvjexxvdiyqtj3mju5d6yhpeht2xs';
+            $cg->require_cvv = true;
+            $cg->require_billing_address = true;
+            $cg->require_shipping_address = true;
+            $cg->update_details = true;
+            $cg->config = encrypt(config('ninja.testvars.forte'));
+            $cg->save();
+
+            $gateway_types = $cg->driver()->gatewayTypes();
+
+            $fees_and_limits = new stdClass();
+            $fees_and_limits->{$gateway_types[0]} = new FeesAndLimits();
+
+            $cg->fees_and_limits = $fees_and_limits;
+            $cg->save();
+        }
+
+
+
     }
 
     private function createRecurringInvoice(Client $client)
@@ -1033,4 +1093,44 @@ class CreateSingleAccount extends Command
 
         event(new RecurringInvoiceWasCreated($invoice, $invoice->company, Ninja::eventVars()));
     }
+
+
+    private function countryClients($company, $user)
+    {
+
+        Client::unguard();
+
+        Client::create([
+            'company_id' => $company->id,
+            'user_id' => $user->id,
+            'name' => 'Swiss Company AG',
+            'website' => 'https://www.testcompany.ch',
+            'private_notes' => 'These are some private notes about the test client.',
+            'balance' => 0,
+            'paid_to_date' => 0,
+            'vat_number' => '654321987',
+            'id_number' => 'CH9300762011623852957', // Sample Swiss IBAN
+            'custom_value1' => '2024-07-22 10:00:00',
+            'custom_value2' => 'blue',
+            'custom_value3' => 'sampleword',
+            'custom_value4' => 'test@example.com',
+            'address1' => '123',
+            'address2' => 'Test Street 45',
+            'city' => 'Zurich',
+            'state' => 'Zurich',
+            'postal_code' => '8001',
+            'country_id' => '756', // Switzerland
+            'shipping_address1' => '123',
+            'shipping_address2' => 'Test Street 45',
+            'shipping_city' => 'Zurich',
+            'shipping_state' => 'Zurich',
+            'shipping_postal_code' => '8001',
+            'shipping_country_id' => '756', // Switzerland
+            'settings' => ClientSettings::Defaults(),
+            'client_hash' => \Illuminate\Support\Str::random(32),
+            'routing_id' => '',
+        ]);
+
+    }
+
 }

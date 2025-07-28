@@ -12,7 +12,7 @@
 
 namespace Tests\Feature\ClientPortal;
 
-use App\Http\Livewire\InvoicesTable;
+use App\Livewire\InvoicesTable;
 use App\Models\Account;
 use App\Models\Client;
 use App\Models\ClientContact;
@@ -31,13 +31,12 @@ class InvoicesTest extends TestCase
     use AppSetup;
 
     public $faker;
-    
+
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->faker = Factory::create();
-        $this->buildCache(true);
     }
 
     public function testInvoiceTableFilters()

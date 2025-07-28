@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,7 +23,7 @@ class UpdateCompanyUserRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $auth_user */
         $auth_user = auth()->user();
@@ -34,5 +34,16 @@ class UpdateCompanyUserRequest extends Request
     public function rules()
     {
         return [];
+    }
+
+    public function prepareForValidation()
+    {
+        $input = $this->all();
+
+        if (isset($input['company_user']['user'])) {
+            unset($input['company_user']['user']);
+        }
+
+        $this->replace($input);
     }
 }

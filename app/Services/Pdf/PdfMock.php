@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -27,11 +28,13 @@ use App\Models\PurchaseOrderInvitation;
 use App\Models\Quote;
 use App\Models\QuoteInvitation;
 use App\Models\Vendor;
+use App\Utils\Traits\GeneratesCounter;
 use App\Utils\Traits\MakesHash;
 
 class PdfMock
 {
     use MakesHash;
+    use GeneratesCounter;
 
     private mixed $mock;
 
@@ -39,18 +42,20 @@ class PdfMock
 
     private string $entity_string = 'invoice';
 
+    private PdfService $pdf_service;
+
     public function __construct(public array $request, public Company $company)
     {
     }
 
-    public function getPdf(): mixed
+    public function setPdfService(): self
     {
         //need to resolve the pdf type here, ie product / purchase order
         $document_type = $this->request['entity_type'] == 'purchase_order' ? 'purchase_order' : 'product';
-             
-        $pdf_service = new PdfService($this->mock->invitation, $document_type);
 
-        $pdf_config = (new PdfConfiguration($pdf_service));
+        $this->pdf_service = new PdfService($this->mock->invitation, $document_type);
+
+        $pdf_config = (new PdfConfiguration($this->pdf_service));
         $pdf_config->entity = $this->mock;
         $pdf_config->entity_string = $this->request['entity_type'];
         $this->entity_string = $this->request['entity_type'];
@@ -60,49 +65,64 @@ class PdfMock
         $pdf_config->settings_object = $this->mock->client;
         $pdf_config->settings = $this->getMergedSettings();
         $this->settings = $pdf_config->settings;
-        $pdf_config->entity_design_id = $pdf_config->settings->{"{$pdf_config->entity_string}_design_id"};
+        $pdf_config->entity_design_id = $pdf_config->settings->{"{$pdf_config->entity_string}_design_id"} ?? 'Wpmbk5ezJn';
         $pdf_config->setPdfVariables();
         $pdf_config->setCurrency(Currency::find($this->settings->currency_id));
         $pdf_config->setCountry(Country::find($this->settings->country_id ?: 840));
-        $pdf_config->currency_entity = $this->mock->client;
+        $pdf_config->currency_entity = $this->mock->client ?? $this->mock->vendor;
 
-        if(isset($this->request['design_id']) && $design  = Design::withTrashed()->find($this->request['design_id'])) {
+        if (isset($this->request['design_id']) && $design  = Design::withTrashed()->find($this->request['design_id'])) {
             $pdf_config->design = $design;
             $pdf_config->entity_design_id = $design->hashed_id;
         } else {
             $pdf_config->design = Design::withTrashed()->find($this->decodePrimaryKey($pdf_config->entity_design_id));
         }
-        
-        $pdf_service->config = $pdf_config;
 
-        if(isset($this->request['design'])) {
-            $pdf_designer = (new PdfDesigner($pdf_service))->buildFromPartials($this->request['design']);
+        $this->pdf_service->config = $pdf_config;
+
+        if (isset($this->request['design']) && is_array($this->request['design'])) {
+            $pdf_designer = (new PdfDesigner($this->pdf_service))->buildFromPartials($this->request['design']);
         } else {
-            $pdf_designer = (new PdfDesigner($pdf_service))->build();
+            $pdf_designer = (new PdfDesigner($this->pdf_service))->build();
         }
-        
-        $pdf_service->designer = $pdf_designer;
 
-        $pdf_service->html_variables = $document_type == 'purchase_order' ? $this->getVendorStubVariables() : $this->getStubVariables();
+        $this->pdf_service->designer = $pdf_designer;
 
-        $pdf_builder = (new PdfBuilder($pdf_service))->build();
-        $pdf_service->builder = $pdf_builder;
+        $this->pdf_service->html_variables = $document_type == 'purchase_order' ? $this->getVendorStubVariables() : $this->getStubVariables();
 
-        $html = $pdf_service->getHtml();
+        $pdf_builder = (new PdfBuilder($this->pdf_service))->build();
+        $this->pdf_service->builder = $pdf_builder;
 
-        return $pdf_service->resolvePdfEngine($html);
+        return $this;
+    }
+
+    public function getPdf(): mixed
+    {
+
+        $html = $this->pdf_service->getHtml();
+
+        return $this->pdf_service->resolvePdfEngine($html);
+
+    }
+
+    public function getHtml(): string
+    {
+        return $this->pdf_service->getHtml();
+
     }
 
     public function build(): self
     {
         $this->mock = $this->initEntity();
- 
+        
+        $this->setPdfService();
+
         return $this;
     }
 
     public function initEntity(): mixed
     {
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->entity = Client::class;
         $settings->currency_id = '1';
         $settings->industry_id = '';
@@ -112,77 +132,86 @@ class PdfMock
             case 'invoice':
                 /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote $entity */
                 $entity = Invoice::factory()->make();
-                $entity->client = Client::factory()->make(['settings' => $settings]);
-                $entity->invitation = InvoiceInvitation::factory()->make();
+                $entity->client = Client::factory()->make(['settings' => $settings]); //@phpstan-ignore-line
+                $entity->client->setRelation('company', $this->company);
+                $entity->invitation = InvoiceInvitation::factory()->make(); //@phpstan-ignore-line
                 break;
             case 'quote':
                 /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote $entity */
                 $entity = Quote::factory()->make();
-                $entity->client = Client::factory()->make(['settings' => $settings]);
-                $entity->invitation = QuoteInvitation::factory()->make();
+                $entity->client = Client::factory()->make(['settings' => $settings]); //@phpstan-ignore-line
+                $entity->client->setRelation('company', $this->company);
+                $entity->invitation = QuoteInvitation::factory()->make(); //@phpstan-ignore-line
                 break;
             case 'credit':
                 /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote $entity */
                 $entity = Credit::factory()->make();
-                $entity->client = Client::factory()->make(['settings' => $settings]);
-                $entity->invitation = CreditInvitation::factory()->make();
+                $entity->client = Client::factory()->make(['settings' => $settings]); //@phpstan-ignore-line
+                $entity->client->setRelation('company', $this->company);
+                $entity->invitation = CreditInvitation::factory()->make(); //@phpstan-ignore-line
                 break;
             case 'purchase_order':
-                /** @var \App\Models\Invoice | \App\Models\Credit | \App\Models\Quote $entity */
+
+                /** @var \App\Models\PurchaseOrder $entity */
                 $entity = PurchaseOrder::factory()->make();
-                $entity->client = Client::factory()->make(['settings' => $settings]);
-                $entity->invitation = PurchaseOrderInvitation::factory()->make();
+                // $entity->client = Client::factory()->make(['settings' => $settings]);
+                $entity->vendor = Vendor::factory()->make(); /** @phpstan-ignore-line */
+                $entity->vendor->setRelation('company', $this->company);
+                $entity->invitation = PurchaseOrderInvitation::factory()->make();/** @phpstan-ignore-line */
+
                 break;
             case PurchaseOrder::class:
                 /** @var \App\Models\PurchaseOrder $entity */
                 $entity = PurchaseOrder::factory()->make();
                 $entity->invitation = PurchaseOrderInvitation::factory()->make();
-                $entity->vendor = Vendor::factory()->make();
+                $entity->vendor = Vendor::factory()->make(); /** @phpstan-ignore-line */
+
+                $entity->invitation->setRelation('company', $this->company);
                 break;
             default:
                 $entity = false;
                 break;
         }
 
-    
         $entity->tax_map = $this->getTaxMap();
         $entity->total_tax_map = $this->getTotalTaxMap();
         $entity->invitation->company = $this->company;
 
         return $entity;
     }
-    
+
     /**
      * getMergedSettings
      *
      * @return object
      */
-    public function getMergedSettings() :object
+    public function getMergedSettings(): object
     {
         $settings = $this->company->settings;
 
-        match ($this->request['settings_type']) {
+        match ($this->request['settings_type'] ?? '') {
             'group' => $settings = ClientSettings::buildClientSettings($this->company->settings, $this->request['settings']),
             'client' => $settings = ClientSettings::buildClientSettings($this->company->settings, $this->request['settings']),
-            'company' => $settings = (object)$this->request['settings']
+            'company' => $settings = (object)$this->request['settings'],
+            default => $settings = (object)$this->company->settings,
         };
 
         $settings = CompanySettings::setProperties($settings);
-        
+
         return $settings;
     }
 
-    
+
     /**
      * getTaxMap
      *
-     * @return \Illuminate\Support\Collection
+     * @return  \Illuminate\Support\Collection
      */
     private function getTaxMap(): \Illuminate\Support\Collection
     {
         return collect([['name' => 'GST', 'total' => 10]]);
     }
-    
+
     /**
      * getTotalTaxMap
      *
@@ -192,7 +221,7 @@ class PdfMock
     {
         return [['name' => 'GST', 'total' => 10]];
     }
-    
+
     /**
      * getStubVariables
      *
@@ -200,13 +229,27 @@ class PdfMock
      */
     public function getStubVariables(): array
     {
+        $entity_pattern = $this->entity_string.'_number_pattern';
+        $entity_number = '0029';
+
+        if (!empty($this->settings->{$entity_pattern})) {
+            // Although $this->mock is the Invoice/etc entity,
+            // we need the invitation to get company details.
+            $entity_number = $this->getFormattedEntityNumber(
+                $this->mock->invitation,
+                (int) $entity_number,
+                $this->settings->counter_padding,
+                $this->settings->{$entity_pattern},
+            );
+        }
+
         return ['values' =>
          [
     '$client.shipping_postal_code' => '46420',
     '$client.billing_postal_code' => '11243',
-    '$company.city_state_postal' => 'Beveley Hills, CA, 90210',
-    '$company.postal_city_state' => 'CA',
-    '$company.postal_city' => '90210, CA',
+    '$company.city_state_postal' => "{$this->settings->city}, {$this->settings->state}, {$this->settings->postal_code}",
+    '$company.postal_city_state' => "{$this->settings->postal_code}, {$this->settings->city}, {$this->settings->state}",
+    '$company.postal_city' => "{$this->settings->postal_code}, {$this->settings->state}",
     '$product.gross_line_total' => '100',
     '$client.classification' => 'Individual',
     '$company.classification' => 'Business',
@@ -236,6 +279,8 @@ class PdfMock
     '$company.postal_code' => $this->settings->postal_code,
     '$client.billing_city' => 'Aufderharchester',
     '$secondary_font_name' => isset($this->settings?->secondary_font) ? $this->settings->secondary_font : 'Roboto',
+    '$secondary_font_url' => isset($this->settings?->secondary_font) ? \App\Utils\Helpers::resolveFont($this->settings->secondary_font)['url'] : 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
+    '$credit.valid_until' => '2024-12-11',
     '$product.line_total' => '',
     '$product.tax_amount' => '',
     '$company.vat_number' => $this->settings->vat_number,
@@ -243,7 +288,6 @@ class PdfMock
     '$quote.quote_number' => '0029',
     '$client.postal_code' => '11243',
     '$contact.first_name' => 'Benedict',
-    '$secondary_font_url' => 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
     '$contact.signature' => '',
     '$company_logo_size' => $this->settings->company_logo_size ?: '65%',
     '$product.tax_rate1' => ctrans('texts.tax'),
@@ -262,9 +306,9 @@ class PdfMock
     '$company.id_number' => $this->settings->id_number,
     '$invoice.po_number' => 'PO12345',
     '$invoice_total_raw' => 0.0,
-    '$postal_city_state' => '11243 Aufderharchester, North Carolina',
+    '$postal_city_state' => "{$this->settings->postal_code}, {$this->settings->city}, {$this->settings->state}",
     '$client.vat_number' => '975977515',
-    '$city_state_postal' => 'Aufderharchester, North Carolina 11243',
+    '$city_state_postal' => "{$this->settings->city}, {$this->settings->state}, {$this->settings->postal_code}",
     '$contact.full_name' => 'Benedict Eichmann',
     '$contact.last_name' => 'Eichmann',
     '$company.country_2' => 'US',
@@ -275,7 +319,7 @@ class PdfMock
     '$statement_amount' => '',
     '$task.description' => '',
     '$product.discount' => '',
-    '$entity_issued_to' => 'Bob JOnes',
+    '$entity_issued_to' => 'Bob Jones',
     '$assigned_to_user' => '',
     '$product.quantity' => '',
     '$total_tax_labels' => '',
@@ -289,7 +333,7 @@ class PdfMock
     '$credit.po_number' => 'PO12345',
     '$company.address1' => $this->settings->address1,
     '$credit.credit_no' => '0029',
-    '$invoice.datetime' => '25/Feb/2023 1:10 am',
+    '$invoice.datetime' => '2023-10-25 01:10:00',
     '$contact.custom1' => null,
     '$contact.custom2' => null,
     '$contact.custom3' => null,
@@ -303,23 +347,23 @@ class PdfMock
     '$invoice.custom2' => 'custom value',
     '$invoice.custom3' => 'custom value',
     '$invoice.custom4' => 'custom value',
-    '$company.custom1' => 'custom value',
-    '$company.custom2' => 'custom value',
-    '$company.custom3' => 'custom value',
-    '$company.custom4' => 'custom value',
+    '$company.custom1' => $this->company->settings->custom_value1,
+    '$company.custom2' => $this->company->settings->custom_value2,
+    '$company.custom3' => $this->company->settings->custom_value3,
+    '$company.custom4' => $this->company->settings->custom_value4,
     '$quote.po_number' => 'PO12345',
     '$company.website' => $this->settings->website,
     '$balance_due_raw' => '0.00',
-    '$entity.datetime' => '25/Feb/2023 1:10 am',
-    '$credit.datetime' => '25/Feb/2023 1:10 am',
+    '$entity.datetime' => '2023-10-25 01:10:00',
+    '$credit.datetime' => '2023-10-25 01:10:00',
     '$client.address2' => '63993 Aiyana View',
     '$client.address1' => '8447',
     '$user.first_name' => 'Derrick Monahan DDS',
     '$created_by_user' => 'Derrick Monahan DDS Erna Wunsch',
     '$client.currency' => 'USD',
-    '$company.country' => 'United States',
-    '$company.address' => 'Christiansen Garden<br/>70218 Lori Station Suite 529<br/>New Loy, Delaware 29359<br/>United States<br/>Phone: 1-240-886-2233<br/>Email: immanuel53@example.net<br/>',
-    '$tech_hero_image' => 'http://ninja.test:8000/images/pdf-designs/tech-hero-image.jpg',
+    '$company.country' => $this->company->country()?->name ?? 'USA',
+    '$company.address' => $this->company->present()->address(),
+    '$tech_hero_image' => 'https://invoicing.co/images/pdf-designs/tech-hero-image.jpg',
     '$task.tax_name1' => '',
     '$task.tax_name2' => '',
     '$task.tax_name3' => '',
@@ -336,7 +380,7 @@ class PdfMock
     '$emailSignature' => 'A email signature.',
     '$invoice.number' => '0029',
     '$quote.quote_no' => '0029',
-    '$quote.datetime' => '25/Feb/2023 1:10 am',
+    '$quote.datetime' => '2023-10-25 01:10:00',
     '$client_address' => '8447<br/>63993 Aiyana View<br/>Aufderharchester, North Carolina 11243<br/>United States<br/>',
     '$client.address' => '8447<br/>63993 Aiyana View<br/>Aufderharchester, North Carolina 11243<br/>United States<br/>',
     '$payment_button' => '<a class="button" href="http://ninja.test:8000/client/pay/UAUY8vIPuno72igmXbbpldwo5BDDKIqs">Pay Now</a>',
@@ -364,7 +408,7 @@ class PdfMock
     '$company.phone' => $this->settings->phone,
     '$company.state' => $this->settings->state,
     '$credit.number' => '0029',
-    '$entity_number' => '0029',
+    '$entity_number' => $entity_number,
     '$credit_number' => '0029',
     '$global_margin' => '6.35mm',
     '$contact.phone' => '681-480-9828',
@@ -386,7 +430,7 @@ class PdfMock
     '$client.phone' => '555-123-3212',
     '$number_short' => '0029',
     '$quote.number' => '0029',
-    '$invoice.date' => '25/Feb/2023',
+    '$invoice.date' => '2023-10-25',
     '$company.name' => $this->settings->name,
     '$portalButton' => '<a class="button" href="http://ninja.test:8000/client/key_login/zJJEjlUtXPiNnnnyO2tcYia64PSwauidy61eDnMU?client_hash=nzikYQITs1kyUK61GScTNW67JwhTRkOBVdvsHzIv">View client portal</a>',
     '$contact.name' => 'Benedict Eichmann',
@@ -406,8 +450,8 @@ class PdfMock
     '$partial_due' => '$50.00',
     '$quote.total' => '$10.00',
     '$payment_due' => '&nbsp;',
-    '$credit.date' => '25/Feb/2023',
-    '$invoiceDate' => '25/Feb/2023',
+    '$credit.date' => '2023-10-25',
+    '$invoiceDate' => '2023-10-25',
     '$view_button' => '<a class="button" href="http://ninja.test:8000/client/invoice/UAUY8vIPuno72igmXbbpldwo5BDDKIqs">View Invoice</a>',
     '$client.city' => 'Aufderharchester',
     '$spc_qr_code' => '',
@@ -424,7 +468,7 @@ class PdfMock
     '$amount_due' => '$0.00',
     '$amount_raw' => '0.00',
     '$invoice_no' => '0029',
-    '$quote.date' => '25/Feb/2023',
+    '$quote.date' => '2023-10-25',
     '$vat_number' => '975977515',
     '$viewButton' => '<a class="button" href="http://ninja.test:8000/client/invoice/UAUY8vIPuno72igmXbbpldwo5BDDKIqs">View Invoice</a>',
     '$portal_url' => 'http://ninja.test:8000/client/',
@@ -444,25 +488,25 @@ class PdfMock
     '$country_2' => 'AF',
     '$firstName' => 'Benedict',
     '$user.name' => 'Derrick Monahan DDS Erna Wunsch',
-    '$font_name' => isset($this->settings?->primary_font) ? $this->settings?->primary_font : 'Roboto',
+    '$font_name' => isset($this->settings?->primary_font) ? $this->settings?->primary_font : 'Roboto', //@phpstan-ignore-line
     '$auto_bill' => 'This invoice will automatically be billed to your credit card on file on the due date.',
     '$payments' => '',
     '$task.tax' => '',
     '$discount' => '$0.00',
     '$subtotal' => '$0.00',
-    '$company1' => 'custom value',
-    '$company2' => 'custom value',
-    '$company3' => 'custom value',
-    '$company4' => 'custom value',
+    '$company1' => $this->company->settings->custom_value1,
+    '$company2' => $this->company->settings->custom_value2,
+    '$company3' => $this->company->settings->custom_value3,
+    '$company4' => $this->company->settings->custom_value4,
     '$due_date' => '2022-01-01',
     '$poNumber' => 'PO-123456',
     '$quote_no' => '0029',
-    '$address2' => '63993 Aiyana View',
-    '$address1' => '8447',
+    '$address2' => $this->settings->address2,
+    '$address1' => $this->settings->address1,
     '$viewLink' => '<a class="button" href="http://ninja.test:8000/client/invoice/UAUY8vIPuno72igmXbbpldwo5BDDKIqs">View Invoice</a>',
     '$autoBill' => 'This invoice will automatically be billed to your credit card on file on the due date.',
     '$view_url' => 'http://ninja.test:8000/client/invoice/UAUY8vIPuno72igmXbbpldwo5BDDKIqs',
-    '$font_url' => 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
+    '$font_url' => isset($this->settings?->primary_font) ? \App\Utils\Helpers::resolveFont($this->settings->primary_font)['url'] : 'https://fonts.googleapis.com/css2?family=Roboto&display=swap',
     '$details' => '',
     '$balance' => '$40.00',
     '$partial' => '$30.00',
@@ -477,7 +521,7 @@ class PdfMock
     '$country' => 'United States',
     '$contact' => 'Benedict Eichmann',
     '$app_url' => 'http://ninja.test:8000',
-    '$website' => 'http://www.parisian.org/',
+    '$website' => $this->settings->website,
     '$entity' => '',
     '$thanks' => 'Thanks!',
     '$amount' => '$30.00',
@@ -498,7 +542,7 @@ class PdfMock
     '$terms' => 'Default company invoice terms',
     '$from' => 'Bob Jones',
     '$item' => '',
-    '$date' => '25/Feb/2023',
+    '$date' => '2023-10-25',
     '$tax' => '',
     '$net' => 'Net',
     '$dir' => 'ltr',
@@ -508,8 +552,8 @@ class PdfMock
     '$show_shipping_address' => $this->settings->show_shipping_address ? 'flex' : 'none',
     '$show_shipping_address_block' => $this->settings->show_shipping_address ? 'block' : 'none',
     '$show_shipping_address_visibility' => $this->settings->show_shipping_address ? '1' : '0',
-    '$start_date' => '31/01/2023',
-    '$end_date' => '31/12/2023',
+    '$start_date' => '2023-01-31',
+    '$end_date' => '2023-12-31',
     '$history' => '',
     '$amount_paid' => '',
     '$receipt' => '',
@@ -571,6 +615,7 @@ class PdfMock
             '$invoice.invoice_no_label' => ctrans('texts.invoice_no'),
             '$contact.first_name_label' => ctrans('texts.first_name'),
             '$secondary_font_url_label' => ctrans('texts.secondary_font'),
+            '$credit.valid_until_label' => ctrans('texts.valid_until'),
             '$contact.signature_label' => ctrans('texts.signature'),
             '$product.tax_name1_label' => ctrans('texts.tax_name1'),
             '$product.tax_name2_label' => ctrans('texts.tax_name2'),
@@ -600,10 +645,10 @@ class PdfMock
             '$task.description_label' => ctrans('texts.description'),
             '$product.discount_label' => ctrans('texts.discount'),
             '$product.quantity_label' => ctrans('texts.quantity'),
-            '$entity_issued_to_label' => ctrans('texts.quote_issued_to'),
+            '$entity_issued_to_label' => ctrans("texts.{$this->entity_string}_issued_to") ?: ctrans('texts.quote_issued_to'),
             '$partial_due_date_label' => ctrans('texts.partial_due_date'),
             '$invoice.datetime_label' => ctrans('texts.datetime_format_id'),
-            '$invoice.due_date_label' => ctrans('texts.due_date'),
+            '$invoice.due_date_label' => ctrans('texts.invoice_due_date'),
             '$company.address1_label' => ctrans('texts.address1'),
             '$company.address2_label' => ctrans('texts.address2'),
             '$total_tax_labels_label' => ctrans('texts.total_taxes'),
@@ -646,9 +691,9 @@ class PdfMock
             '$company.website_label' => ctrans('texts.website'),
             '$invoice.balance_label' => ctrans('texts.balance'),
             '$client.country_label' => ctrans('texts.country'),
-            '$task.tax_name1_label' => ctrans('texts.tax_name1'),
-            '$task.tax_name2_label' => ctrans('texts.tax_name2'),
-            '$task.tax_name3_label' => ctrans('texts.tax_name3'),
+            '$task.tax_name1_label' => ctrans('texts.tax'),
+            '$task.tax_name2_label' => ctrans('texts.tax'),
+            '$task.tax_name3_label' => ctrans('texts.tax'),
             '$payment_button_label' => '',
             '$credit.custom1_label' => ctrans('texts.custom1'),
             '$credit.custom2_label' => ctrans('texts.custom2'),
@@ -698,16 +743,16 @@ class PdfMock
             '$contact.email_label' => ctrans('texts.email'),
             '$invoice.taxes_label' => ctrans('texts.taxes'),
             '$credit_amount_label' => ctrans('texts.credit_amount'),
-            '$invoice.total_label' => ctrans('texts.total'),
+            '$invoice.total_label' => ctrans('texts.invoice_total'),
             '$product.date_label' => ctrans('texts.date'),
             '$product.item_label' => ctrans('texts.item'),
             '$public_notes_label' => ctrans('texts.public_notes'),
             '$entity.terms_label' => ctrans('texts.terms'),
             '$task.service_label' => ctrans('texts.service'),
             '$portalButton_label' => '',
-            '$payment.date_label' => ctrans('texts.date'),
+            '$payment.date_label' => ctrans('texts.payment_date'),
             '$client.phone_label' => ctrans('texts.phone'),
-            '$invoice.date_label' => ctrans('texts.date'),
+            '$invoice.date_label' => ctrans('texts.invoice_date'),
             '$client.state_label' => ctrans('texts.state'),
             '$number_short_label' => '',
             '$quote.number_label' => ctrans('texts.number'),
@@ -849,7 +894,7 @@ class PdfMock
             '$order_number_label' => ctrans('texts.order_number'),
         ];
     }
-    
+
     private function getVendorStubVariables()
     {
         return ['values' => [
@@ -988,7 +1033,7 @@ class PdfMock
 <table align="center" cellspacing="0" cellpadding="0" style="width: 600px;">
     <tr>
     <td align="center" valign="top">
-        <![endif]-->        
+        <![endif]-->
         <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" >
         <tbody><tr>
         <td align="center" class="new_button" style="border-radius: 2px; background-color: #298AAB">
@@ -1022,7 +1067,7 @@ class PdfMock
 <table align="center" cellspacing="0" cellpadding="0" style="width: 600px;">
     <tr>
     <td align="center" valign="top">
-        <![endif]-->        
+        <![endif]-->
         <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" >
         <tbody><tr>
         <td align="center" class="new_button" style="border-radius: 2px; background-color: #298AAB">
@@ -1053,7 +1098,7 @@ class PdfMock
 <table align="center" cellspacing="0" cellpadding="0" style="width: 600px;">
     <tr>
     <td align="center" valign="top">
-        <![endif]-->        
+        <![endif]-->
         <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" >
         <tbody><tr>
         <td align="center" class="new_button" style="border-radius: 2px; background-color: #298AAB">
@@ -1088,7 +1133,7 @@ class PdfMock
 <table align="center" cellspacing="0" cellpadding="0" style="width: 600px;">
     <tr>
     <td align="center" valign="top">
-        <![endif]-->        
+        <![endif]-->
         <table align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" >
         <tbody><tr>
         <td align="center" class="new_button" style="border-radius: 2px; background-color: #298AAB">

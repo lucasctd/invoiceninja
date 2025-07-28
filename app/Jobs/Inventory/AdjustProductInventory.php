@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -29,7 +29,11 @@ use Illuminate\Queue\SerializesModels;
 
 class AdjustProductInventory implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, UserNotifies;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+    use UserNotifies;
 
     private array $notified_products = [];
 
@@ -65,7 +69,6 @@ class AdjustProductInventory implements ShouldQueue
 
             if ($p) {
                 $p->in_stock_quantity += $i->quantity;
-
                 $p->saveQuietly();
             }
         });
@@ -117,7 +120,7 @@ class AdjustProductInventory implements ShouldQueue
 
     private function existingInventoryAdjustment()
     {
-    
+
         collect($this->old_invoice)->filter(function ($item) {
             return $item->type_id == '1';
         })->each(function ($i) {
@@ -133,13 +136,13 @@ class AdjustProductInventory implements ShouldQueue
 
     private function notifyStocklevels(Product $product, string $notification_level)
     {
-        $nmo = new NinjaMailerObject;
+        $nmo = new NinjaMailerObject();
         $nmo->company = $this->company;
         $nmo->settings = $this->company->settings;
 
-        
+
         $this->company->company_users->each(function ($cu) use ($product, $nmo, $notification_level) {
-        
+
             /** @var \App\Models\CompanyUser $cu */
             if ($this->checkNotificationExists($cu, $product, ['inventory_all', 'inventory_user', 'inventory_threshold_all', 'inventory_threshold_user']) && (! in_array($product->id, $this->notified_products))) {
                 $nmo->mailable = new NinjaMailer((new InventoryNotificationObject($product, $notification_level, $cu->portalType()))->build());

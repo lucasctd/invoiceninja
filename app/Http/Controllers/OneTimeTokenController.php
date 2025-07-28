@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -22,9 +22,6 @@ use Illuminate\Support\Str;
 
 class OneTimeTokenController extends BaseController
 {
-    private $contexts = [
-    ];
-
     public function __construct()
     {
         parent::__construct();
@@ -34,7 +31,7 @@ class OneTimeTokenController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param OneTimeTokenRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      * @OA\Post(
      *      path="/api/v1/one_time_token",
@@ -71,10 +68,14 @@ class OneTimeTokenController extends BaseController
 
         $data = [
             'user_id' => $user->id,
-            'company_key'=> $user->company()->company_key,
+            'company_key' => $user->company()->company_key,
             'context' => $request->input('context'),
             'is_react' => $request->hasHeader('X-REACT') ? true : false,
         ];
+
+        if ($request->institution_id) {
+            $data['institution_id'] = $request->institution_id;
+        }
 
         Cache::put($hash, $data, 3600);
 
