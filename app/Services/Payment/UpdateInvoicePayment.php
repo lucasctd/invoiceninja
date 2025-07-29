@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -39,7 +39,7 @@ class UpdateInvoicePayment
         $paid_invoices = $this->payment_hash->invoices();
 
         $invoices = Invoice::query()->whereIn('id', $this->transformKeys(array_column($paid_invoices, 'invoice_id')))->withTrashed()->get();
-        
+
         $client = $this->payment->client;
 
         if ($client->trashed()) {
@@ -72,31 +72,41 @@ class UpdateInvoicePayment
                 $paid_amount = $invoice->balance;
             }
 
-            $client->service()->updateBalance($paid_amount*-1); //only ever use the amount applied to the invoice
+            $client->service()->updateBalance($paid_amount * -1); //only ever use the amount applied to the invoice
 
             /*Improve performance here - 26-01-2022 - also change the order of events for invoice first*/
             //caution what if we amount paid was less than partial - we wipe it!
             $invoice->balance -= $paid_amount;
             $invoice->paid_to_date += $paid_amount;
-            $invoice->save();
 
-            $invoice_service = $invoice->service()
+            $invoice->saveQuietly();
+
+            $invoice = $invoice->service()
                                ->clearPartial()
                                ->updateStatus()
-                               ->workFlow();
+                               ->workFlow()
+                               ->unlockDocuments()
+                               ->save();
+
 
             if ($has_partial) {
-                $invoice_service->checkReminderStatus();
+                $invoice->service()->checkReminderStatus()->save();
             }
-                            
-            $invoice = $invoice_service->save();
-            
+
             if ($invoice->is_proforma) {
                 //keep proforma's hidden
                 if (property_exists($this->payment_hash->data, 'pre_payment') && $this->payment_hash->data->pre_payment == "1") {
                     $invoice->payments()->each(function ($p) {
                         $p->pivot->forceDelete();
+                        $p->invoices()->each(function ($i) {
+                            $i->pivot->forceDelete();
+                        });
                     });
+
+
+                    $invoice
+                    ->ledger()
+                    ->updateInvoiceBalance($paid_amount * -1, "Prepayment Balance Adjustment");
 
                     $invoice->is_deleted = true;
                     $invoice->deleted_at = now();
@@ -118,7 +128,7 @@ class UpdateInvoicePayment
                         $recurring_invoice->balance = $invoice->amount;
                         $recurring_invoice->status_id = RecurringInvoice::STATUS_ACTIVE;
                         $recurring_invoice->is_proforma = true;
-                        
+
                         $recurring_invoice->saveQuietly();
                         $recurring_invoice->next_send_date =  $recurring_invoice->nextSendDate();
                         $recurring_invoice->next_send_date_client = $recurring_invoice->nextSendDateClient();
@@ -128,24 +138,21 @@ class UpdateInvoicePayment
                     return;
                 }
 
-                
-
                 if (strlen($invoice->number) > 1 && str_starts_with($invoice->number, "####")) {
                     $invoice->number = '';
                 }
 
                 $invoice->is_proforma = false;
-                
+
                 $invoice->service()
                         ->applyNumber()
                         ->save();
             }
 
-
             /* Updates the company ledger */
             $this->payment
                  ->ledger()
-                 ->updatePaymentBalance($paid_amount * -1);
+                 ->updatePaymentBalance($paid_amount * -1, "UpdateInvoicePayment");
 
             $pivot_invoice = $this->payment->invoices->first(function ($inv) use ($paid_invoice) {
                 return $inv->hashed_id == $paid_invoice->invoice_id;
@@ -156,13 +163,15 @@ class UpdateInvoicePayment
             $pivot_invoice->pivot->save();
 
             $this->payment->applied += $paid_amount;
+
         });
-        
+
         /* Remove the event updater from within the loop to prevent race conditions */
 
         $this->payment->saveQuietly();
 
         $invoices->each(function ($invoice) {
+            event('eloquent.updated: App\Models\Invoice', $invoice);
             event(new InvoiceWasUpdated($invoice, $invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
         });
 

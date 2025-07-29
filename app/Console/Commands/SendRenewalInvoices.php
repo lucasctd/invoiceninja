@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -53,7 +53,7 @@ class SendRenewalInvoices extends Command
 
         $to_user = User::first();
 
-        $nmo = new NinjaMailerObject;
+        $nmo = new NinjaMailerObject();
         $nmo->mailable = new TestMailServer('Email Server Works!', config('mail.from.address'));
         $nmo->company = $to_user->account->companies()->first();
         $nmo->settings = $to_user->account->companies()->first()->settings;
@@ -68,7 +68,7 @@ class SendRenewalInvoices extends Command
             });
 
 
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             $this->info("Error sending email: " . $e->getMessage());
         }
     }

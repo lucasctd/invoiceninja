@@ -22,8 +22,8 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
- * @covers App\Import\Providers\Csv
+ * 
+ *  App\Import\Providers\Csv
  */
 class TaskImportTest extends TestCase
 {
@@ -64,7 +64,7 @@ class TaskImportTest extends TestCase
             2 => 'client.name',
             4 => 'task.number',
             5 => 'task.description',
-            6 => 'task.is_billable',
+            6 => 'task.billable',
             7 => 'task.start_date',
             9 => 'task.end_date',
             8 => 'task.start_time',
@@ -92,11 +92,11 @@ class TaskImportTest extends TestCase
         $task = Task::where('company_id', $this->company->id)->where('number', 'x1234')->first();
         $this->assertNotNull($task);
         $this->assertEquals(1998, $task->calcDuration());
-        
+
         $time_log = json_decode($task->time_log);
 
         foreach($time_log as $log) {
-            $this->assertFalse($log[3]);
+            $this->assertTrue($log[3]);
         }
 
         $task = Task::where('company_id', $this->company->id)->where('number', 'x1233')->first();
@@ -106,10 +106,10 @@ class TaskImportTest extends TestCase
         $time_log = json_decode($task->time_log);
 
         foreach($time_log as $log) {
-            $this->assertFalse($log[3]);
+            $this->assertTrue($log[3]);
         }
 
-    
+
     }
 
 
@@ -119,7 +119,7 @@ class TaskImportTest extends TestCase
         Task::query()
             ->where('company_id', $this->company->id)
             ->forceDelete();
-            
+
         $this->assertEquals(0, Task::withTrashed()->where('company_id', $this->company->id)->count());
 
         /*Need to import clients first*/
@@ -132,7 +132,7 @@ class TaskImportTest extends TestCase
             3 => 'project.name',
             2 => 'client.name',
             5 => 'task.description',
-            6 => 'task.is_billable',
+            6 => 'task.billable',
             7 => 'task.start_date',
             9 => 'task.end_date',
             8 => 'task.start_time',

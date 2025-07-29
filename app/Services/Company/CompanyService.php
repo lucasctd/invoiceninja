@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -17,7 +17,6 @@ use App\Models\User;
 
 class CompanyService
 {
-
     public function __construct(public Company $company)
     {
     }
@@ -57,21 +56,25 @@ class CompanyService
                 case '724': // Spain
                     $taxes[] = ['name' => 'IVA', 'rate' => 21];
                     break;
+                case '554': // New Zealand
+                    $taxes[] = ['name' => 'GST', 'rate' => 15];
+                    break;
 
                 default:
                     return;
             }
 
-            foreach($taxes as $tax) {
+            foreach ($taxes as $tax) {
                 $tax_rate = TaxRateFactory::create($this->company->id, $user->id);
                 $tax_rate->fill($tax);
                 $tax_rate->save();
             }
 
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
+            nlog("Exception:: CompanyService::" . $e->getMessage());
             nlog($e->getMessage());
         }
-        
+
     }
 
 }

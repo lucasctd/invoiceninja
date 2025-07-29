@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -22,6 +22,7 @@ use App\Models\Invoice;
 use App\Models\InvoiceInvitation;
 use App\Models\QuoteInvitation;
 use App\Models\RecurringInvoiceInvitation;
+use App\Utils\HtmlEngine;
 use App\Utils\Ninja;
 use App\Utils\Number;
 use App\Utils\Traits\MakesDates;
@@ -34,7 +35,8 @@ use Illuminate\View\View;
 
 class InvoiceController extends Controller
 {
-    use MakesHash, MakesDates;
+    use MakesHash;
+    use MakesDates;
 
     /**
      * Display list of invoices.
@@ -60,6 +62,7 @@ class InvoiceController extends Controller
 
         $invitation = $invoice->invitations()->where('client_contact_id', auth()->guard('contact')->user()->id)->first();
 
+        // @phpstan-ignore-next-line
         if ($invitation && auth()->guard('contact') && ! session()->get('is_silent') && ! $invitation->viewed_date) {
             $invitation->markViewed();
 
@@ -67,37 +70,54 @@ class InvoiceController extends Controller
             event(new InvoiceWasViewed($invitation, $invoice->company, Ninja::eventVars()));
         }
 
+        $variables = ($invitation && auth()->guard('contact')->user()->client->getSetting('show_accept_invoice_terms')) ? (new HtmlEngine($invitation))->generateLabelsAndValues() : false;
+
         $data = [
-            'invoice' => $invoice,
+            'invoice' => $invoice->service()->removeUnpaidGatewayFees()->save(),
             'invitation' => $invitation ?: $invoice->invitations->first(),
             'key' => $invitation ? $invitation->key : false,
             'hash' => $hash,
+            'variables' => $variables,
+            'invoices' => [$invoice->hashed_id],
+            'db' => $invoice->company->db,
         ];
 
         if ($request->query('mode') === 'fullscreen') {
             return render('invoices.show-fullscreen', $data);
         }
 
-        return $this->render('invoices.show', $data);
+        if (!$invoice->isPayable()) {
+            return $this->render('invoices.show', $data);
+        }
+
+        return auth()->guard('contact')->user()->client->getSetting('payment_flow') == 'default' ? $this->render('invoices.show', $data) : $this->render('invoices.show_smooth', $data);
+
     }
 
     public function showBlob($hash)
     {
         $data = Cache::get($hash);
 
-        if(!$data) {
-            usleep(200000);
+        for ($x = 0; $x < 3; $x++) {
+
             $data = Cache::get($hash);
+
+            if ($data) {
+                break;
+            }
+
+            usleep(300000);
+
         }
 
         $invitation = false;
-        
-        match($data['entity_type'] ?? false) {
-            'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']),
+
+        match($data['entity_type'] ?? 'invoice') {
+            'invoice' => $invitation = InvoiceInvitation::withTrashed()->find($data['invitation_id']), //@todo - sometimes this is false!!
             'quote' => $invitation = QuoteInvitation::withTrashed()->find($data['invitation_id']),
             'credit' => $invitation = CreditInvitation::withTrashed()->find($data['invitation_id']),
             'recurring_invoice' => $invitation = RecurringInvoiceInvitation::withTrashed()->find($data['invitation_id']),
-            false => $invitation = false,
+            default => $invitation = false,
         };
 
         if (! $invitation) {
@@ -105,7 +125,7 @@ class InvoiceController extends Controller
         }
 
         $file = (new \App\Jobs\Entity\CreateRawPdf($invitation))->handle();
-        
+
         $headers = ['Content-Type' => 'application/pdf'];
         return response()->make($file, 200, $headers);
 
@@ -202,7 +222,6 @@ class InvoiceController extends Controller
 
         //format data
         $invoices->map(function ($invoice) {
-            // $invoice->service()->removeUnpaidGatewayFees();
             $invoice->balance = $invoice->balance > 0 ? Number::formatValue($invoice->balance, $invoice->client->currency()) : 0;
             $invoice->partial = $invoice->partial > 0 ? Number::formatValue($invoice->partial, $invoice->client->currency()) : 0;
 
@@ -216,16 +235,27 @@ class InvoiceController extends Controller
 
         //if there is only one payment method -> lets return straight to the payment page
 
+        $settings = auth()->guard('contact')->user()->client->getMergedSettings();
+        $variables = false;
+
+        if (($invitation = $invoices->first()->invitations()->first() ?? false) && $settings->show_accept_invoice_terms) {
+            $variables = (new HtmlEngine($invitation))->generateLabelsAndValues();
+        }
+
         $data = [
-            'settings' => auth()->guard('contact')->user()->client->getMergedSettings(),
+            'settings' => $settings,
             'invoices' => $invoices,
             'formatted_total' => $formatted_total,
             'payment_methods' => $payment_methods,
             'hashed_ids' => $invoices->pluck('hashed_id'),
             'total' =>  $total,
+            'variables' => $variables,
+            'invitation' => $invitation,
+            'db' => $invitation->company->db,
         ];
 
-        return $this->render('invoices.payment', $data);
+        // return $this->render('invoices.payment', $data);
+        return auth()->guard('contact')->user()->client->getSetting('payment_flow') === 'default' ? $this->render('invoices.payment', $data) : $this->render('invoices.show_smooth_multi', $data);
     }
 
     /**
@@ -266,7 +296,7 @@ class InvoiceController extends Controller
         try {
 
             foreach ($invoices as $invoice) {
-                            
+
                 if ($invoice->client->getSetting('enable_e_invoice')) {
                     $xml = $invoice->service()->getEInvoice();
                     $zipFile->addFromString($invoice->getFileName("xml"), $xml);

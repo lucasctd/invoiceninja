@@ -5,29 +5,26 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
-use App\Models\ClientContact;
 use App\Models\Design;
 use App\Models\Invoice;
-use App\Services\PdfMaker\Design as PdfMakerDesign;
-use App\Services\PdfMaker\PdfMaker as PdfMakerService;
-use App\Services\Template\TemplateService;
-use App\Utils\HostedPDF\NinjaPdf;
 use App\Utils\HtmlEngine;
-use App\Utils\PhantomJS\Phantom;
+use App\Models\ClientContact;
 use App\Utils\Traits\MakesHash;
 use App\Utils\Traits\Pdf\PdfMaker;
 use Illuminate\Support\Facades\Storage;
+use App\Services\Template\TemplateService;
 
 class GenerateDeliveryNote
 {
-    use MakesHash, PdfMaker;
+    use MakesHash;
+    use PdfMaker;
 
     /**
      * @var mixed
@@ -45,10 +42,12 @@ class GenerateDeliveryNote
         $delivery_note_design_id = $this->invoice->client->getSetting('delivery_note_design_id');
         $design = Design::withTrashed()->find($this->decodePrimaryKey($delivery_note_design_id));
 
-        if($design && $design->is_template) {
+        if ($design && $design->is_template) {
 
             $ts = new TemplateService($design);
-            $pdf = $ts->build([
+
+            $pdf = $ts->setCompany($this->invoice->company)
+            ->build([
                 'invoices' => collect([$this->invoice]),
             ])->getPdf();
 
@@ -61,61 +60,12 @@ class GenerateDeliveryNote
             : $this->decodePrimaryKey($this->invoice->client->getSetting('invoice_design_id'));
 
         $invitation = $this->invoice->invitations->first();
-        // $file_path = sprintf('%s%s_delivery_note.pdf', $this->invoice->client->invoice_filepath($invitation), $this->invoice->number);
-        $file_path = sprintf('%sdelivery_note.pdf', $this->invoice->client->invoice_filepath($invitation));
-
-        if (config('ninja.phantomjs_pdf_generation') || config('ninja.pdf_generator') == 'phantom') {
-            return (new Phantom)->generate($this->invoice->invitations->first());
-        }
 
         $design = Design::withTrashed()->find($design_id);
-        $html = new HtmlEngine($invitation);
 
-        if ($design->is_custom) {
-            $options = ['custom_partials' => json_decode(json_encode($design->design), true)];
-            $template = new PdfMakerDesign(PdfMakerDesign::CUSTOM, $options);
-        } else {
-            $template = new PdfMakerDesign(strtolower($design->name));
-        }
+        $ps = new \App\Services\Pdf\PdfService($invitation, 'delivery_note');
 
-        $state = [
-            'template' => $template->elements([
-                'client' => $this->invoice->client,
-                'entity' => $this->invoice,
-                'pdf_variables' => (array) $this->invoice->company->settings->pdf_variables,
-                'contact' => $this->contact,
-            ], 'delivery_note'),
-            'variables' => $html->generateLabelsAndValues(),
-            'options' => [
-                'client' => $this->invoice->client,
-                'entity' => $this->invoice,
-                'contact' => $this->contact,
-            ],
-            'process_markdown' => $this->invoice->client->company->markdown_enabled,
-        ];
+        return $ps->boot()->getPdf();
 
-        $maker = new PdfMakerService($state);
-
-        $maker
-            ->design($template)
-            ->build();
-
-        if (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
-            $pdf = (new NinjaPdf())->build($maker->getCompiledHTML(true));
-        } else {
-            $pdf = $this->makePdf(null, null, $maker->getCompiledHTML());
-        }
-
-        if (config('ninja.log_pdf_html')) {
-            info($maker->getCompiledHTML());
-        }
-
-        return $pdf;
-        // Storage::disk($this->disk)->put($file_path, $pdf);
-
-        $maker = null;
-        $state = null;
-        
-        // return $file_path;
     }
 }

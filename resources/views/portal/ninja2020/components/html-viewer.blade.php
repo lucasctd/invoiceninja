@@ -77,6 +77,8 @@ span {
                     <td>
                         <div class="product-information">
                             <div class="item-details">
+
+                                <p class="overflow-ellipsis overflow-hidden px-1 mb-2">{!! $product['notes'] !!}</p>
                                 <p class="mt-2">
                                     @if($show_quantity)
                                     {{ $product['quantity'] }} x
@@ -85,8 +87,8 @@ span {
                                     @if($show_cost)
                                     {{ $product['cost'] }}
                                     @endif
-                                </p> 
-                                <p class="overflow-ellipsis overflow-hidden px-1 mb-2">{!! $product['notes'] !!}</p>
+                                </p>
+                                
                             </div>
                         </div>
                     </td>
@@ -132,6 +134,18 @@ span {
     <div id="totals" class="mb-10 mr-3 ml-3">
         <table width="100%">
             <tbody>
+                @if($discount)
+                <tr>
+                    <td style="text-align:left; padding-right:10px;" class="text-lg">{{ ctrans('texts.discount') }}</td>
+                    <td style="text-align:right; padding-right:10px;" class="text-lg">{{ $discount }}</td>
+                </tr>
+                @endif
+                @if($taxes)
+                <tr>
+                    <td style="text-align:left; padding-right:10px;" class="text-lg">{{ ctrans('texts.tax') }}</td>
+                    <td style="text-align:right; padding-right:10px;" class="text-lg">{{ $taxes }}</td>
+                </tr>
+                @endif
                 <tr>
                     <td style="text-align:left; padding-right:10px;" class="text-lg">{{ ctrans('texts.total') }}</td>
                     <td style="text-align:right; padding-right:10px;" class="text-lg">{{ $amount }}</td>
@@ -147,7 +161,7 @@ span {
 
     </div>
 
-    @if(strlen($entity->public_notes) > 3)
+    @if(strlen($entity->public_notes ?? '') > 3)
     <div x-data="{ show_notes: false }" class="mb-10 mr-5 ml-5 flex flex-col items-end">
         
         <button @click="show_notes = !show_notes" :aria-expanded="show_notes ? 'true' : 'false'" :class="{ 'active': show_notes }" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
@@ -156,13 +170,13 @@ span {
         </button>
         
         <div id="notes" class="py-10 border-b-2 border-fuschia-600"  x-show="show_notes">     
-            {!! html_entity_decode($entity->public_notes) !!}
+            {!! html_entity_decode(e($public_notes)) !!}
         </div>
 
     </div>
     @endif
 
-    @if(strlen($entity->terms) > 3)
+    @if(strlen($entity->terms ?? '') > 3)
     <div x-data="{ show_terms: false }" class="mb-10 mr-5 ml-5 flex flex-col items-end">
 
         <button @click="show_terms = !show_terms" :aria-expanded="show_terms ? 'true' : 'false'" :class="{ 'active': show_terms }" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
@@ -171,13 +185,13 @@ span {
         </button>
 
         <div id="terms" class="py-10 border-b-2 border-fuschia-600"  x-show="show_terms">
-            {!! html_entity_decode($entity->terms) !!}
+            {!! html_entity_decode($terms) !!}
         </div>
 
     </div>
     @endif
 
-    @if(strlen($entity->footer) > 3)
+    @if(strlen($entity->footer ?? '') > 3)
     <div x-data="{ show_footer: false }" class="mb-10 mr-5 ml-5 flex flex-col items-end">
 
         <button @click="show_footer = !show_footer" :aria-expanded="show_footer ? 'true' : 'false'" :class="{ 'active': show_footer }" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-2 px-4 rounded inline-flex items-center">
@@ -202,16 +216,20 @@ span {
             }
         });
 
-        Livewire.hook('message.processed', (message, component) => {
+        document.addEventListener('livewire:init', () => {
 
-            Array.from(document.getElementsByClassName("entity-field")).forEach(function(item) {
-                if(item.innerText.length == 0){
-                    item.parentNode.remove();
-                }
+            Livewire.hook('message.processed', (message, component) => {
+
+                Array.from(document.getElementsByClassName("entity-field")).forEach(function(item) {
+                    if(item.innerText.length == 0){
+                        item.parentNode.remove();
+                    }
+                });
+
             });
 
-        })
-        
+        });
+
         var timeout = false; 
         
         /* Watch for resize of window and ensure we unset props with no values */

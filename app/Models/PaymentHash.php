@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $hash 32 char length AlphaNum
  * @property float $fee_total
  * @property int|null $fee_invoice_id
- * @property \stdClass $data
+ * @property \stdClass|array $data
  * @property int|null $payment_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -54,7 +54,7 @@ class PaymentHash extends Model
     {
         return $this->data->invoices;
     }
-    
+
     /**
      * @return float|null
      */

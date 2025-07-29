@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -17,11 +17,11 @@ use App\Models\Invoice;
 use App\Services\AbstractService;
 use App\Utils\Ninja;
 use Illuminate\Support\Facades\App;
+use App\Models\Product;
 
 class AddGatewayFee extends AbstractService
 {
-    
-    public function __construct(private CompanyGateway $company_gateway, private int $gateway_type_id, public Invoice $invoice, private float $amount)
+    public function __construct(private CompanyGateway $company_gateway, private int $gateway_type_id, public Invoice $invoice, private float $amount, private string $payment_hash_string)
     {
     }
 
@@ -33,29 +33,8 @@ class AddGatewayFee extends AbstractService
             return $this->invoice;
         }
 
-        // Removes existing stale gateway fees
-        $this->cleanPendingGatewayFees();
+        return $gateway_fee > 0 ? $this->processGatewayFee($gateway_fee) : $this->processGatewayDiscount($gateway_fee);
 
-        // If a gateway fee is > 0 insert the line item
-        if ($gateway_fee > 0) {
-            return $this->processGatewayFee($gateway_fee);
-        }
-
-        // If we have reached this far, then we are apply a gateway discount
-        return $this->processGatewayDiscount($gateway_fee);
-    }
-
-    private function cleanPendingGatewayFees()
-    {
-        $invoice_items = (array) $this->invoice->line_items;
-
-        $invoice_items = collect($invoice_items)->filter(function ($item) {
-            return $item->type_id != '3';
-        });
-
-        $this->invoice->line_items = $invoice_items;
-
-        return $this;
     }
 
     private function processGatewayFee($gateway_fee)
@@ -67,12 +46,13 @@ class AddGatewayFee extends AbstractService
         $t->replace(Ninja::transformTranslations($this->invoice->company->settings));
         App::setLocale($this->invoice->client->locale());
 
-        $invoice_item = new InvoiceItem;
+        $invoice_item = new InvoiceItem();
         $invoice_item->type_id = '3';
         $invoice_item->product_key = ctrans('texts.surcharge');
         $invoice_item->notes = ctrans('texts.online_payment_surcharge');
         $invoice_item->quantity = 1;
         $invoice_item->cost = $gateway_fee;
+        $invoice_item->unit_code = $this->payment_hash_string;
 
         if ($fees_and_limits = $this->company_gateway->getFeesAndLimits($this->gateway_type_id)) {
             $invoice_item->tax_rate1 = $fees_and_limits->fee_tax_rate1;
@@ -81,6 +61,7 @@ class AddGatewayFee extends AbstractService
             $invoice_item->tax_name2 = $fees_and_limits->fee_tax_name2;
             $invoice_item->tax_rate3 = $fees_and_limits->fee_tax_rate3;
             $invoice_item->tax_name3 = $fees_and_limits->fee_tax_name3;
+            $invoice_item->tax_id = (string)Product::PRODUCT_TYPE_OVERRIDE_TAX;
         }
 
         $invoice_items = (array) $this->invoice->line_items;
@@ -95,11 +76,6 @@ class AddGatewayFee extends AbstractService
 
         if (floatval($new_balance) - floatval($balance) != 0) {
             $adjustment = $new_balance - $balance;
-
-            // $this->invoice
-            // ->client
-            // ->service()
-            // ->updateBalance($adjustment);
 
             $this->invoice
             ->ledger()
@@ -120,7 +96,7 @@ class AddGatewayFee extends AbstractService
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->invoice->company->settings));
 
-        $invoice_item = new InvoiceItem;
+        $invoice_item = new InvoiceItem();
         $invoice_item->type_id = '3';
         $invoice_item->product_key = ctrans('texts.discount');
         $invoice_item->notes = ctrans('texts.online_payment_discount');
@@ -144,12 +120,6 @@ class AddGatewayFee extends AbstractService
 
         if (floatval($new_balance) - floatval($balance) != 0) {
             $adjustment = $new_balance - $balance;
-
-            // $this->invoice
-            // ->client
-            // ->service()
-            // ->updateBalance($adjustment * -1)
-            // ->save();
 
             $this->invoice
             ->ledger()

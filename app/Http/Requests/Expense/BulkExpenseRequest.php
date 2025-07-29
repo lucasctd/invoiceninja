@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -37,12 +37,13 @@ class BulkExpenseRequest extends Request
         $user = auth()->user();
 
         return [
+            'action' => 'required|string|in:archive,restore,delete,bulk_update,bulk_categorize',
             'ids' => ['required','bail','array', Rule::exists('expenses', 'id')->where('company_id', $user->company()->id)],
             'category_id' => ['sometimes', 'bail', Rule::exists('expense_categories', 'id')->where('company_id', $user->company()->id)],
-            'action' => 'in:archive,restore,delete,bulk_categorize',
+            'column' => ['required_if:action,bulk_update', 'string', Rule::in(\App\Models\Expense::$bulk_update_columns)],
+            'new_value' => ['required_if:action,bulk_update|string'],
         ];
 
-        
     }
 
     public function prepareForValidation()
@@ -55,6 +56,10 @@ class BulkExpenseRequest extends Request
 
         if (isset($input['category_id'])) {
             $input['category_id'] = $this->transformKeys($input['category_id']);
+        }
+
+        if (isset($input['newValue'])) {
+            $input['new_value'] = $input['newValue'];
         }
 
         $this->replace($input);

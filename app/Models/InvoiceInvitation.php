@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,7 +12,6 @@
 namespace App\Models;
 
 use App\Utils\Traits\Inviteable;
-use App\Utils\Traits\MakesDates;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
@@ -77,7 +76,6 @@ use Illuminate\Support\Carbon;
  */
 class InvoiceInvitation extends BaseModel
 {
-    use MakesDates;
     use SoftDeletes;
     use Inviteable;
 
@@ -95,6 +93,11 @@ class InvoiceInvitation extends BaseModel
     public function getEntityType()
     {
         return self::class;
+    }
+
+    public function getEntityString(): string
+    {
+        return 'invoice';
     }
 
     public function entityType()

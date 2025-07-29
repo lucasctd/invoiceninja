@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -11,7 +12,7 @@
 
 namespace App\Services\Pdf;
 
-use App\Jobs\Invoice\CreateEInvoice;
+use App\Jobs\EDocument\CreateEDocument;
 use App\Models\Company;
 use App\Models\CreditInvitation;
 use App\Models\Invoice;
@@ -29,7 +30,8 @@ use horstoeko\zugferd\ZugferdDocumentPdfBuilder;
 
 class PdfService
 {
-    use PdfMaker, PageNumbering;
+    use PdfMaker;
+    use PageNumbering;
 
     public InvoiceInvitation | QuoteInvitation | CreditInvitation | RecurringInvoiceInvitation | PurchaseOrderInvitation $invitation;
 
@@ -51,10 +53,10 @@ class PdfService
 
     public float $execution_time;
 
-    const DELIVERY_NOTE = 'delivery_note';
-    const STATEMENT = 'statement';
-    const PURCHASE_ORDER = 'purchase_order';
-    const PRODUCT = 'product';
+    public const DELIVERY_NOTE = 'delivery_note';
+    public const STATEMENT = 'statement';
+    public const PURCHASE_ORDER = 'purchase_order';
+    public const PRODUCT = 'product';
 
     public function __construct($invitation, $document_type = 'product', $options = [])
     {
@@ -88,7 +90,10 @@ class PdfService
     public function getPdf()
     {
         try {
-            $pdf = $this->resolvePdfEngine($this->getHtml());
+
+            $html = $this->getHtml();
+            // nlog($html);
+            $pdf = $this->resolvePdfEngine($html);
 
             $numbered_pdf = $this->pageNumbering($pdf, $this->company);
 
@@ -96,17 +101,17 @@ class PdfService
                 $pdf = $numbered_pdf;
             }
 
-            if($this->config->entity_string == "invoice" && $this->config->settings->enable_e_invoice) {
+            if ($this->config->entity_string == "invoice" && $this->config->settings->enable_e_invoice) {
                 $pdf = $this->checkEInvoice($pdf);
             }
 
         } catch (\Exception $e) {
-            nlog(print_r($e->getMessage(), 1));
+            nlog($e->getMessage());
             throw new \Exception($e->getMessage(), $e->getCode());
         }
 
         $this->execution_time = microtime(true) - $this->start_time;
-        
+
         return $pdf;
     }
 
@@ -119,17 +124,14 @@ class PdfService
     public function getHtml(): string
     {
 
-        $html = $this->builder->getCompiledHTML();
+        $html = \App\Services\Pdf\Purify::clean($this->builder->document->saveHTML());
 
         if (config('ninja.log_pdf_html')) {
             nlog($html);
         }
-
-        $this->execution_time = microtime(true) - $this->start_time;
-
         return $html;
     }
-        
+
     /**
      * Initialize all the services to build the PDF
      *
@@ -141,10 +143,9 @@ class PdfService
 
         $this->config = (new PdfConfiguration($this))->init();
 
-
-        $this->html_variables = $this->config->client ?
-                                    (new HtmlEngine($this->invitation))->generateLabelsAndValues() :
-                                    (new VendorHtmlEngine($this->invitation))->generateLabelsAndValues();
+        $this->html_variables = ($this->invitation instanceof \App\Models\PurchaseOrderInvitation) ?
+                                    (new VendorHtmlEngine($this->invitation))->generateLabelsAndValues() :
+                                    (new HtmlEngine($this->invitation))->generateLabelsAndValues();
 
         $this->designer = (new PdfDesigner($this))->build();
 
@@ -161,7 +162,7 @@ class PdfService
     public function resolvePdfEngine(string $html): mixed
     {
         if (config('ninja.phantomjs_pdf_generation') || config('ninja.pdf_generator') == 'phantom') {
-            $pdf = (new Phantom)->convertHtmlToPdf($html);
+            $pdf = (new Phantom())->convertHtmlToPdf($html);
         } elseif (config('ninja.invoiceninja_hosted_pdf_generation') || config('ninja.pdf_generator') == 'hosted_ninja') {
             $pdf = (new NinjaPdf())->build($html);
         } else {
@@ -179,7 +180,7 @@ class PdfService
      */
     private function checkEInvoice(string $pdf): string
     {
-        if(!$this->config->entity instanceof Invoice) {
+        if (!$this->config->entity instanceof Invoice) {
             return $pdf;
         }
 
@@ -204,7 +205,7 @@ class PdfService
         }
 
     }
-    
+
     /**
      * Embed the .xml file into the PDF
      *
@@ -215,14 +216,14 @@ class PdfService
     {
         try {
 
-            $e_rechnung = (new CreateEInvoice($this->config->entity, true))->handle();
+            $e_rechnung = (new CreateEDocument($this->config->entity, true))->handle();
             $pdfBuilder = new ZugferdDocumentPdfBuilder($e_rechnung, $pdf);
             $pdfBuilder->generateDocument();
-            
-            return $pdfBuilder->downloadString(basename($this->config->entity->getFileName()));
 
-        } catch (\Exception $e) {
-            nlog("E_Invoice Merge failed - " . $e->getMessage());
+            return $pdfBuilder->downloadString();
+
+        } catch (\Throwable $th) {
+            nlog("E_Invoice Merge failed - " . $th->getMessage());
         }
 
         return $pdf;

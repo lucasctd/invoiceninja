@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -103,14 +103,14 @@ class Response
     public function __construct($data = null)
     {
 
-        if($data) {
+        if ($data) {
 
-            foreach($data as $key => $value) {
+            foreach ($data as $key => $value) {
                 $this->{$key} = $value;
             }
 
         }
-        
+
     }
 
 }

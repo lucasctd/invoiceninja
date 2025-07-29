@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -65,7 +65,7 @@ class Kernel extends HttpKernel
      *
      * These middleware are run during every request to your application.
      *
-     * @var array
+     * @var array<int,string>
      */
     protected $middleware = [
         CheckForMaintenanceMode::class,
@@ -79,7 +79,7 @@ class Kernel extends HttpKernel
     /**
      * The application's route middleware groups.
      *
-     * @var array
+     * @var array<string, array<int,string>>
      */
     protected $middlewareGroups = [
         'web' => [
@@ -125,7 +125,7 @@ class Kernel extends HttpKernel
      *
      * These middleware may be assigned to groups or used individually.
      *
-     * @var array
+     * @var array<string,string>
      */
     protected $middlewareAliases = [
         'auth' => Authenticate::class,
@@ -135,7 +135,7 @@ class Kernel extends HttpKernel
         'can' => Authorize::class,
         'cors' => Cors::class,
         'guest' => RedirectIfAuthenticated::class,
-        'signed' => ValidateSignature::class,
+        'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'verified' => EnsureEmailIsVerified::class,
         'query_logging' => QueryLogging::class,
         'token_auth' => TokenAuth::class,

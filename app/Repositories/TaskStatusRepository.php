@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -45,7 +45,7 @@ class TaskStatusRepository extends BaseRepository
                                  ->first();
 
         $new_status = $task_status ? $task_status->id : null;
-        
+
         Task::withTrashed()
             ->where('status_id', $task_status->id)
             ->where('company_id', $task_status->company_id)
@@ -65,15 +65,18 @@ class TaskStatusRepository extends BaseRepository
                     ->orderByRaw('ISNULL(status_order), status_order ASC')
                     ->cursor()
                     ->each(function ($ts, $key) use ($task_status) {
-                    
-                        if($ts->status_order < $task_status->status_order) {
+
+                        if ($ts->status_order < $task_status->status_order) {
                             $ts->status_order--;
                             $ts->save();
-                        } elseif($ts->status_order >= $task_status->status_order) {
-                            $ts->status_order ++;
+                        } elseif ($ts->status_order >= $task_status->status_order) {
+                            $ts->status_order++;
+                            $ts->save();
+                        } else {
+                            $ts->status_order = 99999;
                             $ts->save();
                         }
-                    
+
                     });
 
 
@@ -81,7 +84,7 @@ class TaskStatusRepository extends BaseRepository
                 ->orderByRaw('ISNULL(status_order), status_order ASC')
                 ->cursor()
                 ->each(function ($ts, $key) {
-                    $ts->status_order = $key+1;
+                    $ts->status_order = $key + 1;
                     $ts->save();
                 });
 

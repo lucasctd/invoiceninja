@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,11 +25,11 @@ class UserService
     {
     }
 
-    public function invite(Company $company, bool $is_react=true)
+    public function invite(Company $company, bool $is_react = true)
     {
 
         try {
-            $nmo = new NinjaMailerObject;
+            $nmo = new NinjaMailerObject();
             $nmo->mailable = new NinjaMailer((new VerifyUserObject($this->user, $company, $is_react))->build());
             $nmo->company = $company;
             $nmo->to_user = $this->user;

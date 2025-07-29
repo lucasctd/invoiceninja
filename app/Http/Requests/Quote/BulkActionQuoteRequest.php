@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -21,7 +21,7 @@ class BulkActionQuoteRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         return true;
     }
@@ -35,10 +35,11 @@ class BulkActionQuoteRequest extends Request
             'ids' => 'required|array',
             'template' => 'sometimes|string',
             'template_id' => 'sometimes|string',
-            'send_email' => 'sometimes|bool'
+            'send_email' => 'sometimes|bool',
+            'email_type' => 'sometimes|in:quote,reminder1,custom1,custom2,custom3',
         ];
 
-        if (in_array($input['action'], ['convert,convert_to_invoice'])) {
+        if (in_array($input['action'], ['convert','convert_to_invoice'])) {
             $rules['action'] = [new ConvertableQuoteRule()];
         }
 

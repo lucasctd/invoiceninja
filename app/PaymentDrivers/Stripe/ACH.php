@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -24,6 +24,7 @@ use App\Models\Payment;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\StripePaymentDriver;
 use App\Utils\Traits\MakesHash;
 use Exception;
@@ -35,7 +36,7 @@ use Stripe\Exception\InvalidRequestException;
 use Stripe\Exception\RateLimitException;
 use Stripe\PaymentIntent;
 
-class ACH
+class ACH implements LivewireMethodInterface
 {
     use MakesHash;
 
@@ -109,14 +110,36 @@ class ACH
 
     public function verificationView(ClientGatewayToken $token)
     {
-        if (isset($token->meta->state) && $token->meta->state === 'authorized') {
-            return redirect()
-                ->route('client.payment_methods.show', $token->hashed_id)
-                ->with('message', __('texts.payment_method_verified'));
-        }
 
         //double check here if we need to show the verification view.
         $this->stripe->init();
+
+        if (substr($token->token, 0, 2) == 'pm') {
+            $pm = $this->stripe->getStripePaymentMethod($token->token);
+
+            if (!$pm->customer) {
+
+                $meta = $token->meta;
+                $meta->state = 'unauthorized';
+                $token->meta = $meta;
+                $token->save();
+
+                return redirect()
+                    ->route('client.payment_methods.show', $token->hashed_id);
+
+            }
+
+            if (isset($token->meta->state) && $token->meta->state === 'authorized') {
+                return redirect()
+                    ->route('client.payment_methods.show', $token->hashed_id)
+                    ->with('message', __('texts.payment_method_verified'));
+            }
+
+            if ($token->meta->next_action) {
+                return redirect($token->meta->next_action);
+            }
+
+        }
 
         $bank_account = Customer::retrieveSource($token->gateway_customer_reference, $token->token, [], $this->stripe->stripe_connect_auth);
 
@@ -177,47 +200,12 @@ class ACH
      */
     public function paymentView(array $data)
     {
-        $data['gateway'] = $this->stripe;
-        $data['currency'] = $this->stripe->client->getCurrencyCode();
-        $data['payment_method_id'] = GatewayType::BANK_TRANSFER;
-        $data['customer'] = $this->stripe->findOrCreateCustomer();
-        $data['amount'] = $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency());
+        $data = $this->paymentData($data);
 
-        $description = $this->stripe->getDescription(false);
-
-        $intent = false;
-
-        if (count($data['tokens']) == 1) {
-        
+        if (!$data['authorized']) {
             $token = $data['tokens'][0];
-
-            $meta = $token->meta;
-
-            if(isset($meta->state) && $meta->state == 'unauthorized') {
-                return redirect()->route('client.payment_methods.show', $token->hashed_id);
-            }
+            return redirect()->route('client.payment_methods.show', $token->hashed_id);
         }
-
-        if (count($data['tokens']) == 0) {
-            $intent =
-            $this->stripe->createPaymentIntent(
-                [
-                'amount' => $data['amount'],
-                'currency' => $data['currency'],
-                'setup_future_usage' => 'off_session',
-                'customer' => $data['customer']->id,
-                'payment_method_types' => ['us_bank_account'],
-                'description' => $description,
-                'metadata' => [
-                    'payment_hash' => $this->stripe->payment_hash->hash,
-                    'gateway_type_id' => GatewayType::BANK_TRANSFER,
-                ],
-                'statement_descriptor' => $this->stripe->getStatementDescriptor(),
-            ]
-            );
-        }
-
-        $data['client_secret'] = $intent ? $intent->client_secret : false;
 
         return render('gateways.stripe.ach.pay', $data);
     }
@@ -319,8 +307,9 @@ class ACH
                     $data['message'] = 'Too many requests made to the API too quickly';
                     break;
                 case $e instanceof InvalidRequestException:
-                    $data['message'] = 'Invalid parameters were supplied to Stripe\'s API';
-                    break;
+
+                    return redirect()->route('client.payment_methods.verification', ['payment_method' => $cgt->hashed_id, 'method' => GatewayType::BANK_TRANSFER]);
+
                 case $e instanceof AuthenticationException:
                     $data['message'] = 'Authentication with Stripe\'s API failed';
                     break;
@@ -569,7 +558,7 @@ class ACH
         $state = property_exists($method, 'state') ? $method->state : 'unauthorized';
 
         try {
-            $payment_meta = new \stdClass;
+            $payment_meta = new \stdClass();
             $payment_meta->brand = (string) \sprintf('%s (%s)', $method->bank_name, ctrans('texts.ach'));
             $payment_meta->last4 = (string) $method->last4;
             $payment_meta->type = GatewayType::BANK_TRANSFER;
@@ -596,7 +585,7 @@ class ACH
                 'company_id' => $this->stripe->client->company_id,
             ])->first();
 
-            if($token) {
+            if ($token) {
                 return $token;
             }
 
@@ -604,5 +593,59 @@ class ACH
         } catch (Exception $e) {
             return $this->stripe->processInternallyFailedPayment($this->stripe, $e);
         }
+    }
+
+    public function livewirePaymentView(array $data): string
+    {
+        return 'gateways.stripe.ach.pay_livewire';
+    }
+
+    public function paymentData(array $data): array
+    {
+        $data['gateway'] = $this->stripe;
+        $data['currency'] = $this->stripe->client->getCurrencyCode();
+        $data['payment_method_id'] = GatewayType::BANK_TRANSFER;
+        $data['customer'] = $this->stripe->findOrCreateCustomer();
+        $data['amount'] = $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency());
+        $data['authorized'] = true;
+
+        $description = $this->stripe->getDescription(false);
+
+        $intent = false;
+
+        if (count($data['tokens']) == 1) {
+
+            $token = $data['tokens'][0];
+
+            $meta = $token->meta;
+
+            if (isset($meta->state) && $meta->state == 'unauthorized') {
+                $data['authorized'] = false;
+                // return redirect()->route('client.payment_methods.show', $token->hashed_id);
+            }
+        }
+
+        if (count($data['tokens']) == 0) {
+            $intent =
+            $this->stripe->createPaymentIntent(
+                [
+                'amount' => $data['amount'],
+                'currency' => $data['currency'],
+                'setup_future_usage' => 'off_session',
+                'customer' => $data['customer']->id,
+                'payment_method_types' => ['us_bank_account'],
+                'description' => $description,
+                'metadata' => [
+                    'payment_hash' => $this->stripe->payment_hash->hash,
+                    'gateway_type_id' => GatewayType::BANK_TRANSFER,
+                ],
+                'statement_descriptor' => $this->stripe->getStatementDescriptor(),
+            ]
+            );
+        }
+
+        $data['client_secret'] = $intent ? $intent->client_secret : false;
+
+        return $data;
     }
 }

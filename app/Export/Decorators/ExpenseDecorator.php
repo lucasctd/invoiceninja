@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,20 +19,25 @@ class ExpenseDecorator implements DecoratorInterface
     {
         $expense = false;
 
-        if($entity instanceof Expense) {
+        if ($entity instanceof Expense) {
             $expense = $entity;
-        } elseif($entity->expense) {
+        } elseif ($entity->expense) {
             $expense = $entity->expense;
         }
 
-        if($expense && method_exists($this, $key)) {
+        if ($expense && method_exists($this, $key)) {
             return $this->{$key}($expense);
-        } elseif($expense && $expense->{$key}) {
+        } elseif ($expense && ($expense->{$key} ?? false)) {
             return $expense->{$key};
         }
 
         return '';
 
+    }
+
+    public function category(Expense $expense)
+    {
+        return $this->category_id($expense);
     }
 
     public function category_id(Expense $expense)
@@ -86,7 +91,7 @@ class ExpenseDecorator implements DecoratorInterface
     {
         return strip_tags($expense->public_notes ?? '');
     }
-    
+
     public function vendor_id(Expense $expense)
     {
         return $expense->vendor ? $expense->vendor->name : '';

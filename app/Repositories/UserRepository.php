@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -72,7 +72,12 @@ class UserRepository extends BaseRepository
             $user->confirmation_code = $this->createDbHash($company->db);
         }
 
-        $user->account_id = $account->id;
+        //@18-10-2024 - ensure no cross account linkage.
+        if (is_numeric($user->account_id) && $user->account_id != $account->id) {
+            throw new \Illuminate\Auth\Access\AuthorizationException("Illegal operation encountered for {$user->hashed_id}", 401);
+        }
+
+        $user->account_id = $account->id;//@todo we should never change the account_id if it is set at this point.
 
         if (strlen($user->password) >= 1) {
             $user->has_password = true;
@@ -120,7 +125,7 @@ class UserRepository extends BaseRepository
 
     public function destroy(array $data, User $user)
     {
-        if ($user->isOwner()) {
+        if ($user->hasOwnerFlag()) {
             return $user;
         }
 
@@ -206,6 +211,7 @@ class UserRepository extends BaseRepository
                          ->first();
 
         $cu->restore();
+        $cu->tokens()->restore();
 
         event(new UserWasRestored($user, auth()->user(), auth()->user()->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null)));
     }

@@ -17,13 +17,19 @@
     <input type="hidden" name="is_recurring" value="{{ isset($is_recurring) ? $is_recurring : false }}">
     <input type="hidden" name="frequency_id" value="{{ isset($frequency_id) ? $frequency_id : false }}">
     <input type="hidden" name="remaining_cycles" value="{{ isset($remaining_cycles) ? $remaining_cycles : false }}">
+    <input type="hidden" name="contact_first_name" value="{{ auth()->guard('contact')->user()->first_name }}">
+    <input type="hidden" name="contact_last_name" value="{{ auth()->guard('contact')->user()->last_name }}">
+    <input type="hidden" name="contact_email" value="{{ auth()->guard('contact')->user()->email }}">
+
+    <input type="hidden" name="client_city" value="{{ auth()->guard('contact')->user()->client->city }}">
+    <input type="hidden" name="client_postal_code" value="{{ auth()->guard('contact')->user()->client->postal_code }}">
 
     <div class="container mx-auto">
         <div class="grid grid-cols-6 gap-4">
             <div class="col-span-6 md:col-start-2 md:col-span-4">
                 <div class="flex justify-end">
                     <div class="flex justify-end mb-2">
-                        @livewire('pay-now-dropdown', ['total' => $total, 'company' => $company])
+                        @livewire('pay-now-dropdown', ['total' => $total, 'company_id' => $company->id, 'db' => $company->db])
                     </div>
                 </div>
 
@@ -150,7 +156,8 @@
     </div>
 </form>
 
-@include('portal.ninja2020.invoices.includes.terms', ['entities' => $invoices, 'entity_type' => ctrans('texts.invoice')])
+@include('portal.ninja2020.invoices.includes.required-fields')
+@include('portal.ninja2020.invoices.includes.terms', ['entities' => $invoices, 'variables' => $variables, 'entity_type' => ctrans('texts.invoice')])
 @include('portal.ninja2020.invoices.includes.signature')
 
 @endsection

@@ -14,12 +14,15 @@ namespace App\Import\Transformer\Csv;
 use App\Import\ImportException;
 use App\Import\Transformer\BaseTransformer;
 use App\Models\Quote;
+use App\Utils\Traits\CleanLineItems;
 
 /**
  * Class QuoteTransformer.
  */
 class QuoteTransformer extends BaseTransformer
 {
+    use CleanLineItems;
+
     /**
      * @param $data
      *
@@ -56,10 +59,10 @@ class QuoteTransformer extends BaseTransformer
             'discount' => $this->getFloat($quote_data, 'quote.discount'),
             'po_number' => $this->getString($quote_data, 'quote.po_number'),
             'date' => isset($quote_data['quote.date'])
-                ? date('Y-m-d', strtotime(str_replace("/", "-", $quote_data['quote.date'])))
+                ? $this->parseDate($quote_data['quote.date'])
                 : now()->format('Y-m-d'),
             'due_date' => isset($quote_data['quote.due_date'])
-                ? date('Y-m-d', strtotime(str_replace("/", "-", $quote_data['quote.due_date'])))
+                ? $this->parseDate($quote_data['quote.due_date'])
                 : null,
             'terms' => $this->getString($quote_data, 'quote.terms'),
             'public_notes' => $this->getString(
@@ -94,10 +97,7 @@ class QuoteTransformer extends BaseTransformer
             ),
             'footer' => $this->getString($quote_data, 'quote.footer'),
             'partial' => $this->getFloat($quote_data, 'quote.partial'),
-            'partial_due_date' => $this->getString(
-                $quote_data,
-                'quote.partial_due_date'
-            ),
+            'partial_due_date' =>  isset($quote_data['quote.partial_due_date']) ? $this->parseDate($quote_data['quote.partial_due_date']) : null,
             'custom_surcharge1' => $this->getString(
                 $quote_data,
                 'quote.custom_surcharge1'
@@ -123,7 +123,7 @@ class QuoteTransformer extends BaseTransformer
                         $this->getString($quote_data, 'quote.status')
                     ))
                 ] ?? Quote::STATUS_SENT,
-            'archived' => $status === 'archived',
+            // 'archived' => $status === 'archived',
         ];
 
         /* If we can't find the client, then lets try and create a client */
@@ -139,10 +139,7 @@ class QuoteTransformer extends BaseTransformer
             $transformed['payments'] = [
                 [
                     'date' => isset($quote_data['payment.date'])
-                        ? date(
-                            'Y-m-d',
-                            strtotime($quote_data['payment.date'])
-                        )
+                        ? $this->parseDate($quote_data['payment.date'])
                         : date('y-m-d'),
                     'transaction_reference' => $this->getString(
                         $quote_data,
@@ -158,10 +155,7 @@ class QuoteTransformer extends BaseTransformer
             $transformed['payments'] = [
                 [
                     'date' => isset($quote_data['payment.date'])
-                        ? date(
-                            'Y-m-d',
-                            strtotime($quote_data['payment.date'])
-                        )
+                        ? $this->parseDate($quote_data['payment.date'])
                         : date('y-m-d'),
                     'transaction_reference' => $this->getString(
                         $quote_data,
@@ -181,10 +175,7 @@ class QuoteTransformer extends BaseTransformer
             $transformed['payments'] = [
                 [
                     'date' => isset($quote_data['payment.date'])
-                        ? date(
-                            'Y-m-d',
-                            strtotime($quote_data['payment.date'])
-                        )
+                        ? $this->parseDate($quote_data['payment.date'])
                         : date('y-m-d'),
                     'transaction_reference' => $this->getString(
                         $quote_data,
@@ -233,7 +224,7 @@ class QuoteTransformer extends BaseTransformer
                 'type_id' => '1', //$this->getQuoteTypeId( $record, 'item.type_id' ),
             ];
         }
-        $transformed['line_items'] = $line_items;
+        $transformed['line_items'] = $this->cleanItems($line_items);
 
         return $transformed;
     }

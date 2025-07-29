@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -108,15 +108,15 @@ class SwissQrGenerator
 
         // Add payment reference
         // This is what you will need to identify incoming payments.
-        
+
         if (stripos($this->invoice->number, "Live") === 0) {
             // we're currently in preview status. Let's give a dummy reference for now
             $invoice_number = "123456789";
         } else {
             $tempInvoiceNumber = $this->invoice->number;
             $tempInvoiceNumber = preg_replace('/[^A-Za-z0-9]/', '', $tempInvoiceNumber);
-            $tempInvoiceNumber = substr($tempInvoiceNumber, 1);
-        
+            // $tempInvoiceNumber = substr($tempInvoiceNumber, 1);
+
             $calcInvoiceNumber = "";
             $array = str_split($tempInvoiceNumber);
             foreach ($array as $char) {
@@ -132,7 +132,7 @@ class SwissQrGenerator
                 }
                 $calcInvoiceNumber .= $char;
             }
-       
+
             $invoice_number = $calcInvoiceNumber;
         }
 
@@ -159,7 +159,7 @@ class SwissQrGenerator
         // Optionally, add some human-readable information about what the bill is for.
         $qrBill->setAdditionalInformation(
             QrBill\DataGroup\Element\AdditionalInformation::create(
-                $this->invoice->public_notes ? substr($this->invoice->public_notes, 0, 139) : ctrans('texts.invoice_number_placeholder', ['invoice' => $this->invoice->number])
+                $this->invoice->public_notes ? substr(strip_tags($this->invoice->public_notes), 0, 139) : ctrans('texts.invoice_number_placeholder', ['invoice' => $this->invoice->number])
             )
         );
 
@@ -172,20 +172,21 @@ class SwissQrGenerator
                 ->setPrintable(false)
                 ->getPaymentPart();
 
-            return $html;
+                // return $html;
+            return htmlspecialchars($html);
         } catch (\Exception $e) {
 
-            if(is_iterable($qrBill->getViolations())) {
-           
-                foreach ($qrBill->getViolations() as $key => $violation) {
-                    nlog("qr");
-                    nlog($violation);
-                }
+            // if (is_iterable($qrBill->getViolations())) {
 
-            }
+            //     foreach ($qrBill->getViolations() as $key => $violation) {
+            //         nlog("qr");
+            //         nlog($violation);
+            //     }
 
-            nlog($e->getMessage());
-            
+            // }
+
+            // nlog($e->getMessage());
+
             return '';
             // return $e->getMessage();
         }
@@ -207,7 +208,7 @@ class SwissQrGenerator
             case 'fr_CA':
             case 'fr_CH':
                 return 'fr';
-            
+
             default:
                 return 'en';
         }

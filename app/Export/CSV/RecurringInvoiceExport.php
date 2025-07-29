@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,7 +23,6 @@ use League\Csv\Writer;
 
 class RecurringInvoiceExport extends BaseExport
 {
-
     private $invoice_transformer;
 
     public string $date_key = 'date';
@@ -57,10 +56,24 @@ class RecurringInvoiceExport extends BaseExport
         $query = RecurringInvoice::query()
                         ->withTrashed()
                         ->with('client')
-                        ->where('company_id', $this->company->id)
-                        ->where('is_deleted', 0);
+                        ->whereHas('client', function ($q) {
+                            $q->where('is_deleted', false);
+                        })
+                        ->where('company_id', $this->company->id);
 
-        $query = $this->addDateRange($query);
+        if (!$this->input['include_deleted'] ?? false) {
+            $query->where('is_deleted', 0);
+        }
+
+        $query = $this->addDateRange($query, 'recurring_invoices');
+
+        $clients = &$this->input['client_id'];
+
+        if ($clients) {
+            $query = $this->addClientFilter($query, $clients);
+        }
+
+        $query = $this->addRecurringInvoiceStatusFilter($query, $this->input['status'] ?? '');
 
         return $query;
 
@@ -73,12 +86,15 @@ class RecurringInvoiceExport extends BaseExport
 
         //load the CSV document from a string
         $this->csv = Writer::createFromString();
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
         $this->csv->insertOne($this->buildHeader());
 
         $query->cursor()
             ->each(function ($invoice) {
+
+                /** @var \App\Models\RecurringInvoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 
@@ -98,21 +114,22 @@ class RecurringInvoiceExport extends BaseExport
 
         $report = $query->cursor()
                 ->map(function ($resource) {
+
+                    /** @var \App\Models\RecurringInvoice $resource */
                     $row = $this->buildRow($resource);
                     return $this->processMetaData($row, $resource);
                 })->toArray();
-        
+
         return array_merge(['columns' => $header], $report);
     }
 
 
-    private function buildRow(RecurringInvoice $invoice) :array
+    private function buildRow(RecurringInvoice $invoice): array
     {
         $transformed_invoice = $this->invoice_transformer->transform($invoice);
-        $transformed_invoice['frequency_id'] = $invoice->frequencyForKey($invoice->frequency_id); //need to inject this here because it is also a valid key
-// nlog($transformed_invoice);
 
         $entity = [];
+        $currency = $this->company->currency();
 
         foreach (array_values($this->input['report_keys']) as $key) {
 
@@ -120,47 +137,24 @@ class RecurringInvoiceExport extends BaseExport
 
             if (is_array($parts) && $parts[0] == 'recurring_invoice' && array_key_exists($parts[1], $transformed_invoice)) {
                 $entity[$key] = $transformed_invoice[$parts[1]];
-            } elseif($parts[0] == 'item'){
+            } elseif ($parts[0] == 'item') {
                 $entity[$key] = '';
-            } 
-            else {
-                // nlog($key);
+            } else {
                 $entity[$key] = $this->decorator->transform($key, $invoice);
-                // $entity[$key] = '';
-                // $entity[$key] = $this->resolveKey($key, $invoice, $this->invoice_transformer);
+            }
+
+            if (is_float($entity[$key])) {
+                $entity[$key] = \App\Utils\Number::formatValue($entity[$key], $currency);
             }
 
         }
-// nlog($entity);
-        return $entity;
-        // return $this->decorateAdvancedFields($invoice, $entity);
+
+        // return $entity;
+        return $this->decorateAdvancedFields($invoice, $entity);
     }
 
-    private function decorateAdvancedFields(RecurringInvoice $invoice, array $entity) :array
+    private function decorateAdvancedFields(RecurringInvoice $invoice, array $entity): array
     {
-        if (in_array('country_id', $this->input['report_keys'])) {
-            $entity['country'] = $invoice->client->country ? ctrans("texts.country_{$invoice->client->country->name}") : '';
-        }
-
-        if (in_array('currency_id', $this->input['report_keys'])) {
-            $entity['currency'] = $invoice->client->currency() ? $invoice->client->currency()->code : $invoice->company->currency()->code;
-        }
-
-        if (in_array('client_id', $this->input['report_keys'])) {
-            $entity['client'] = $invoice->client->present()->name();
-        }
-
-        if (in_array('recurring_invoice.status', $this->input['report_keys'])) {
-            $entity['recurring_invoice.status'] = $invoice->stringStatus($invoice->status_id);
-        }
-
-        if (in_array('project_id', $this->input['report_keys'])) {
-            $entity['project'] = $invoice->project ? $invoice->project->name : '';
-        }
-
-        if (in_array('vendor_id', $this->input['report_keys'])) {
-            $entity['vendor'] = $invoice->vendor ? $invoice->vendor->name : '';
-        }
 
         if (in_array('recurring_invoice.frequency_id', $this->input['report_keys']) || in_array('frequency_id', $this->input['report_keys'])) {
             $entity['recurring_invoice.frequency_id'] = $invoice->frequencyForKey($invoice->frequency_id);

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -15,35 +15,33 @@ use App\Models\Payment;
 
 class PaymentDecorator extends Decorator implements DecoratorInterface
 {
-
     private $entity_key = 'payment';
 
     public function transform(string $key, $entity): mixed
     {
         $payment = false;
 
-        if($entity instanceof Payment) {
+        if ($entity instanceof Payment) {
             $payment = $entity;
-        } elseif($entity->payment) {
+        } elseif ($entity->payment) {
             $payment = $entity->payment;
-        } elseif($entity->payments()->exists()) {
+        } elseif ($entity->payments()->exists()) {
             $payment = $entity->payments()->first();
         }
 
-        if($key == 'amount' && (!$entity instanceof Payment)) {
+        if ($key == 'amount' && (!$entity instanceof Payment)) {
             return $entity->payments()->exists() ? $entity->payments()->withoutTrashed()->sum('paymentables.amount') : ctrans('texts.unpaid');
-        } elseif($key == 'refunded' && (!$entity instanceof Payment)) {
+        } elseif ($key == 'refunded' && (!$entity instanceof Payment)) {
             return $entity->payments()->exists() ? $entity->payments()->withoutTrashed()->sum('paymentables.refunded') : '';
-        } elseif($key == 'applied' && (!$entity instanceof Payment)) {
+        } elseif ($key == 'applied' && (!$entity instanceof Payment)) {
             $refunded = $entity->payments()->withoutTrashed()->sum('paymentables.refunded');
             $amount = $entity->payments()->withoutTrashed()->sum('paymentables.amount');
             return $entity->payments()->withoutTrashed()->exists() ? ($amount - $refunded) : '';
         }
 
-        if($payment && method_exists($this, $key)) {
+        if ($payment && method_exists($this, $key)) {
             return $this->{$key}($payment);
-        }
-        elseif($payment && $payment->{$key}){
+        } elseif ($payment && ($payment->{$key} ?? false)) {
             return $payment->{$key};
         }
 

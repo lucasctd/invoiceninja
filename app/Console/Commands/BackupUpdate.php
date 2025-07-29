@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -56,10 +56,10 @@ class BackupUpdate extends Command
     {
         //always return state to first DB
 
-        if(Ninja::isSelfHost()) {
+        if (Ninja::isSelfHost()) {
             return;
         }
-            
+
         $current_db = config('database.default');
 
         if (! config('ninja.db.multi_db_enabled')) {
@@ -91,7 +91,7 @@ class BackupUpdate extends Command
 
                    $logo = @file_get_contents($company_logo_path);
                    $extension = @pathinfo($company->settings->company_logo, PATHINFO_EXTENSION);
-            
+
                    if ($logo && $extension) {
                        $path = "{$company->company_key}/{$company->company_key}.{$extension}";
 
@@ -117,7 +117,7 @@ class BackupUpdate extends Command
 
                   $logo = @file_get_contents($company_logo_path);
                   $extension = @pathinfo($company_logo_path, PATHINFO_EXTENSION);
-       
+
                   if ($logo && $extension) {
                       $path = "{$client->company->company_key}/{$client->client_hash}.{$extension}";
 
@@ -148,7 +148,7 @@ class BackupUpdate extends Command
 
                   $logo = @file_get_contents($company_logo_path);
                   $extension = @pathinfo($company_logo_path, PATHINFO_EXTENSION);
-       
+
                   if ($logo && $extension) {
                       $path = "{$group->company->company_key}/{$group->hashed_id}.{$extension}";
 
@@ -175,8 +175,8 @@ class BackupUpdate extends Command
 
                     try {
                         $doc_bin = $document->getFile();
-                    } catch(\Exception $e) {
-                        nlog($e->getMessage());
+                    } catch (\Exception $e) {
+                        nlog("Exception:: BackupUpdate::" . $e->getMessage());
                     }
 
                     if ($doc_bin) {
@@ -184,8 +184,6 @@ class BackupUpdate extends Command
 
                         $document->disk = $this->option('disk');
                         $document->saveQuietly();
-
-                        nlog("Documents - Moving {$document->url} to {$this->option('disk')}");
                     }
                 });
 
@@ -199,8 +197,6 @@ class BackupUpdate extends Command
 
                     if ($backup_bin) {
                         Storage::disk($this->option('disk'))->put($backup->filename, $backup_bin);
-
-                        nlog("Backups - Moving {$backup->filename} to {$this->option('disk')}");
                     }
                 });
     }

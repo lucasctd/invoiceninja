@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -132,7 +132,7 @@ class IncomeTransformer implements BankRevenueInterface
             }
 
             //some object do no store amounts ignore these
-            if(!property_exists($transaction, 'amount')) {
+            if (!property_exists($transaction, 'amount')) {
                 continue;
             }
 
@@ -171,20 +171,16 @@ class IncomeTransformer implements BankRevenueInterface
 
     private function convertCurrency(string $code)
     {
-        $currencies = Cache::get('currencies');
 
-        if (! $currencies) {
-            $this->buildCache(true);
-        }
+        $currencies = app('currencies');
 
-        $currency = $currencies->filter(function ($item) use ($code) {
+        $currency = $currencies->first(function ($item) use ($code) {
+            /** @var \App\Models\Currency $item */
             return $item->code == $code;
-        })->first();
+        });
 
-        if ($currency) {
-            return $currency->id;
-        }
+        /** @var \App\Models\Currency $currency */
+        return $currency ? $currency->id : 1; //@phpstan-ignore-line
 
-        return 1;
     }
 }

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -87,7 +87,7 @@ class InvitationController extends Controller
                                     ->firstOrFail();
 
         if ($invitation->trashed() || $invitation->{$entity}->is_deleted) {
-            return $this->render('generic.not_available', ['account' => $invitation->company->account, 'company' => $invitation->company]);
+            return $this->render('generic.not_available', ['passed_account' => $invitation->company->account, 'passed_company' => $invitation->company]);
         }
 
         if ($invitation->contact->trashed()) {
@@ -101,9 +101,11 @@ class InvitationController extends Controller
             $client_contact->email = Str::random(15) . "@example.com";
             $client_contact->save();
         }
-        
+
         if (request()->has('client_hash') && request()->input('client_hash') == $invitation->contact->client->client_hash) {
             request()->session()->invalidate();
+            request()->session()->regenerateToken();
+
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         } elseif ((bool) $invitation->contact->client->getSetting('enable_client_portal_password') !== false) {
             //if no contact password has been set - allow user to set password - then continue to view entity
@@ -115,13 +117,17 @@ class InvitationController extends Controller
                         ]);
             }
 
-            $this->middleware('auth:contact');
-            return redirect()->route('client.login');
+            if (!auth()->guard('contact')->check()) {
+                $this->middleware('auth:contact');
+                /** @var \App\Models\InvoiceInvitation | \App\Models\QuoteInvitation | \App\Models\CreditInvitation | \App\Models\RecurringInvoiceInvitation $invitation */
+                return redirect()->route('client.login', ['intended' => route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])]);
+            }
+
         } else {
             request()->session()->invalidate();
+            request()->session()->regenerateToken();
             auth()->guard('contact')->loginUsingId($client_contact->id, true);
         }
-
 
         if (auth()->guard('contact')->user() && ! request()->has('silent') && ! $invitation->viewed_date) {
             $invitation->markViewed();
@@ -138,12 +144,12 @@ class InvitationController extends Controller
 
             return redirect()->route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent]);
 
-            return redirect()->route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key}), 'silent' => $is_silent])->header('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
         }
+
         return redirect()->route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key})]);
 
-        return redirect()->route('client.'.$entity.'.show', [$entity => $this->encodePrimaryKey($invitation->{$key})])->header('Cache-Control', 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0');
     }
+
 
     private function fireEntityViewedEvent($invitation, $entity_string)
     {
@@ -251,7 +257,7 @@ class InvitationController extends Controller
     {
         /** @var \App\Models\ClientContact $contact **/
         $contact = ClientContact::withTrashed()->where('contact_key', $contact_key)->firstOrFail();
-        
+
         /** @var \App\Models\Payment $payment **/
         $payment = Payment::find($this->decodePrimaryKey($payment_id));
 
@@ -259,6 +265,8 @@ class InvitationController extends Controller
             abort(403, 'You are not authorized to view this resource');
         }
 
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($contact->id, true);
 
         return redirect()->route('client.payments.show', $payment->hashed_id);
@@ -271,13 +279,30 @@ class InvitationController extends Controller
                                     ->with('contact.client')
                                     ->firstOrFail();
 
+
         if ($invitation->contact->trashed()) {
             $invitation->contact->restore();
         }
-        
+
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         auth()->guard('contact')->loginUsingId($invitation->contact->id, true);
-        
-        $invoice = $invitation->invoice;
+
+        $invoice = $invitation->invoice->service()->removeUnpaidGatewayFees()->save();
+
+        if (! $invitation->viewed_date) {
+            $invitation->markViewed();
+
+            if (!session()->get('is_silent')) {
+                event(new InvitationWasViewed($invitation->invoice, $invitation, $invitation->invoice->company, Ninja::eventVars()));
+                $this->fireEntityViewedEvent($invitation, $invoice);
+            }
+
+        }
+
+        if (!session()->get('is_silent')) {
+            event(new ContactLoggedIn($invitation->contact, $invitation->contact->company, Ninja::eventVars()));
+        }
 
         if ($invoice->partial > 0) {
             $amount = round($invoice->partial, (int)$invoice->client->currency()->precision);
@@ -287,14 +312,19 @@ class InvitationController extends Controller
 
         $gateways = $invitation->contact->client->service()->getPaymentMethods($amount);
 
-        if (is_array($gateways) && count($gateways) >=1) {
+        if (is_array($gateways) && count($gateways) >= 1) {
             $data = [
                 'company_gateway_id' => $gateways[0]['company_gateway_id'],
                 'payment_method_id' => $gateways[0]['gateway_type_id'],
                 'payable_invoices' => [
                     ['invoice_id' => $invitation->invoice->hashed_id, 'amount' => $amount],
                 ],
-                'signature' => false
+                'signature' => false,
+                'contact_first_name' => $invitation->contact->first_name ?? '',
+                'contact_last_name' => $invitation->contact->last_name ?? '',
+                'contact_email' => $invitation->contact->email ?? '',
+                'client_city' => $invitation->client->city ?? '',
+                'client_postal_code' => $invitation->client->postal_code ?? '',
             ];
 
             $request->replace($data);

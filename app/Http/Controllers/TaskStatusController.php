@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -50,12 +50,12 @@ class TaskStatusController extends BaseController
 
         $this->task_status_repo = $task_status_repo;
     }
-    
+
     /**
      * index
      *
      * @param  TaskStatusFilters $filters
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function index(TaskStatusFilters $filters)
     {
@@ -64,12 +64,12 @@ class TaskStatusController extends BaseController
         return $this->listResponse($task_status);
     }
 
-    
+
     /**
      * create
      *
      * @param  CreateTaskStatusRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function create(CreateTaskStatusRequest $request)
     {
@@ -85,7 +85,7 @@ class TaskStatusController extends BaseController
      * Store a newly created resource in storage.
      *
      * @param StoreTaskStatusRequest $request  The request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
     */
     public function store(StoreTaskStatusRequest $request)
@@ -104,7 +104,7 @@ class TaskStatusController extends BaseController
     /**
      * @param ShowTaskStatusRequest $request
      * @param TaskStatus $task_status
-     * @return Response|mixed
+     * @return Response| \Illuminate\Http\JsonResponse|mixed
      */
     public function show(ShowTaskStatusRequest $request, TaskStatus $task_status)
     {
@@ -114,7 +114,7 @@ class TaskStatusController extends BaseController
     /**
      * @param EditTaskStatusRequest $request
      * @param TaskStatus $payment
-     * @return Response|mixed
+     * @return Response| \Illuminate\Http\JsonResponse|mixed
      */
     public function edit(EditTaskStatusRequest $request, TaskStatus $payment)
     {
@@ -126,21 +126,21 @@ class TaskStatusController extends BaseController
      *
      * @param UpdateTaskStatusRequest $request  The request
      * @param TaskStatus $task_status   The payment term
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function update(UpdateTaskStatusRequest $request, TaskStatus $task_status)
     {
-    
+
         $task_status->fill($request->all());
         $reorder = $task_status->isDirty('status_order');
         $task_status->save();
-        
+
         if ($reorder) {
             $this->task_status_repo->reorder($task_status);
         }
 
         return $this->itemResponse($task_status->fresh());
-    
+
     }
 
     /**
@@ -148,7 +148,7 @@ class TaskStatusController extends BaseController
      *
      * @param DestroyTaskStatusRequest $request
      * @param TaskStatus $task_status
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      * @throws \Exception
      */
@@ -162,7 +162,7 @@ class TaskStatusController extends BaseController
     /**
      * Perform bulk actions on the list view.
      * @param  ActionTaskStatusRequest $request
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      */
     public function bulk(ActionTaskStatusRequest $request)
     {

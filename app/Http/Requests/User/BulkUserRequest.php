@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,9 +23,9 @@ class BulkUserRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
-        if($this->action == 'delete' && in_array(auth()->user()->hashed_id, $this->ids)) {
+        if ($this->action == 'delete' && in_array(auth()->user()->hashed_id, $this->ids)) {
             return false;
         }
 

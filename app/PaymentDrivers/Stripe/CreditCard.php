@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -19,12 +19,13 @@ use App\Models\GatewayType;
 use App\Models\Payment;
 use App\Models\PaymentType;
 use App\Models\SystemLog;
+use App\PaymentDrivers\Common\LivewireMethodInterface;
 use App\PaymentDrivers\Stripe\Jobs\UpdateCustomer;
 use App\PaymentDrivers\StripePaymentDriver;
 use Stripe\PaymentIntent;
 use Stripe\PaymentMethod;
 
-class CreditCard
+class CreditCard implements LivewireMethodInterface
 {
     public $stripe;
 
@@ -36,6 +37,10 @@ class CreditCard
     public function authorizeView(array $data)
     {
         $intent['intent'] = $this->stripe->getSetupIntent();
+
+        if ($this->stripe->headless) {
+            return array_merge($data, $intent);
+        }
 
         return render('gateways.stripe.credit_card.authorize', array_merge($data, $intent));
     }
@@ -54,13 +59,17 @@ class CreditCard
 
         $this->storePaymentMethod($stripe_method, $request->payment_method_id, $customer);
 
+        if ($this->stripe->headless) {
+            return true;
+        }
+
         return redirect()->route('client.payment_methods.index');
     }
 
-    public function paymentView(array $data)
+    public function paymentData(array $data): array
     {
         $description = $this->stripe->getDescription(false);
-        
+
         $payment_intent_data = [
             'amount' => $this->stripe->convertToStripeAmount($data['total']['amount_with_fee'], $this->stripe->client->currency()->precision, $this->stripe->client->currency()),
             'currency' => $this->stripe->client->getCurrencyCode(),
@@ -77,7 +86,19 @@ class CreditCard
         $data['intent'] = $this->stripe->createPaymentIntent($payment_intent_data);
         $data['gateway'] = $this->stripe;
 
+        return $data;
+    }
+
+    public function paymentView(array $data)
+    {
+        $data = $this->paymentData($data);
+
         return render('gateways.stripe.credit_card.pay', $data);
+    }
+
+    public function livewirePaymentView(array $data): string
+    {
+        return 'gateways.stripe.credit_card.pay_livewire';
     }
 
     public function paymentResponse(PaymentResponseRequest $request)
@@ -105,7 +126,7 @@ class CreditCard
         $server_response = $this->stripe->payment_hash->data->server_response;
 
         if ($server_response->status == 'succeeded') {
-            $this->stripe->logSuccessfulGatewayResponse(['response' => json_decode($request->gateway_response), 'data' => $this->stripe->payment_hash], SystemLog::TYPE_STRIPE);
+            $this->stripe->logSuccessfulGatewayResponse(['response' => json_decode($request->gateway_response), 'data' => $this->stripe->payment_hash->data], SystemLog::TYPE_STRIPE);
 
             return $this->processSuccessfulPayment();
         }
@@ -131,7 +152,7 @@ class CreditCard
         $this->stripe->payment_hash->save();
 
         if ($this->stripe->payment_hash->data->store_card) {
-            $customer = new \stdClass;
+            $customer = new \stdClass();
             $customer->id = $this->stripe->payment_hash->data->customer;
 
             $this->stripe->attach($this->stripe->payment_hash->data->server_response->payment_method, $customer);
@@ -155,12 +176,12 @@ class CreditCard
         if ($payment->invoices()->whereHas('subscription')->exists()) {
             $subscription = $payment->invoices()->first()->subscription;
 
-            if ($subscription && array_key_exists('return_url', $subscription->webhook_configuration) && strlen($subscription->webhook_configuration['return_url']) >=1) {
+            if ($subscription && array_key_exists('return_url', $subscription->webhook_configuration) && strlen($subscription->webhook_configuration['return_url']) >= 1) {
                 return redirect($subscription->webhook_configuration['return_url']);
             }
         }
 
-        return redirect()->route('client.payments.show', ['payment' => $this->stripe->encodePrimaryKey($payment->id)]);
+        return redirect()->route('client.payments.show', ['payment' => $payment->hashed_id]);
     }
 
     public function processUnsuccessfulPayment($server_response)
@@ -187,7 +208,7 @@ class CreditCard
     private function storePaymentMethod(PaymentMethod $method, $payment_method_id, $customer)
     {
         try {
-            $payment_meta = new \stdClass;
+            $payment_meta = new \stdClass();
             $payment_meta->exp_month = (string) $method->card->exp_month;
             $payment_meta->exp_year = (string) $method->card->exp_year;
             $payment_meta->brand = (string) $method->card->brand;

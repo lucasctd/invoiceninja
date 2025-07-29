@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -64,7 +64,7 @@ class Document extends BaseModel
     use SoftDeletes;
     use Filterable;
 
-    const DOCUMENT_PREVIEW_SIZE = 300; // pixels
+    public const DOCUMENT_PREVIEW_SIZE = 300; // pixels
 
     /**
      * @var array<string>
@@ -83,6 +83,10 @@ class Document extends BaseModel
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
+    ];
+
+    protected $touches = [
+        // 'documentable'
     ];
 
     /**
@@ -176,7 +180,12 @@ class Document extends BaseModel
 
     public function generateRoute($absolute = false)
     {
-        return route('api.documents.show', ['document' => $this->hashed_id]).'/download';
+        try {
+            return route('api.documents.show', ['document' => $this->hashed_id]).'/download';
+        } catch (\Exception $e) {
+            nlog("Exception:: Document::" . $e->getMessage());
+            return '';
+        }
     }
 
     public function deleteFile()
@@ -204,28 +213,51 @@ class Document extends BaseModel
         return ctrans('texts.document');
     }
 
+    public function link()
+    {
+        $entity_id = $this->encodePrimaryKey($this->documentable_id);
+        $link = '';
+
+        match($this->documentable_type) {
+            'App\Models\Vendor' => $link = "/vendors/{$entity_id}",
+            'App\Models\Project' => $link = "/projects/{$entity_id}",
+            'invoices' => $link = "/invoices/{$entity_id}/edit",
+            'App\Models\Quote' => $link = "/quotes/{$entity_id}/edit",
+            'App\Models\Credit' => $link = "/credits/{$entity_id}/edit",
+            'App\Models\Expense' => $link = "/expenses/{$entity_id}/edit",
+            'App\Models\Payment' => $link = "/payments/{$entity_id}/edit",
+            'App\Models\Task' => $link = "/tasks/{$entity_id}/edit",
+            'App\Models\Client' => $link = "/clients/{$entity_id}",
+            'App\Models\RecurringExpense' => $link = "/recurring_expenses/{$entity_id}/edit",
+            'App\Models\RecurringInvoice' => $link = "/recurring_invoices/{$entity_id}/edit",
+            default => $link = '',
+        };
+
+        return $link;
+    }
+
     public function compress(): mixed
     {
 
         $image = $this->getFile();
         $catch_image = $image;
 
-        if(!extension_loaded('imagick')) {
+        if (!extension_loaded('imagick')) {
             return $catch_image;
         }
 
         try {
             $file = base64_encode($image);
 
-            $img = new \Imagick();
+            $img = new \Imagick(); //@phpstan-ignore-line
             $img->readImageBlob($file);
-            $img->setImageCompression(true);
-            $img->setImageCompressionQuality(50);
+            $img->setImageCompression(true); //@phpstan-ignore-line
+            $img->setImageCompressionQuality(40);
 
             return $img->getImageBlob();
-            
-        } catch(\Exception $e) {
-        
+
+        } catch (\Exception $e) {
+            nlog("Exception:: Document::" . $e->getMessage());
             nlog($e->getMessage());
             return $catch_image;
         }

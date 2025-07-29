@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,7 +12,6 @@
 namespace App\Models;
 
 use App\Utils\Traits\Inviteable;
-use App\Utils\Traits\MakesDates;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -73,7 +72,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class RecurringInvoiceInvitation extends BaseModel
 {
-    use MakesDates;
     use SoftDeletes;
     use Inviteable;
 
@@ -89,6 +87,12 @@ class RecurringInvoiceInvitation extends BaseModel
     public function getEntityType()
     {
         return self::class;
+    }
+
+
+    public function getEntityString(): string
+    {
+        return 'recurring_invoice';
     }
 
     public function entityType()

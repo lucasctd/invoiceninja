@@ -4,29 +4,31 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
-use App\Jobs\Mail\NinjaMailer;
-use App\Jobs\Mail\NinjaMailerJob;
-use App\Jobs\Mail\NinjaMailerObject;
-use App\Mail\ClientContact\ClientContactResetPasswordObject;
-use App\Models\Presenters\ClientContactPresenter;
 use App\Utils\Ninja;
+use Illuminate\Support\Str;
+use Laravel\Scout\Searchable;
+use App\Jobs\Mail\NinjaMailer;
 use App\Utils\Traits\AppSetup;
 use App\Utils\Traits\MakesHash;
-use Illuminate\Contracts\Translation\HasLocalePreference;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
+use App\Jobs\Mail\NinjaMailerJob;
+use App\Jobs\Mail\NinjaMailerObject;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
 use Laracasts\Presenter\PresentableTrait;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Presenters\ClientContactPresenter;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Contracts\Translation\HasLocalePreference;
+use App\Mail\ClientContact\ClientContactResetPasswordObject;
 
 /**
  * Class ClientContact
@@ -98,7 +100,9 @@ class ClientContact extends Authenticatable implements HasLocalePreference
     use SoftDeletes;
     use HasFactory;
     use AppSetup;
-    
+
+    use Searchable;
+
     /* Used to authenticate a contact */
     protected $guard = 'contact';
 
@@ -163,6 +167,29 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         'custom_value4',
         'email',
     ];
+
+    public function toSearchableArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->present()->search_display(),
+            'hashed_id' => $this->client->hashed_id,
+            'email' => $this->email,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'phone' => $this->phone,
+            'custom_value1' => $this->custom_value1,
+            'custom_value2' => $this->custom_value2,
+            'custom_value3' => $this->custom_value3,
+            'custom_value4' => $this->custom_value4,
+            'company_key' => $this->company->company_key,
+        ];
+    }
+
+    public function getScoutKey()
+    {
+        return $this->hashed_id;
+    }
 
     /*
     V2 type of scope
@@ -259,7 +286,7 @@ class ClientContact extends Authenticatable implements HasLocalePreference
         $this->token = $token;
         $this->save();
 
-        $nmo = new NinjaMailerObject;
+        $nmo = new NinjaMailerObject();
         $nmo->mailable = new NinjaMailer((new ClientContactResetPasswordObject($token, $this))->build());
         $nmo->to_user = $this;
         $nmo->company = $this->company;
@@ -270,15 +297,13 @@ class ClientContact extends Authenticatable implements HasLocalePreference
 
     public function preferredLocale()
     {
-        $languages = Cache::get('languages');
 
-        if (! $languages) {
-            $this->buildCache(true);
-        }
+        /** @var \Illuminate\Support\Collection<\App\Models\Language> */
+        $languages = app('languages');
 
-        return $languages->filter(function ($item) {
+        return $languages->first(function ($item) {
             return $item->id == $this->client->getSetting('language_id');
-        })->first()->locale;
+        })->locale ?? 'en';
     }
 
     public function routeNotificationForMail($notification)
@@ -338,5 +363,24 @@ class ClientContact extends Authenticatable implements HasLocalePreference
             default:
                 return '';
         }
+    }
+
+    public function getAdminLink($use_react_link = false): string
+    {
+        return $use_react_link ? $this->getReactLink() : config('ninja.app_url');
+    }
+
+    private function getReactLink(): string
+    {
+        return config('ninja.react_url')."/#/clients/{$this->client->hashed_id}";
+    }
+
+    public function showRff(): bool
+    {
+        // if (\strlen($this->first_name ?? '') === 0 || \strlen($this->last_name ?? '') === 0 || \strlen($this->email ?? '') === 0) {
+        //     return true;
+        // }
+
+        return false;
     }
 }

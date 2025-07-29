@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,32 +12,23 @@
 namespace App\Http\ValidationRules\Company;
 
 use App\Libraries\MultiDB;
-use Illuminate\Contracts\Validation\Rule;
+use Closure;
+use Illuminate\Contracts\Validation\ValidationRule;
 
 /**
- * Class ValidCompanyQuantity.
+ * Class ValidSubdomain.
  */
-class ValidSubdomain implements Rule
+class ValidSubdomain implements ValidationRule
 {
-
-    public function __construct()
+    public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-    }
 
-    public function passes($attribute, $value)
-    {
         if (empty($value)) {
-            return true;
+            return;
         }
 
-        return MultiDB::checkDomainAvailable($value);
-    }
-
-    /**
-     * @return string
-     */
-    public function message()
-    {
-        return ctrans('texts.subdomain_taken');
+        if (!MultiDB::checkDomainAvailable($value)) {
+            $fail(ctrans('texts.subdomain_taken'));
+        }
     }
 }

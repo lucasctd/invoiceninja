@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -29,13 +29,18 @@ use Illuminate\Support\Facades\Storage;
 
 class ZipPurchaseOrders implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $settings;
 
     public $tries = 1;
 
-    public function __construct(protected array $purchase_order_ids, protected Company $company, protected User $user)
+    public $timeout = 3600;
+
+    public function __construct(protected mixed $purchase_order_ids, protected Company $company, protected User $user)
     {
     }
 
@@ -58,12 +63,24 @@ class ZipPurchaseOrders implements ShouldQueue
                                             ->with('purchase_order')
                                             ->whereIn('purchase_order_id', $this->purchase_order_ids)
                                             ->get();
+
+
+        if ($invitations->count() == 0) {
+            nlog("no PurchaseOrder Invitations");
+            return;
+        }
+
         $invitation = $invitations->first();
         $path = $invitation->contact->vendor->purchase_order_filepath($invitation);
 
         try {
             foreach ($invitations as $invitation) {
-                
+
+                if ($invitation->purchase_order->vendor->getSetting("enable_e_invoice")) {
+                    $xml = $invitation->purchase_order->service()->getEDocument();
+                    $zipFile->addFromString($invitation->purchase_order->getFileName("xml"), $xml);
+                }
+
                 $file = (new CreateRawPdf($invitation))->handle();
 
                 $zipFile->addFromString($invitation->purchase_order->numberFormatter().".pdf", $file);
@@ -71,7 +88,7 @@ class ZipPurchaseOrders implements ShouldQueue
 
             Storage::put($path.$file_name, $zipFile->outputAsString());
 
-            $nmo = new NinjaMailerObject;
+            $nmo = new NinjaMailerObject();
             $nmo->mailable = new DownloadPurchaseOrders(Storage::url($path.$file_name), $this->company);
             $nmo->to_user = $this->user;
             $nmo->settings = $this->settings;
@@ -85,5 +102,11 @@ class ZipPurchaseOrders implements ShouldQueue
         } finally {
             $zipFile->close();
         }
+    }
+
+    public function failed($exception)
+    {
+        nlog("ZipPurchaseOrders:: Exception:: => ".$exception->getMessage());
+        config(['queue.failed.driver' => null]);
     }
 }

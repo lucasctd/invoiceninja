@@ -20,19 +20,92 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
- * @covers  App\Helpers\Invoice\InvoiceItemSum
+ * 
+ *   App\Helpers\Invoice\InvoiceItemSum
  */
 class InvoiceItemTest extends TestCase
 {
     use MockAccountData;
     use DatabaseTransactions;
 
-    protected function setUp() :void
+    protected function setUp(): void
     {
         parent::setUp();
 
         $this->makeTestData();
+    }
+
+    public function testNetCost()
+    {
+        
+            $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+            $invoice->client_id = $this->client->id;
+            $invoice->uses_inclusive_taxes = true;
+            $invoice->is_amount_discount = false;
+            $invoice->discount = 0;
+            $invoice->tax_rate1 = 0;
+            $invoice->tax_rate2 = 0;
+            $invoice->tax_rate3 = 0;
+            $invoice->tax_name1 = '';
+            $invoice->tax_name2 = '';
+            $invoice->tax_name3 = '';
+
+            $line_items = [];
+
+            $line_item = new InvoiceItem();
+            $line_item->quantity = 1;
+            $line_item->cost = 100;
+            $line_item->tax_rate1 = 22;
+            $line_item->tax_name1 = 'Km';
+            $line_item->product_key = 'Test';
+            $line_item->notes = 'Test';
+            $line_item->is_amount_discount = false;
+            $line_items[] = $line_item;
+
+            $invoice->line_items = $line_items;
+            $invoice->save();
+
+            $invoice = $invoice->calc()->getInvoice();
+
+            $this->assertEquals(100, $invoice->amount);
+            $this->assertEquals(18.03, $invoice->total_taxes);
+
+
+    }
+
+    public function testEdgeCasewithDiscountsPercentageAndTaxCalculations()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = false;
+        $invoice->is_amount_discount = false;
+        $invoice->discount = 0;
+        $invoice->tax_rate1 = 0;
+        $invoice->tax_rate2 = 0;
+        $invoice->tax_rate3 = 0;
+        $invoice->tax_name1 = '';
+        $invoice->tax_name2 = '';
+        $invoice->tax_name3 = '';
+
+        $line_items = [];
+
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 22;
+        $line_item->tax_name1 = 'Km';
+        $line_item->product_key = 'Test';
+        $line_item->notes = 'Test';
+        $line_item->is_amount_discount = false;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $this->assertEquals(122, $invoice->amount);
+        $this->assertEquals(22, $invoice->total_taxes);
     }
 
 
@@ -41,12 +114,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = true;
-        $invoice->is_amount_discount =true;
+        $invoice->is_amount_discount = true;
         $invoice->discount = 10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -70,12 +143,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = true;
-        $invoice->is_amount_discount =true;
+        $invoice->is_amount_discount = true;
         $invoice->discount = -10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = -1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -98,12 +171,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =true;
+        $invoice->is_amount_discount = true;
         $invoice->discount = 10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -127,12 +200,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =true;
+        $invoice->is_amount_discount = true;
         $invoice->discount = -10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = -1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -155,12 +228,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =false;
+        $invoice->is_amount_discount = false;
         $invoice->discount = 10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -183,12 +256,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = true;
-        $invoice->is_amount_discount =false;
+        $invoice->is_amount_discount = false;
         $invoice->discount = 10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->is_amount_discount = false;
@@ -213,12 +286,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =false;
+        $invoice->is_amount_discount = false;
         $invoice->discount = -10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = -1;
         $line_item->cost = 100;
         $line_item->is_amount_discount = false;
@@ -244,12 +317,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =false;
+        $invoice->is_amount_discount = false;
         $invoice->discount = -10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = -1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -275,12 +348,12 @@ class InvoiceItemTest extends TestCase
         $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
         $invoice->client_id = $this->client->id;
         $invoice->uses_inclusive_taxes = false;
-        $invoice->is_amount_discount =true;
+        $invoice->is_amount_discount = true;
         $invoice->discount = 10;
-        
+
         $line_items = [];
-              
-        $line_item = new InvoiceItem;
+
+        $line_item = new InvoiceItem();
         $line_item->quantity = 1;
         $line_item->cost = 100;
         $line_item->tax_rate1 = 10;
@@ -308,7 +381,7 @@ class InvoiceItemTest extends TestCase
         $item->cost = 10;
         $item->is_amount_discount = true;
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -328,7 +401,7 @@ class InvoiceItemTest extends TestCase
         $item->is_amount_discount = true;
         $item->tax_rate1 = 10;
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -351,7 +424,7 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -372,7 +445,7 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -393,7 +466,7 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -412,7 +485,7 @@ class InvoiceItemTest extends TestCase
         $item->discount = 2;
         $item->tax_rate1 = 10;
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -435,7 +508,7 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
@@ -457,7 +530,7 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = true;
         $settings->precision = 2;
 
@@ -481,14 +554,232 @@ class InvoiceItemTest extends TestCase
 
         $this->invoice->line_items = [$item];
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->inclusive_taxes = false;
         $settings->precision = 2;
 
         $item_calc = new InvoiceItemSum($this->invoice, $settings);
         $item_calc->process();
 
+        nlog($item_calc->getGroupedTaxes());
+        
         $this->assertEquals($item_calc->getTotalTaxes(), 2.06);
         $this->assertEquals($item_calc->getGroupedTaxes()->count(), 2);
     }
+
+    public function testNetCostWithDoubleTaxInclusive()
+    {
+
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        $invoice->is_amount_discount = false;
+
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 10;
+        $line_item->tax_rate2 = 5;
+        $line_item->tax_name1 = 'GST';
+        $line_item->tax_name2 = 'VAT';
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(13.85, $invoice->total_taxes);
+
+    }
+
+    public function testNetCostWithHighTaxRatesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 25;
+        $line_item->tax_rate2 = 20;
+        $line_item->tax_name1 = 'Tax1';
+        $line_item->tax_name2 = 'Tax2';
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(36.67, $invoice->total_taxes);
+        $this->assertEquals(68.97, $item->net_cost);
+    }
+
+    public function testNetCostWithTripleTaxInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 7;
+        $line_item->tax_rate2 = 5;
+        $line_item->tax_rate3 = 3;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(14.21, $invoice->total_taxes);
+        $this->assertEquals(86.96, $item->net_cost);
+    }
+
+    public function testNetCostWithFractionalTaxRatesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 7.5;
+        $line_item->tax_rate2 = 2.75;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(9.66, $invoice->total_taxes);
+        $this->assertEquals(90.7, $item->net_cost);
+    }
+
+    public function testNetCostWithHighValueAndMultipleTaxesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 1000;
+        $line_item->tax_rate1 = 15;
+        $line_item->tax_rate2 = 10;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(1000, $invoice->amount);
+        $this->assertEquals(221.34, $invoice->total_taxes);
+        $this->assertEquals(800, $item->net_cost);
+    }
+
+    public function testNetCostWithLowTaxRatesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 1.5;
+        $line_item->tax_rate2 = 0.5;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(1.98, $invoice->total_taxes);
+        $this->assertEquals(98.04, $item->net_cost);
+    }
+
+    public function testNetCostWithEqualTaxRatesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_rate1 = 10;
+        $line_item->tax_rate2 = 10;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(18.18, $invoice->total_taxes);
+        $this->assertEquals(83.33, $item->net_cost);
+    }
+
+    public function testNetCostWithZeroAndNonZeroTaxesInclusive()
+    {
+        $invoice = InvoiceFactory::create($this->company->id, $this->user->id);
+        $invoice->client_id = $this->client->id;
+        $invoice->uses_inclusive_taxes = true;
+        
+        $line_items = [];
+        $line_item = new InvoiceItem();
+        $line_item->quantity = 1;
+        $line_item->cost = 100;
+        $line_item->tax_name1 = 'Tax1';
+        $line_item->tax_rate1 = 0;
+        $line_item->tax_name2 = 'Tax2';
+        $line_item->tax_rate2 = 15;
+        $line_items[] = $line_item;
+
+        $invoice->line_items = $line_items;
+        $invoice->save();
+
+        $invoice = $invoice->calc()->getInvoice();
+
+        $item = $invoice->line_items[0];
+
+        $this->assertEquals(100, $invoice->amount);
+        $this->assertEquals(13.04, $invoice->total_taxes);
+        $this->assertEquals(86.96, $item->net_cost);
+    }
+
 }

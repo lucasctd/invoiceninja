@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -67,7 +67,7 @@ class PaymentController extends BaseController
      *
      * @param PaymentFilters $filters  The filters
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -115,7 +115,7 @@ class PaymentController extends BaseController
      *
      * @param CreatePaymentRequest $request  The request
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -155,6 +155,7 @@ class PaymentController extends BaseController
         $user = auth()->user();
 
         $payment = PaymentFactory::create($user->company()->id, $user->id);
+        $payment->date = now()->addSeconds($user->company()->utc_offset())->format('Y-m-d');
 
         return $this->itemResponse($payment);
     }
@@ -164,7 +165,7 @@ class PaymentController extends BaseController
      *
      * @param StorePaymentRequest $request  The request
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -221,7 +222,7 @@ class PaymentController extends BaseController
      * @param ShowPaymentRequest $request The request
      * @param Payment $payment The invoice
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -276,7 +277,7 @@ class PaymentController extends BaseController
      * @param EditPaymentRequest $request The request
      * @param Payment $payment The invoice
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Get(
@@ -331,7 +332,7 @@ class PaymentController extends BaseController
      * @param UpdatePaymentRequest $request The request
      * @param Payment $payment The invoice
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      * @OA\Put(
@@ -453,7 +454,7 @@ class PaymentController extends BaseController
     /**
      * Perform bulk actions on the list view.
      *
-     * @return \Illuminate\Support\Collection
+     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
      *
      *
      * @OA\Post(
@@ -516,10 +517,10 @@ class PaymentController extends BaseController
             return response()->json(['message' => ctrans('texts.record_not_found')]);
         }
 
-        if($action == 'template' && $user->can('view', $payments->first())) {
+        if ($action == 'template' && $user->can('view', $payments->first())) {
 
             $hash_or_response = request()->boolean('send_email') ? 'email sent' : \Illuminate\Support\Str::uuid();
-            nlog($payments->pluck('hashed_id')->toArray());
+
             TemplateAction::dispatch(
                 $payments->pluck('hashed_id')->toArray(),
                 $request->template_id,
@@ -666,7 +667,7 @@ class PaymentController extends BaseController
      *
      * @param RefundPaymentRequest $request  The request
      *
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *
@@ -719,7 +720,7 @@ class PaymentController extends BaseController
      *
      * @param UploadPaymentRequest $request
      * @param Payment $payment
-     * @return Response
+     * @return Response| \Illuminate\Http\JsonResponse
      *
      *
      *

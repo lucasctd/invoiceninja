@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -70,7 +70,7 @@ class ResetPasswordController extends Controller
             $account = Account::first();
         }
 
-        
+
         return $this->render('auth.passwords.reset', ['root' => 'themes', 'token' => $token, 'account' => $account, 'email' => $request->email]);
     }
 
@@ -78,7 +78,7 @@ class ResetPasswordController extends Controller
      * Reset the given user's password.
      *
      * @param Request $request
-     * @return RedirectResponse|JsonResponse
+     * @return \Illuminate\Http\RedirectResponse | \Illuminate\Http\RedirectResponse|JsonResponse
      * @throws \Illuminate\Validation\ValidationException
      */
     public function reset(Request $request)
@@ -111,7 +111,7 @@ class ResetPasswordController extends Controller
     {
         auth()->logout();
 
-        if(request()->has('react') || request()->hasHeader('X-React')) {
+        if (request()->has('react') || request()->hasHeader('X-React')) {
             return redirect(config('ninja.react_url').'/#/login');
         }
 
@@ -131,14 +131,14 @@ class ResetPasswordController extends Controller
             return new JsonResponse(['message' => trans($response)], 200);
         }
 
-        if($request->hasHeader('X-REACT') || $request->has('react')) {
+        if ($request->hasHeader('X-REACT') || $request->has('react')) {
             return redirect(config('ninja.react_url').'/#/login');
         } else {
             return redirect('/#/login');
         }
 
-        return redirect($this->redirectPath())
-                            ->with('status', trans($response));
+        // return redirect($this->redirectPath())
+        //                     ->with('status', trans($response));
     }
 
 }

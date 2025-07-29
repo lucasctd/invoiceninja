@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -48,9 +48,10 @@ class ClientContactRequestCancellationObject
             'signature' => $this->company->settings->email_signature,
             'settings' => $this->company->settings,
             'logo' => $this->company->present()->logo(),
+            'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 
-        $mail_obj = new \stdClass;
+        $mail_obj = new \stdClass();
         $mail_obj->subject = ctrans('texts.recurring_cancellation_request', ['contact' => $this->client_contact->present()->name()]);
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.admin.generic';

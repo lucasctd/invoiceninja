@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -37,9 +37,9 @@ class CreateAccountRequest extends Request
     public function rules()
     {
         if (Ninja::isHosted()) {
-            $email_rules = ['bail', 'required', 'email:rfc,dns', new NewUniqueUserRule, new BlackListRule, new EmailBlackListRule];
+            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule(), new BlackListRule(), new EmailBlackListRule()];
         } else {
-            $email_rules = ['bail', 'required', 'email:rfc,dns', new NewUniqueUserRule];
+            $email_rules = ['bail', 'required', 'max:255', 'email:rfc,dns', new NewUniqueUserRule()];
         }
 
         return [

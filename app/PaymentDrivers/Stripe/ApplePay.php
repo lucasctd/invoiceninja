@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -76,7 +76,7 @@ class ApplePay
         $response_handler = new CreditCard($this->stripe_driver);
 
         if ($server_response->status == 'succeeded') {
-            $this->stripe_driver->logSuccessfulGatewayResponse(['response' => json_decode($request->gateway_response), 'data' => $this->stripe_driver->payment_hash], SystemLog::TYPE_STRIPE);
+            $this->stripe_driver->logSuccessfulGatewayResponse(['response' => json_decode($request->gateway_response), 'data' => $this->stripe_driver->payment_hash->data], SystemLog::TYPE_STRIPE);
 
             return $response_handler->processSuccessfulPayment();
         }

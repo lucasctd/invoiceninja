@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -33,12 +33,9 @@ class CreateInvitations extends AbstractService
 
         if ($contacts->count() == 0) {
             $this->createBlankContact();
-
-            $this->invoice->refresh();
-            $contacts = $this->invoice->client->contacts;
         }
 
-        $contacts->each(function ($contact) {
+        $this->invoice->client->contacts()->each(function ($contact) {
             $invitation = InvoiceInvitation::query()->where('company_id', $this->invoice->company_id)
                                         ->where('client_contact_id', $contact->id)
                                         ->where('invoice_id', $this->invoice->id)

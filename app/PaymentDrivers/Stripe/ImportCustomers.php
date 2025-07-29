@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -62,12 +62,6 @@ class ImportCustomers
                 $this->addCustomer($customer);
             }
 
-            //handle
-            // if(is_array($customers->data) && end($customers->data) && array_key_exists('id', end($customers->data)))
-            //     $starting_after = end($customers->data)['id'];
-            // else
-            //     break;
-
             $starting_after = isset(end($customers->data)['id']) ? end($customers->data)['id'] : false;
 
             if (!$starting_after) {
@@ -76,7 +70,7 @@ class ImportCustomers
         } while ($customers->has_more);
     }
 
-    private function addCustomer(Customer $customer)
+    public function addCustomer(Customer $customer)
     {
         $account = $this->stripe->company_gateway->company->account;
 
@@ -131,6 +125,13 @@ class ImportCustomers
                 $settings->currency_id = (string) $currency->id;
                 $client->settings = $settings;
             }
+
+        } else {
+
+            $settings = $client->settings;
+            $settings->currency_id = (string) $this->stripe->company_gateway->company->settings->currency_id;
+            $client->settings = $settings;
+
         }
 
         $client->name = $customer->name ? $customer->name : $customer->email;
@@ -214,7 +215,7 @@ class ImportCustomers
                 if (! $cgt) {
                     nlog('customer '.$searchResults->data[0]->id.' does not exist.');
 
-                    $this->update_payment_methods->updateMethods($searchResults->data[0], $client);
+                    $this->update_payment_methods->updateMethods($searchResults->data[0], $client); //@phpstan-ignore-line
                 }
             }
         }

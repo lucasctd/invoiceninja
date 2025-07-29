@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -39,27 +39,30 @@ class RecurringInvoicesCron
      *
      * @return void
      */
-    public function handle() : void
+    public function handle(): void
     {
         /* Get all invoices where the send date is less than NOW + 30 minutes() */
         $start = Carbon::now()->format('Y-m-d h:i:s');
         nlog('Sending recurring invoices '.$start);
-        
+
         Auth::logout();
 
         if (! config('ninja.db.multi_db_enabled')) {
-            $recurring_invoices = RecurringInvoice::where('status_id', RecurringInvoice::STATUS_ACTIVE)
+            $recurring_invoices = RecurringInvoice::query()->where('status_id', RecurringInvoice::STATUS_ACTIVE)
                                                         ->where('is_deleted', false)
                                                         ->where('remaining_cycles', '!=', '0')
                                                         ->whereNotNull('next_send_date')
                                                         ->whereNull('deleted_at')
                                                         ->where('next_send_date', '<=', now()->toDateTimeString())
                                                         ->whereHas('client', function ($query) {
-                                                            $query->where('is_deleted', 0)
-                                                                   ->where('deleted_at', null);
+                                                            $query->where('is_deleted', false)
+                                                                   ->whereNull('deleted_at');
                                                         })
                                                         ->whereHas('company', function ($query) {
-                                                            $query->where('is_disabled', 0);
+                                                            $query->where('is_disabled', 0)
+                                                                  ->whereHas('account', function ($q){
+                                                                        $q->where('is_flagged', false);
+                                                                  });
                                                         })
                                                         ->with('company')
                                                         ->cursor();
@@ -87,18 +90,22 @@ class RecurringInvoicesCron
             foreach (MultiDB::$dbs as $db) {
                 MultiDB::setDB($db);
 
-                $recurring_invoices = RecurringInvoice::where('status_id', RecurringInvoice::STATUS_ACTIVE)
+                $recurring_invoices = RecurringInvoice::query()->where('status_id', RecurringInvoice::STATUS_ACTIVE)
                                                         ->where('is_deleted', false)
                                                         ->where('remaining_cycles', '!=', '0')
                                                         ->whereNull('deleted_at')
                                                         ->whereNotNull('next_send_date')
                                                         ->where('next_send_date', '<=', now()->toDateTimeString())
                                                         ->whereHas('client', function ($query) {
-                                                            $query->where('is_deleted', 0)
-                                                                   ->where('deleted_at', null);
+                                                                $query->where('is_deleted', false)
+                                                                   ->whereNull('deleted_at');
+
                                                         })
                                                         ->whereHas('company', function ($query) {
-                                                            $query->where('is_disabled', 0);
+                                                            $query->where('is_disabled', 0)
+                                                                  ->whereHas('account', function ($q){
+                                                                        $q->where('is_flagged', false);
+                                                                  });
                                                         })
                                                         ->with('company')
                                                         ->cursor();

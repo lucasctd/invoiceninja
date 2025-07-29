@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -54,6 +54,10 @@ trait DesignHelpers
             $this->payments = $this->context['payments'];
         }
 
+        if (isset($this->context['unapplied'])) {
+            $this->unapplied_payments = $this->context['unapplied'];
+        }
+
         if (isset($this->context['credits'])) {
             $this->credits = $this->context['credits'];
         }
@@ -64,9 +68,9 @@ trait DesignHelpers
 
         $this->document();
 
-        $this->settings_object = $this->vendor ? $this->vendor->company : $this->client;
+        $this->settings_object = $this->vendor ? $this->vendor->company : $this->client; //@phpstan-ignore-line
 
-        $this->company = $this->vendor ? $this->vendor->company : $this->client->company;
+        $this->company = $this->vendor ? $this->vendor->company : $this->client->company; //@phpstan-ignore-line
 
         return $this;
     }
@@ -159,7 +163,7 @@ trait DesignHelpers
         if ($type == 'task') {
             $type_id = 2;
         }
-        
+
         /** 17-05-2023 need to explicity define product_quote here */
         if ($type == 'product_quote') {
             $type_id = 1;
@@ -174,7 +178,7 @@ trait DesignHelpers
         // evaluating the variable.
 
         if (in_array(sprintf('%s%s.tax', '$', $type), (array) $this->context['pdf_variables']["{$column_type}_columns"])) {
-            $line_items = collect($this->entity->line_items)->filter(function ($item) use ($type_id) {
+            $line_items = collect($this->entity->line_items)->filter(function ($item) use ($type_id) { //@phpstan-ignore-line
                 return $item->type_id = $type_id;
             });
 
@@ -279,6 +283,7 @@ trait DesignHelpers
             '$purchase_order.total' => 'amount',
             '$purchase_order.due_date' => 'due_date',
             '$purchase_order.balance_due' => 'balance_due',
+            '$credit.valid_until' => 'due_date',
         ];
 
         try {
@@ -315,6 +320,11 @@ trait DesignHelpers
         // Some variables don't map 1:1 to table columns. This gives us support for such cases.
         $aliases = [
             '$quote.balance_due' => 'partial',
+            '$purchase_order.po_number' => 'number',
+            '$purchase_order.total' => 'amount',
+            '$purchase_order.due_date' => 'due_date',
+            '$purchase_order.balance_due' => 'balance_due',
+            '$credit.valid_until' => 'due_date',
         ];
 
         try {
@@ -387,13 +397,13 @@ trait DesignHelpers
             return '';
         }
 
-        if ($this->client->company->custom_fields && ! property_exists($this->client->company->custom_fields, $field)) {
+        if ($this->client->company->custom_fields && ! property_exists($this->client->company->custom_fields, $field)) { //@phpstan-ignore-line
             return '';
         }
 
         $value = $this->client->company->getSetting($fields[$field]);
 
-        return (new \App\Utils\Helpers)->formatCustomFieldValue(
+        return (new \App\Utils\Helpers())->formatCustomFieldValue(
             $this->client->company->custom_fields,
             $field,
             $value,
@@ -401,6 +411,10 @@ trait DesignHelpers
         );
     }
 
+    /**
+     * @todo - this is being called directl, - not through the calling class!!!!
+     * @design_flaw
+     */
     public static function parseMarkdownToHtml(string $markdown): ?string
     {
         // Use setting to determinate if parsing should be done.

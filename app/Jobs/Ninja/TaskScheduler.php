@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -23,7 +23,10 @@ use Illuminate\Support\Facades\Auth;
 //@rebuild it
 class TaskScheduler implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public $deleteWhenMissingModels = true;
 
@@ -53,7 +56,16 @@ class TaskScheduler implements ShouldQueue
                 ->where('next_run', '<=', now())
                 ->cursor()
                 ->each(function ($scheduler) {
-                    $this->doJob($scheduler);
+
+                    nlog("Doing job ::{$scheduler->id}:: {$scheduler->name}");
+
+                    try {
+                        //@var \App\Models\Schedule $scheduler
+                        $scheduler->service()->runTask();
+                    } catch (\Throwable $e) {
+                        nlog("Exception:: TaskScheduler:: Doing job :: {$scheduler->id} :: {$scheduler->name}" . $e->getMessage());
+                    }
+
                 });
 
 
@@ -70,19 +82,20 @@ class TaskScheduler implements ShouldQueue
                 ->where('next_run', '<=', now())
                 ->cursor()
                 ->each(function ($scheduler) {
-                    $this->doJob($scheduler);
+
+                    nlog("Doing job ::{$scheduler->id}:: {$scheduler->name}");
+
+                    try {
+                        /** @var \App\Models\Scheduler $scheduler */
+                        $scheduler->service()->runTask();
+                    } catch (\Throwable $e) {
+                        nlog("Exception:: TaskScheduler:: #{$scheduler->id}::" . $e->getMessage());
+                        nlog($e->getMessage());
+                    }
+
+
                 });
         }
     }
 
-    private function doJob(Scheduler $scheduler)
-    {
-        nlog("Doing job {$scheduler->name}");
-    
-        try {
-            $scheduler->service()->runTask();
-        } catch(\Exception $e) {
-            nlog($e->getMessage());
-        }
-    }
 }

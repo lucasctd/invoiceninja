@@ -4,35 +4,41 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Report;
 
-use App\Export\CSV\BaseExport;
-use App\Libraries\MultiDB;
-use App\Models\Client;
-use App\Models\Company;
-use App\Models\Invoice;
+use App\Models\User;
 use App\Utils\Ninja;
 use App\Utils\Number;
+use App\Models\Client;
+use League\Csv\Writer;
+use App\Models\Company;
+use App\Models\Invoice;
+use App\Libraries\MultiDB;
+use App\Export\CSV\BaseExport;
 use App\Utils\Traits\MakesDates;
 use Illuminate\Support\Facades\App;
-use League\Csv\Writer;
+use App\Services\Template\TemplateService;
 
 class ARSummaryReport extends BaseExport
 {
     use MakesDates;
 
     public Writer $csv;
-    
+
     public string $date_key = 'created_at';
 
     public Client $client;
 
     private float $total = 0;
+
+    private array $clients = [];
+
+    private string $template = '/views/templates/reports/ar_summary_report.html';
 
     public array $report_keys = [
         'client_name',
@@ -70,7 +76,8 @@ class ARSummaryReport extends BaseExport
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
         $this->csv = Writer::createFromString();
-        
+        \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
+
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
         $this->csv->insertOne([]);
@@ -90,12 +97,37 @@ class ARSummaryReport extends BaseExport
             ->orderBy('balance', 'desc')
             ->cursor()
             ->each(function ($client) {
-                        
+
                 $this->csv->insertOne($this->buildRow($client));
-                        
+
             });
 
         return $this->csv->toString();
+    }
+
+    public function getPdf()
+    {
+        $user = isset($this->input['user_id']) ? User::withTrashed()->find($this->input['user_id']) : $this->company->owner();
+
+        $user_name = $user ? $user->present()->name() : '';
+
+        $data = [
+            'clients' => $this->clients,
+            'company_logo' => $this->company->present()->logo(),
+            'company_name' => $this->company->present()->name(),
+            'created_on' => $this->translateDate(now()->format('Y-m-d'), $this->company->date_format(), $this->company->locale()),
+            'created_by' => $user_name,
+        ];
+
+        $ts = new TemplateService();
+
+        $ts_instance = $ts->setCompany($this->company)
+                    ->setData($data)
+                    ->setRawTemplate(file_get_contents(resource_path($this->template)))
+                    ->parseNinjaBlocks()
+                    ->save();
+
+        return $ts_instance->getPdf();
     }
 
     private function buildRow(Client $client): array
@@ -112,10 +144,12 @@ class ARSummaryReport extends BaseExport
             $this->getAgingAmount('90'),
             $this->getAgingAmount('120'),
             $this->getAgingAmount('120+'),
-            Number::formatMoney($this->total, $this->client),
+            Number::formatMoney($this->total, $this->company),
         ];
-        
+
         $this->total = 0;
+
+        $this->clients[] = $row;
 
         return $row;
     }
@@ -125,9 +159,9 @@ class ARSummaryReport extends BaseExport
         $amount = Invoice::withTrashed()
             ->where('client_id', $this->client->id)
             ->where('company_id', $this->client->company_id)
+            ->where('is_deleted', 0)
             ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
             ->where('balance', '>', 0)
-            ->where('is_deleted', 0)
             ->where(function ($query) {
                 $query->where('due_date', '>', now()->startOfDay())
                     ->orWhereNull('due_date');
@@ -210,7 +244,7 @@ class ARSummaryReport extends BaseExport
         }
     }
 
-    public function buildHeader() :array
+    public function buildHeader(): array
     {
         $header = [];
 

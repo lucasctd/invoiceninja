@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -24,13 +24,17 @@ use Intervention\Image\ImageManager;
 
 class UploadFile implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, MakesHash;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
+    use MakesHash;
 
-    const IMAGE = 1;
+    public const IMAGE = 1;
 
-    const DOCUMENT = 2;
+    public const DOCUMENT = 2;
 
-    const PROPERTIES = [
+    public const PROPERTIES = [
         self::IMAGE => [
             'path' => 'images',
         ],
@@ -52,7 +56,7 @@ class UploadFile implements ShouldQueue
     public $entity;
 
     public $disk;
-    
+
     public function __construct($file, $type, $user, $company, $entity, $disk = null, $is_public = true)
     {
         $this->file = $file;
@@ -71,7 +75,7 @@ class UploadFile implements ShouldQueue
      *
      * @return Document|null
      */
-    public function handle() : ?Document
+    public function handle(): ?Document
     {
         if (is_array($this->file)) { //return early if the payload is just JSON
             return null;
@@ -117,7 +121,7 @@ class UploadFile implements ShouldQueue
         return $document;
     }
 
-    private function generatePreview($preview_path) : string
+    private function generatePreview($preview_path): string
     {
         $extension = $this->file->getClientOriginalExtension();
 
@@ -183,5 +187,10 @@ class UploadFile implements ShouldQueue
         }
 
         return $preview;
+    }
+
+    public function failed(\Throwable $exception)
+    {
+        nlog('UploadFile failed: ' . $exception->getMessage());
     }
 }

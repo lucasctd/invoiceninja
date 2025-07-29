@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -25,11 +25,11 @@ class StoreRecurringExpenseRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
-        
+
         return $user->can('create', RecurringExpense::class);
     }
 
@@ -55,17 +55,17 @@ class StoreRecurringExpenseRequest extends Request
         $rules['tax_amount2'] = 'numeric';
         $rules['tax_amount3'] = 'numeric';
         $rules['currency_id'] = 'bail|required|integer|exists:currencies,id';
-        
+
         if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->file_validation;
+            $rules['documents.*'] = $this->fileValidation();
         } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->file_validation;
+            $rules['documents'] = $this->fileValidation();
         }
 
         if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->file_validation;
+            $rules['file.*'] = $this->fileValidation();
         } elseif ($this->file('file')) {
-            $rules['file'] = $this->file_validation;
+            $rules['file'] = $this->fileValidation();
         }
 
         return $this->globalRules($rules);

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -12,8 +12,9 @@
 namespace App\Filters;
 
 use App\Models\Payment;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * PaymentFilters.
@@ -108,11 +109,11 @@ class PaymentFilters extends QueryFilters
                 $payment_filters[] = Payment::STATUS_REFUNDED;
             }
 
-            if (count($payment_filters) >0) {
+            if (count($payment_filters) > 0) {
                 $query->whereIn('status_id', $payment_filters);
             }
 
-            if(in_array('partially_unapplied', $status_parameters)) {
+            if (in_array('partially_unapplied', $status_parameters)) {
                 $query->whereColumn('amount', '>', 'applied')->where('refunded', 0);
             }
         });
@@ -128,7 +129,7 @@ class PaymentFilters extends QueryFilters
      */
     public function match_transactions($value = 'true'): Builder
     {
-        
+
         if ($value == 'true') {
             return $this->builder
                         ->where('is_deleted', 0)
@@ -163,18 +164,22 @@ class PaymentFilters extends QueryFilters
     {
         $sort_col = explode('|', $sort);
 
-        if (!is_array($sort_col) || count($sort_col) != 2) {
+        if (!is_array($sort_col) || count($sort_col) != 2 || !in_array($sort_col[0], \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
+        $dir = ($sort_col[1] == 'asc') ? 'asc' : 'desc';
 
         if ($sort_col[0] == 'client_id') {
             return $this->builder->orderBy(\App\Models\Client::select('name')
-                    ->whereColumn('clients.id', 'payments.client_id'), $sort_col[1]);
+                    ->whereColumn('clients.id', 'payments.client_id'), $dir);
         }
 
+        if ($sort_col[0] == 'number') {
+            return $this->builder->orderByRaw("REGEXP_REPLACE(number,'[^0-9]+','')+0 " . $dir);
+        }
 
-        return $this->builder->orderBy($sort_col[0], $sort_col[1]);
+        return $this->builder->orderBy($sort_col[0], $dir);
     }
 
     public function date_range(string $date_range = ''): Builder
@@ -185,7 +190,7 @@ class PaymentFilters extends QueryFilters
             return $this->builder;
         }
 
-        if(!in_array($parts[0], ['date'])) {
+        if (!in_array($parts[0], ['date'])) {
             return $this->builder;
         }
 
@@ -195,11 +200,10 @@ class PaymentFilters extends QueryFilters
             $end_date = Carbon::parse($parts[2]);
 
             return $this->builder->whereBetween($parts[0], [$start_date, $end_date]);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return $this->builder;
         }
 
-        return $this->builder;
     }
 
     /**

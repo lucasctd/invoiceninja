@@ -86,7 +86,7 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
+ * 
  */
 class EventTest extends TestCase
 {
@@ -397,6 +397,7 @@ class EventTest extends TestCase
         ];
 
         $quote = Quote::find($this->decodePrimaryKey($arr['data']['id']));
+        $quote->due_date = now()->addYear();
         $quote->status_id = Quote::STATUS_SENT;
         $quote->save();
 
@@ -795,6 +796,7 @@ class EventTest extends TestCase
 
         $data = [
             'name' => $this->faker->firstName,
+            'steps' => "cart,auth.login-or-register",
         ];
 
         $response = $this->withHeaders([
@@ -808,6 +810,7 @@ class EventTest extends TestCase
 
         $data = [
             'name' => $this->faker->firstName,
+            'steps' => "cart,auth.login-or-register",
         ];
 
         $response = $this->withHeaders([
@@ -819,6 +822,7 @@ class EventTest extends TestCase
 
         $data = [
             'ids' => [$arr['data']['id']],
+            'steps' => "cart,auth.login-or-register",
         ];
 
         $response = $this->withHeaders([

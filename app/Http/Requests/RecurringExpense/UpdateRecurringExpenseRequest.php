@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -26,7 +26,7 @@ class UpdateRecurringExpenseRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         return auth()->user()->can('edit', $this->recurring_expense);
     }
@@ -49,15 +49,15 @@ class UpdateRecurringExpenseRequest extends Request
         $rules['category_id'] = 'bail|nullable|sometimes|exists:expense_categories,id,company_id,'.auth()->user()->company()->id.',is_deleted,0';
 
         if ($this->file('documents') && is_array($this->file('documents'))) {
-            $rules['documents.*'] = $this->file_validation;
+            $rules['documents.*'] = $this->fileValidation();
         } elseif ($this->file('documents')) {
-            $rules['documents'] = $this->file_validation;
+            $rules['documents'] = $this->fileValidation();
         }
 
         if ($this->file('file') && is_array($this->file('file'))) {
-            $rules['file.*'] = $this->file_validation;
+            $rules['file.*'] = $this->fileValidation();
         } elseif ($this->file('file')) {
-            $rules['file'] = $this->file_validation;
+            $rules['file'] = $this->fileValidation();
         }
 
         return $this->globalRules($rules);

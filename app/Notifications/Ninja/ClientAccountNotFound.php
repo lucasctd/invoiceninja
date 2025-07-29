@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -66,7 +66,7 @@ class ClientAccountNotFound extends Notification
         $content .= "Account: {$this->account_key }\n";
         $content .= "Email: {$this->email}\n";
 
-        return (new SlackMessage)
+        return (new SlackMessage())
                 ->success()
                 ->from(ctrans('texts.notification_bot'))
                 ->image('https://app.invoiceninja.com/favicon.png')

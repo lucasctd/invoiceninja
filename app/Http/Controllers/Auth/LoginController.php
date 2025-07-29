@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -13,6 +13,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\DataMapper\Analytics\LoginFailure;
+use App\DataMapper\Analytics\LoginMeta;
 use App\DataMapper\Analytics\LoginSuccess;
 use App\Events\User\UserLoggedIn;
 use App\Http\Controllers\BaseController;
@@ -111,6 +112,9 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
+            LightLogs::create(new LoginMeta($request->email, $request->ip, 'success'))
+                ->batch();
+
             /** @var \App\Models\User $user */
             $user = $this->guard()->user();
 
@@ -138,7 +142,7 @@ class LoginController extends BaseController
                 $account->save();
                 $user = $user->fresh();
             }
-            
+
             /** @var \App\Models\CompanyUser $cu */
             $cu = $this->hydrateCompanyUser();
 
@@ -159,6 +163,9 @@ class LoginController extends BaseController
                 ->increment()
                 ->batch();
 
+            LightLogs::create(new LoginMeta($request->email, $request->ip, 'failure'))
+                ->batch();
+
             $this->incrementLoginAttempts($request);
 
             return response()
@@ -172,7 +179,7 @@ class LoginController extends BaseController
      * Refreshes the data feed with the current Company User.
      *
      * @param Request $request
-     * @return Response|JsonResponse
+     * @return \Illuminate\Http\Response|JsonResponse
      */
     public function refresh(Request $request)
     {
@@ -318,14 +325,18 @@ class LoginController extends BaseController
             return $this->timeConstrainedResponse($cu);
         }
 
-        nlog("socialite");
-        nlog($user);
+        // nlog("socialite");
+        // nlog($user);
 
         $name = OAuth::splitName($user->name);
 
         if ($provider == 'apple') {
             $name[0] = request()->has('first_name') ? request()->input('first_name') : $name[0];
             $name[1] = request()->has('last_name') ? request()->input('last_name') : $name[1];
+        }
+
+        if($provider == 'apple' && !$user->email){
+            return response()->json(['message' => 'This signup method is not supported as no email was provided'], 403);
         }
 
         $new_account = [
@@ -369,6 +380,7 @@ class LoginController extends BaseController
         /** @var \App\Models\User $user */
         $user = auth()->user();
 
+        /** @var Builder $cu */
         $cu = CompanyUser::query()->where('user_id', $user->id);
 
         if ($cu->count() == 0) {
@@ -390,13 +402,17 @@ class LoginController extends BaseController
         $truth->setUser($user);
         $truth->setCompany($set_company);
 
-        $user->account->companies->each(function ($company) use ($user) {
-            if ($company->tokens()->where('is_system', true)->count() == 0) {
-                (new CreateCompanyToken($company, $user, request()->server('HTTP_USER_AGENT')))->handle();
+        //21-03-2024
+
+
+        $cu->each(function ($cu) {
+            /** @var \App\Models\CompanyUser $cu */
+            if (CompanyToken::query()->where('company_id', $cu->company_id)->where('user_id', $cu->user_id)->where('is_system', true)->doesntExist()) {
+                (new CreateCompanyToken($cu->company, $cu->user, request()->server('HTTP_USER_AGENT')))->handle();
             }
         });
 
-        $truth->setCompanyToken(CompanyToken::where('user_id', $user->id)->where('company_id', $set_company->id)->first());
+        $truth->setCompanyToken(CompanyToken::where('user_id', $user->id)->where('company_id', $set_company->id)->where('is_system', true)->first());
 
         return CompanyUser::query()->where('user_id', $user->id);
     }
@@ -417,8 +433,6 @@ class LoginController extends BaseController
         $user = $graph->createRequest('GET', '/me')
             ->setReturnType(Model\User::class)
             ->execute();
-
-        nlog($user);
 
         if ($user) {
             $account = request()->input('account');
@@ -474,7 +488,7 @@ class LoginController extends BaseController
      * send login response to oauthed users
      *
      * @param \App\Models\User $existing_user
-     * @return Response | JsonResponse
+     * @return Response| \Illuminate\Http\JsonResponse | JsonResponse
      */
     private function existingOauthUser($existing_user)
     {
@@ -527,7 +541,7 @@ class LoginController extends BaseController
 
         if (request()->has('id_token')) {
             $user = $google->getTokenResponse(request()->input('id_token'));
-        } elseif(request()->has('access_token')) {
+        } elseif (request()->has('access_token')) {
             $user = $google->harvestUser(request()->input('access_token'));
         } else {
             return response()->json(['message' => 'Illegal request'], 403);
@@ -643,8 +657,10 @@ class LoginController extends BaseController
             $parameters = ['response_type' => 'code', 'redirect_uri' => config('ninja.app_url') . "/auth/microsoft"];
         }
 
-        if(request()->hasHeader('X-REACT') || request()->query('react')) {
-            Cache::put("react_redir:".auth()->user()?->account->key, 'true', 300);
+        if (request()->hasHeader('X-REACT') || request()->query('react')) {
+            /**@var \App\Models\User $user */
+            $user = auth()->user();
+            Cache::put("react_redir:".$user?->account->key, 'true', 300);
         }
 
         if (request()->has('code')) {

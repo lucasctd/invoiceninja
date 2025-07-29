@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -86,14 +86,14 @@ trait Utilities
 
         nlog("checkout failure");
         nlog($_payment);
-        
+
         if (is_array($_payment) && array_key_exists('status', $_payment)) {
             $error_message = $_payment['status'];
         } else {
             $error_message = 'Error processing payment.';
         }
 
-        if(isset($_payment['actions'][0]['response_summary']) ?? false) {
+        if (isset($_payment['actions'][0]['response_summary']) ?? false) {
             $error_message = $_payment['actions'][0]['response_summary'];
         }
 
@@ -133,7 +133,7 @@ trait Utilities
     private function storeLocalPaymentMethod($response)
     {
         try {
-            $payment_meta = new stdClass;
+            $payment_meta = new stdClass();
             $payment_meta->exp_month = (string) $response['source']['expiry_month'];
             $payment_meta->exp_year = (string) $response['source']['expiry_year'];
             $payment_meta->brand = (string) $response['source']['scheme'];

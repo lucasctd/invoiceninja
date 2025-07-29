@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -32,25 +32,20 @@ class ReportExportController extends BaseController
 
         $report = Cache::get($hash);
 
-        if(!$report) {
+        if (!$report) {
             return response()->json(['message' => 'Still working.....'], 409);
         }
-        
-        if($report) {
-            
-            Cache::forget($hash);
 
-            $headers = [
-                'Content-Disposition' => 'attachment',
-                'Content-Type' => 'text/csv',
-            ];
+        Cache::forget($hash);
 
-            return response()->streamDownload(function () use ($report) {
-                echo $report;
-            }, $this->filename, $headers);
+        $headers = [
+            'Content-Disposition' => 'attachment',
+            'Content-Type' => 'text/csv',
+        ];
 
-        }
-
+        return response()->streamDownload(function () use ($report) {
+            echo $report;
+        }, $this->filename, $headers);
 
     }
 }

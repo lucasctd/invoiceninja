@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -28,7 +28,10 @@ use Illuminate\Support\Str;
 
 class VersionCheck implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     public function __construct()
     {
@@ -82,7 +85,7 @@ class VersionCheck implements ShouldQueue
                                 $c->saveQuietly();
 
                             });
-            
+
             ClientContact::query()
                             ->whereNull('contact_key')
                             ->update([
@@ -91,7 +94,7 @@ class VersionCheck implements ShouldQueue
 
             Client::doesntHave('contacts')
                             ->cursor()
-                            ->each(function ($client) {
+                            ->each(function (Client $client) { //@phpstan-ignore-line
 
                                 $new_contact = ClientContactFactory::create($client->company_id, $client->user_id);
                                 $new_contact->client_id = $client->id;
@@ -101,10 +104,10 @@ class VersionCheck implements ShouldQueue
 
                             });
 
-            
+
             Vendor::doesntHave('contacts')
                             ->cursor()
-                            ->each(function ($vendor) {
+                            ->each(function (Vendor $vendor) { //@phpstan-ignore-line
 
                                 $new_contact = VendorContactFactory::create($vendor->company_id, $vendor->user_id);
                                 $new_contact->vendor_id = $vendor->id;

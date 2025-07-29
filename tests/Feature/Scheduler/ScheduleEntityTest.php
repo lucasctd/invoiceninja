@@ -20,13 +20,15 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
- * @covers  App\Services\Scheduler\EmailRecord
+ * 
+ *   App\Services\Scheduler\EmailRecord
  */
 class ScheduleEntityTest extends TestCase
 {
     use MakesHash;
     use MockAccountData;
+
+    public $faker;
 
     protected function setUp(): void
     {

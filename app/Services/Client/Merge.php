@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -31,9 +31,16 @@ class Merge extends AbstractService
 
     public function run()
     {
+        nlog("merging {$this->mergable_client->id} into {$this->client->id}");
+        nlog("balance pre {$this->client->balance}");
+        nlog("paid_to_date pre {$this->client->paid_to_date}");
+
         $this->client->balance += $this->mergable_client->balance;
         $this->client->paid_to_date += $this->mergable_client->paid_to_date;
         $this->client->save();
+
+        nlog("balance post {$this->client->balance}");
+        nlog("paid_to_date post {$this->client->paid_to_date}");
 
         $this->updateLedger($this->mergable_client->balance);
 
@@ -63,6 +70,9 @@ class Merge extends AbstractService
         });
 
         $this->mergable_client->forceDelete();
+
+        $this->client->credit_balance = $this->client->service()->getCreditBalance();
+        $this->client->saveQuietly();
 
         return $this->client;
     }

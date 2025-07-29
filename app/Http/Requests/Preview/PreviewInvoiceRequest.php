@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -31,7 +31,7 @@ class PreviewInvoiceRequest extends Request
     use CleanLineItems;
 
     private string $entity_plural = '';
-    
+
     private ?Client $client = null;
 
     /**
@@ -39,7 +39,7 @@ class PreviewInvoiceRequest extends Request
      *
      * @return bool
      */
-    public function authorize() : bool
+    public function authorize(): bool
     {
         /** @var \App\Models\User $user */
         $user = auth()->user();
@@ -76,7 +76,7 @@ class PreviewInvoiceRequest extends Request
         $input['balance'] = 0;
         $input['number'] = isset($input['number']) ? $input['number'] : ctrans('texts.live_preview').' #'.rand(0, 1000);
 
-        if($input['entity_id'] ?? false) {
+        if ($input['entity_id'] ?? false) {
             $input['entity_id'] = $this->decodePrimaryKey($input['entity_id'], true);
         }
 
@@ -89,7 +89,8 @@ class PreviewInvoiceRequest extends Request
     {
         $invitation = false;
 
-        if(! $this->entity_id ?? false) {
+        /** @phpstan-ignore-next-line */
+        if (! $this->entity_id ?? false) {
             return $this->stubInvitation();
         }
 
@@ -98,9 +99,10 @@ class PreviewInvoiceRequest extends Request
             'quote' => $invitation = QuoteInvitation::withTrashed()->where('quote_id', $this->entity_id)->first(),
             'credit' => $invitation = CreditInvitation::withTrashed()->where('credit_id', $this->entity_id)->first(),
             'recurring_invoice' => $invitation = RecurringInvoiceInvitation::withTrashed()->where('recurring_invoice_id', $this->entity_id)->first(),
+            default => $invitation = false,
         };
 
-        if($invitation) {
+        if ($invitation) {
             return $invitation;
         }
 
@@ -109,7 +111,7 @@ class PreviewInvoiceRequest extends Request
 
     public function getClient(): ?Client
     {
-        if(!$this->client) {
+        if (!$this->client) {
             $this->client = Client::query()->with('contacts', 'company', 'user')->withTrashed()->find($this->client_id);
         }
 
@@ -163,11 +165,11 @@ class PreviewInvoiceRequest extends Request
         $entity->setRelation('company', $client->company);
         $entity->setRelation('user', $client->user);
         $entity->fill($this->all());
-        
+
         return $entity;
     }
 
-    private function convertEntityPlural(string $entity) :self
+    private function convertEntityPlural(string $entity): self
     {
         switch ($entity) {
             case 'invoice':

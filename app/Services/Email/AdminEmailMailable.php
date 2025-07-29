@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -68,6 +68,7 @@ class AdminEmailMailable extends Mailable
                 'logo' => $this->email_object->company->present()->logo(),
                 'settings' => $this->email_object->settings,
                 'whitelabel' => $this->email_object->company->account->isPaid() ? true : false,
+                'template' => $this->email_object->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
             ]
         );
     }
@@ -87,7 +88,7 @@ class AdminEmailMailable extends Mailable
 
         return $attachments->toArray();
     }
- 
+
     /**
      * Get the message headers.
      *

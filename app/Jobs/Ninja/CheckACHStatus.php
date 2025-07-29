@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -22,7 +22,10 @@ use Illuminate\Queue\SerializesModels;
 
 class CheckACHStatus implements ShouldQueue
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use Dispatchable;
+    use InteractsWithQueue;
+    use Queueable;
+    use SerializesModels;
 
     /**
      * Create a new job instance.
@@ -62,7 +65,7 @@ class CheckACHStatus implements ShouldQueue
                     $stripe = $token->gateway->driver($token->client)->init();
                     $pm =  $stripe->getStripePaymentMethod($token->token);
 
-                    if($pm) {
+                    if ($pm) {
 
                         $meta = $token->meta;
                         $meta->state = 'authorized';
@@ -85,7 +88,7 @@ class CheckACHStatus implements ShouldQueue
 
                 try {
                     $stripe = $p->company_gateway->driver($p->client)->init();
-                } catch(\Exception $e) {
+                } catch (\Exception $e) {
                     return;
                 }
 
@@ -93,26 +96,26 @@ class CheckACHStatus implements ShouldQueue
 
                 try {
                     $pi = $stripe->getPaymentIntent($p->transaction_reference);
-                } catch(\Exception $e) {
-    
+                } catch (\Exception $e) {
+
                 }
 
-                if(!$pi) {
+                if (!$pi) {
 
                     try {
                         $pi = \Stripe\Charge::retrieve($p->transaction_reference, $stripe->stripe_connect_auth);
-                    } catch(\Exception $e) {
+                    } catch (\Exception $e) {
                         return;
                     }
 
                 }
 
-                if($pi && $pi->status == 'succeeded') {
+                if ($pi && $pi->status == 'succeeded') {
                     $p->status_id = Payment::STATUS_COMPLETED;
                     $p->saveQuietly();
                 } else {
 
-                    if($pi) {
+                    if ($pi) {
                         nlog("{$p->id} did not complete {$p->transaction_reference}");
                     } else {
                         nlog("did not find a payment intent {$p->transaction_reference}");

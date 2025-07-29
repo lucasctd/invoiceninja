@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -16,7 +16,7 @@ use App\Models\RecurringInvoice;
 
 class RecurringExpenseFactory
 {
-    public static function create(int $company_id, int $user_id) :RecurringExpense
+    public static function create(int $company_id, int $user_id): RecurringExpense
     {
         $recurring_expense = new RecurringExpense();
         $recurring_expense->status_id = RecurringInvoice::STATUS_DRAFT;

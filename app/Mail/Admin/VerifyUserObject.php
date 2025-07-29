@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -40,22 +40,23 @@ class VerifyUserObject
 
         $react_redirect = '';
 
-        if($this->is_react) {
+        if ($this->is_react) {
             $react_redirect = '?react=true';
-            nlog("is react");
         }
 
         $data = [
             'title' => ctrans('texts.confirmation_subject'),
-            'message' => ctrans('texts.confirmation_message'),
+            'content' => ctrans('texts.confirmation_message'),
             'url' => url("/user/confirm/{$this->user->confirmation_code}".$react_redirect),
             'button' => ctrans('texts.button_confirmation_message'),
             'settings' => $this->company->settings,
             'logo' => $this->company->present()->logo(),
             'signature' => $this->company->settings->email_signature,
+            'text_body' => ctrans('texts.confirmation_message'),
+            'template' => $this->company->account->isPremium() ? 'email.template.admin_premium' : 'email.template.admin',
         ];
 
-        $mail_obj = new \stdClass;
+        $mail_obj = new \stdClass();
         $mail_obj->subject = ctrans('texts.confirmation_subject');
         $mail_obj->data = $data;
         $mail_obj->markdown = 'email.admin.generic';

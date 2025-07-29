@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -32,8 +32,21 @@ class QuoteTransformer extends EntityTransformer
     protected array $availableIncludes = [
         'activities',
         'client',
+        'location',
     ];
 
+
+    public function includeLocation(Quote $quote)
+    {
+        $transformer = new LocationTransformer($this->serializer);
+
+        if (!$quote->location) {
+            return null;
+        }
+
+        return $this->includeItem($quote->location, $transformer, \App\Models\Location::class);
+    }
+    
     public function includeActivities(Quote $quote)
     {
         $transformer = new ActivityTransformer($this->serializer);
@@ -111,7 +124,7 @@ class QuoteTransformer extends EntityTransformer
             'reminder2_sent' => $quote->reminder2_sent ?: '',
             'reminder3_sent' => $quote->reminder3_sent ?: '',
             'reminder_last_sent' => $quote->reminder_last_sent ?: '',
-            'due_date' => $quote->due_date ?: '',
+            'due_date' => $quote->due_date ? $quote->due_date->format('Y-m-d') : '',
             'terms' => $quote->terms ?: '',
             'public_notes' => $quote->public_notes ?: '',
             'private_notes' => $quote->private_notes ?: '',
@@ -127,7 +140,7 @@ class QuoteTransformer extends EntityTransformer
             'is_amount_discount' => (bool) ($quote->is_amount_discount ?: false),
             'footer' => $quote->footer ?: '',
             'partial' => (float) ($quote->partial ?: 0.0),
-            'partial_due_date' => $quote->partial_due_date ?: '',
+            'partial_due_date' => $quote->partial_due_date ? $quote->partial_due_date->format('Y-m-d') : '',
             'custom_value1' => (string) $quote->custom_value1 ?: '',
             'custom_value2' => (string) $quote->custom_value2 ?: '',
             'custom_value3' => (string) $quote->custom_value3 ?: '',
@@ -148,6 +161,9 @@ class QuoteTransformer extends EntityTransformer
             'paid_to_date' => (float) $quote->paid_to_date,
             'project_id' => $this->encodePrimaryKey($quote->project_id),
             'subscription_id' => $this->encodePrimaryKey($quote->subscription_id),
+            'tax_info' => $quote->tax_data ?: new \stdClass(),
+            'e_invoice' => $quote->e_invoice ?: new \stdClass(),
+            'location_id' => $this->encodePrimaryKey($quote->location_id),
 
         ];
     }

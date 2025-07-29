@@ -4,15 +4,17 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Services\Invoice;
 
+use App\Events\Invoice\InvoiceWasDeleted;
 use App\Jobs\Inventory\AdjustProductInventory;
 use App\Models\Invoice;
+use App\Models\Quote;
 use App\Services\AbstractService;
 use App\Utils\Traits\GeneratesCounter;
 
@@ -32,10 +34,7 @@ class MarkInvoiceDeleted extends AbstractService
 
     public function run()
     {
-        if ($this->invoice->is_deleted) {
-            return $this->invoice;
-        }
-
+        
         if ($this->invoice->company->track_inventory) {
             (new AdjustProductInventory($this->invoice->company, $this->invoice, []))->handleDeletedInvoice();
         }
@@ -45,14 +44,18 @@ class MarkInvoiceDeleted extends AbstractService
              ->deletePaymentables()
              ->adjustPayments()
              ->adjustPaidToDateAndBalance()
-             ->adjustLedger();
+             ->adjustLedger()
+             ->triggeredActions();
+
+        $this->invoice->delete();
+
+        event(new \App\Events\Invoice\InvoiceWasDeleted($this->invoice, $this->invoice->company, \App\Utils\Ninja::eventVars(auth()->guard('api')->user() ? auth()->guard('api')->user()->id : null)));
 
         return $this->invoice;
     }
 
     private function adjustLedger()
     {
-        // $this->invoice->ledger()->updatePaymentBalance($this->adjustment_amount * -1, 'Invoice Deleted - reducing ledger balance'); //reduces the payment balance by payment totals
         $this->invoice->ledger()->updatePaymentBalance($this->balance_adjustment * -1, 'Invoice Deleted - reducing ledger balance'); //reduces the payment balance by payment totals
 
         return $this;
@@ -60,12 +63,18 @@ class MarkInvoiceDeleted extends AbstractService
 
     private function adjustPaidToDateAndBalance()
     {
-        // 06-09-2022
+
+        $ba = $this->balance_adjustment * -1;
+        $aa = $this->adjustment_amount * -1;    
+        $cb = $this->invoice->client->balance;
+
+        nlog("APB => {$this->invoice->number} - BA={$ba} - AA={$aa} - CB={$cb}");
+        
         $this->invoice
              ->client
              ->service()
-             ->updateBalanceAndPaidToDate($this->balance_adjustment * -1, $this->adjustment_amount * -1)
-             ->save(); //reduces the paid to date by the payment totals
+             ->updateBalanceAndPaidToDate($ba, $aa)
+             ->save();
 
         return $this;
     }
@@ -77,7 +86,7 @@ class MarkInvoiceDeleted extends AbstractService
         if ($this->adjustment_amount == $this->total_payments) {
             $this->invoice->payments()->update(['payments.deleted_at' => now(), 'payments.is_deleted' => true]);
         }
-      
+
 
         //adjust payments down by the amount applied to the invoice payment.
         $this->invoice->payments->each(function ($payment) {
@@ -100,7 +109,7 @@ class MarkInvoiceDeleted extends AbstractService
             $payment->applied -= $payment_adjustment;
             $payment->save();
         });
-        
+
 
         return $this;
     }
@@ -128,6 +137,18 @@ class MarkInvoiceDeleted extends AbstractService
         $this->total_payments = $this->invoice->payments->sum('amount') - $this->invoice->payments->sum('refunded');
 
         $this->balance_adjustment = $this->invoice->balance;
+
+            $pre_count = count((array)$this->invoice->line_items);
+
+            $items = collect((array)$this->invoice->line_items)
+                        ->filter(function ($item) {
+                            return $item->type_id != '3';
+                        })->toArray();
+
+            if(count($items) < $pre_count) {
+                $this->invoice->line_items = array_values($items);
+                $this->invoice = $this->invoice->calc()->getInvoice();
+            }
 
         return $this;
     }
@@ -179,6 +200,17 @@ class MarkInvoiceDeleted extends AbstractService
                     ->where('paymentable_id', $this->invoice->id)
                     ->update(['deleted_at' => now()]);
         });
+
+        return $this;
+    }
+
+    private function triggeredActions(): self
+    {
+        if ($this->invoice->quote) {
+            $this->invoice->quote->invoice_id = null;
+            $this->invoice->quote->status_id = Quote::STATUS_SENT;
+            $this->invoice->pushQuietly();
+        }
 
         return $this;
     }

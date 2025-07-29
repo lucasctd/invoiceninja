@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -27,7 +27,7 @@ class Helpers
     {
         if (! $client) {
             $elements['signature'] = '';
-            $elements['settings'] = new stdClass;
+            $elements['settings'] = new stdClass();
             $elements['whitelabel'] = true;
             $elements['company'] = '';
 
@@ -59,7 +59,7 @@ class Helpers
         $custom_field = '';
         $quote_or_credit_field = false;
 
-        if($custom_fields && stripos($field, 'quote') !== false && property_exists($custom_fields, $field)) {
+        if ($custom_fields && stripos($field, 'quote') !== false && property_exists($custom_fields, $field)) {
             $custom_field = $custom_fields->{$field};
             $custom_field_parts = explode('|', $custom_field);
 
@@ -69,7 +69,7 @@ class Helpers
 
             $quote_or_credit_field = true;
 
-        } elseif($custom_fields && stripos($field, 'credit') !== false && property_exists($custom_fields, $field)) {
+        } elseif ($custom_fields && stripos($field, 'credit') !== false && property_exists($custom_fields, $field)) {
             $custom_field = $custom_fields->{$field};
             $custom_field_parts = explode('|', $custom_field);
 
@@ -79,9 +79,9 @@ class Helpers
 
             $quote_or_credit_field = true;
 
-        } elseif($custom_fields && stripos($field, 'credit') !== false) {
+        } elseif ($custom_fields && stripos($field, 'credit') !== false) {
             $field = str_replace("credit", "invoice", $field);
-        } elseif($custom_fields && stripos($field, 'quote') !== false) {
+        } elseif ($custom_fields && stripos($field, 'quote') !== false) {
             $field = str_replace("quote", "invoice", $field);
         }
 
@@ -97,15 +97,15 @@ class Helpers
         switch ($custom_field) {
             case 'date':
                 return is_null($entity) ? $value : $this->translateDate($value, $entity->date_format(), $entity->locale());
-                break;
+
 
             case 'switch':
-                return trim($value) == 'yes' ? ctrans('texts.yes') : ctrans('texts.no');
-                break;
+                return trim($value ?? '') == 'yes' ? ctrans('texts.yes') : ctrans('texts.no');
+
 
             default:
                 return is_null($value) ? '' : $this->processReservedKeywords($value, $entity);
-                break;
+
         }
     }
 
@@ -157,9 +157,10 @@ class Helpers
         // 04-10-2022 Return Early if no reserved keywords are present, this is a very expensive process
         $string_hit = false;
 
-        foreach ([':MONTH',':YEAR',':QUARTER',':WEEK'] as $string) {
+        foreach ([':MONTH',':YEAR',':QUARTER',':WEEK', 'MONTHYEAR' ] as $string) {
             if (stripos($value, $string) !== false) {
                 $string_hit = true;
+                break;
             }
         }
 
@@ -202,7 +203,7 @@ class Helpers
                 ),
                 ':MONTHYEAR' => \sprintf(
                     '%s %s',
-                    Carbon::createFromDate($currentDateTime->month)->translatedFormat('F'),
+                    Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F'),
                     $currentDateTime->year,
                 ),
                 ':MONTH' => Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F'),
@@ -252,45 +253,45 @@ class Helpers
                 continue;
             }
 
-            if (Str::contains($match, '|')) {
-                $parts = explode('|', $match); // [ '[MONTH', 'MONTH+2]' ]
+            // if (Str::contains($match, '|')) {
+            $parts = explode('|', $match); // [ '[MONTH', 'MONTH+2]' ]
 
-                $left = substr($parts[0], 1); // 'MONTH'
-                $right = substr($parts[1], 0, -1); // MONTH+2
+            $left = substr($parts[0], 1); // 'MONTH'
+            $right = substr($parts[1], 0, -1); // MONTH+2
 
-                // If left side is not part of replacements, skip.
-                if (! array_key_exists($left, $replacements['ranges'])) {
-                    continue;
-                }
-
-                $_left = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F Y');
-                $_right = '';
-
-                // If right side doesn't have any calculations, replace with raw ranges keyword.
-                if (! Str::contains(str_replace("</", "", $right), ['-', '+', '/', '*'])) {
-                    $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F Y');
-                }
-
-                // If right side contains one of math operations, calculate.
-                if (Str::contains(str_replace("</", "", $right), ['+'])) {
-                    $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $right, $_matches);
-
-                    $_operation = array_shift($_matches)[0]; // + -
-
-                    $_value = explode($_operation, $right); // [MONTHYEAR, 4]
-
-                    $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths($_value[1])->translatedFormat('F Y');
-                }
-
-                $replacement = sprintf('%s to %s', $_left, $_right);
-
-                $value = preg_replace(
-                    sprintf('/%s/', preg_quote($match)),
-                    $replacement,
-                    $value,
-                    1
-                );
+            // If left side is not part of replacements, skip.
+            if (! array_key_exists($left, $replacements['ranges'])) {
+                continue;
             }
+
+            $_left = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F Y');
+            $_right = '';
+
+            // If right side doesn't have any calculations, replace with raw ranges keyword.
+            if (! Str::contains(str_replace("</", "", $right), ['-', '+', '/', '*'])) {
+                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->translatedFormat('F Y');
+            }
+
+            // If right side contains one of math operations, calculate.
+            if (Str::contains(str_replace("</", "", $right), ['+'])) {
+                $operation = preg_match_all('/(?!^-)[+*\/-](\s?-)?/', $right, $_matches);
+
+                $_operation = array_shift($_matches)[0]; // + -
+
+                $_value = explode($_operation, $right); // [MONTHYEAR, 4]
+
+                $_right = Carbon::createFromDate($currentDateTime->year, $currentDateTime->month)->addMonths((int)$_value[1])->translatedFormat('F Y'); //@phpstan-ignore-line
+            }
+
+            $replacement = sprintf('%s to %s', $_left, $_right);
+
+            $value = preg_replace(
+                sprintf('/%s/', preg_quote($match)),
+                $replacement,
+                $value,
+                1
+            );
+            // }
         }
 
         // Second case with more common calculations.

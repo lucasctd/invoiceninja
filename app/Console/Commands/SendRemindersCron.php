@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -28,7 +28,8 @@ use Illuminate\Support\Facades\App;
 //@deprecated 27-11-2022 - only ever should be used for testing
 class SendRemindersCron extends Command
 {
-    use MakesReminders, MakesDates;
+    use MakesReminders;
+    use MakesDates;
 
     /**
      * The name and signature of the console command.
@@ -61,10 +62,10 @@ class SendRemindersCron extends Command
     public function handle()
     {
         Invoice::where('next_send_date', '<=', now()->toDateTimeString())
-                 ->whereNull('deleted_at')
-                 ->where('is_deleted', 0)
-                 ->whereIn('status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
-                 ->where('balance', '>', 0)
+                ->whereNull('invoices.deleted_at')
+                ->where('invoices.is_deleted', 0)
+                ->whereIn('invoices.status_id', [Invoice::STATUS_SENT, Invoice::STATUS_PARTIAL])
+                ->where('invoices.balance', '>', 0)
                  ->whereHas('client', function ($query) {
                      $query->where('is_deleted', 0)
                            ->where('deleted_at', null);
@@ -72,6 +73,7 @@ class SendRemindersCron extends Command
                  ->whereHas('company', function ($query) {
                      $query->where('is_disabled', 0);
                  })
+
                  ->with('invitations')->cursor()->each(function ($invoice) {
                      if ($invoice->isPayable()) {
                          $reminder_template = $invoice->calculateTemplate('invoice');
@@ -81,12 +83,16 @@ class SendRemindersCron extends Command
                          //check if this reminder needs to be emailed
                          if (in_array($reminder_template, ['reminder1', 'reminder2', 'reminder3']) && $invoice->client->getSetting('enable_'.$reminder_template)) {
                              $invoice->invitations->each(function ($invitation) use ($invoice, $reminder_template) {
-                                 EmailEntity::dispatch($invitation, $invitation->company, $reminder_template);
+                                 EmailEntity::dispatch($invitation->withoutRelations(), $invitation->company->db, $reminder_template);
                                  nlog("Firing reminder email for invoice {$invoice->number}");
                              });
 
                              if ($invoice->invitations->count() > 0) {
-                                 event(new InvoiceWasEmailed($invoice->invitations->first(), $invoice->company, Ninja::eventVars(), $reminder_template));
+                                //  event(new InvoiceWasEmailed($invoice->invitations->first(), $invoice->company, Ninja::eventVars(), $reminder_template));
+                                
+event(new \App\Events\General\EntityWasEmailed($invoice->invitations->first(), $invoice->company, Ninja::eventVars(auth()->user() ? auth()->user()->id : null), $reminder_template));
+
+                                 $invoice->entityEmailEvent($invoice->invitations->first(), $reminder_template);
                              }
                          }
                          $invoice->service()->setReminder()->save();
@@ -97,7 +103,7 @@ class SendRemindersCron extends Command
                  });
     }
 
-    private function calcLateFee($invoice, $template) :Invoice
+    private function calcLateFee($invoice, $template): Invoice
     {
         $late_fee_amount = 0;
         $late_fee_percent = 0;
@@ -137,7 +143,7 @@ class SendRemindersCron extends Command
      *
      * @return Invoice
      */
-    private function setLateFee($invoice, $amount, $percent) :Invoice
+    private function setLateFee($invoice, $amount, $percent): Invoice
     {
         App::forgetInstance('translator');
         $t = app('translator');
@@ -158,7 +164,7 @@ class SendRemindersCron extends Command
             $fee += round($invoice->balance * $percent / 100, 2);
         }
 
-        $invoice_item = new InvoiceItem;
+        $invoice_item = new InvoiceItem();
         $invoice_item->type_id = '5';
         $invoice_item->product_key = ctrans('texts.fee');
         $invoice_item->notes = ctrans('texts.late_fee_added', ['date' => $this->translateDate(now()->startOfDay(), $invoice->client->date_format(), $invoice->client->locale())]);

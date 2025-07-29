@@ -29,13 +29,13 @@ class ClientTransformer extends BaseTransformer
     {
         $client_id_proxy = array_key_exists('Customer ID', $data) ? 'Customer ID' : 'Primary Contact ID';
 
-        if(isset($data[$client_id_proxy]) && $this->hasClientIdNumber($data[$client_id_proxy])) {
+        if (isset($data[$client_id_proxy]) && $this->hasClientIdNumber($data[$client_id_proxy])) {
             throw new ImportException('Client ID already exists => '. $data[$client_id_proxy]);
         } elseif (isset($data['Company Name']) && $this->hasClient($data['Company Name'])) {
             throw new ImportException('Client already exists => '. $data['Company Name']);
         }
 
-        $settings = new \stdClass;
+        $settings = new \stdClass();
         $settings->currency_id = (string) $this->getCurrencyByCode($data, 'Currency');
 
         if (strval($data['Payment Terms'] ?? '') > 0) {

@@ -436,8 +436,26 @@
             schema:
               type: object
               properties:
+                email_type:
+                  type: enum
+                  description: "The email type to be sent, when bulk emailing invoices"
+                  enum:
+                    - invoice
+                    - quote
+                    - credit
+                    - payment
+                    - payment_partial
+                    - statement
+                    - reminder1
+                    - reminder2
+                    - reminder3
+                    - reminder_endless
+                    - custom1
+                    - custom2
+                    - custom3
+                    - purchase_order
+                    - email_quote_template_reminder1
                 action:
-                  required: true
                   type: string
                   description: |
                     The action to be performed, options include:  
@@ -470,14 +488,13 @@
                     - `send_email`  
                       Emails an array of invoices. Requires additional properties to be sent. `email_type`  
                 ids:
-                  required: true
                   type: array
                   items:
                     description: "Array of hashed IDs to be bulk 'actioned - ['D2J234DFA','D2J234DFA','D2J234DFA']"
                     type: string
               example:
                 action: bulk_download
-                ids: "['D2J234DFA','D2J234DFA','D2J234DFA']"
+                ids: ['D2J234DFA','D2J234DFA','D2J234DFA']
               
       responses:
         200:

@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -26,17 +26,17 @@ abstract class QueryFilters
     /**
      * active status.
      */
-    const STATUS_ACTIVE = 'active';
+    public const STATUS_ACTIVE = 'active';
 
     /**
      * archived status.
      */
-    const STATUS_ARCHIVED = 'archived';
+    public const STATUS_ARCHIVED = 'archived';
 
     /**
      * deleted status.
      */
-    const STATUS_DELETED = 'deleted';
+    public const STATUS_DELETED = 'deleted';
 
     /**
      * The request object.
@@ -116,11 +116,11 @@ abstract class QueryFilters
      * @param  string $value
      * @return \stdClass
      */
-    public function split($value) : \stdClass
+    public function split($value): \stdClass
     {
         $exploded_array = explode(':', $value);
 
-        $parts = new \stdClass;
+        $parts = new \stdClass();
 
         $parts->value = $exploded_array[0];
         $parts->operator = $this->operatorConvertor($exploded_array[1]);
@@ -167,7 +167,7 @@ abstract class QueryFilters
      * @param string $operator
      * @return string
      */
-    private function operatorConvertor(string $operator) : string
+    private function operatorConvertor(string $operator): string
     {
         switch ($operator) {
             case 'lt':
@@ -215,7 +215,7 @@ abstract class QueryFilters
             }
 
             return $this->builder->where('created_at', '>=', $created_at);
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             return $this->builder;
         }
     }
@@ -255,7 +255,7 @@ abstract class QueryFilters
 
     public function client_id(string $client_id = ''): Builder
     {
-        if (strlen($client_id) == 0) {
+        if (strlen($client_id) == 0 || !in_array('client_id', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -264,7 +264,7 @@ abstract class QueryFilters
 
     public function vendor_id(string $vendor_id = ''): Builder
     {
-        if (strlen($vendor_id) == 0) {
+        if (strlen($vendor_id) == 0 || !in_array('vendor_id', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
             return $this->builder;
         }
 
@@ -322,7 +322,7 @@ abstract class QueryFilters
             return $this->builder;
         }
 
-        if($this->with_property == 'id') {
+        if ($this->with_property == 'id') {
             $value = $this->decodePrimaryKey($value);
         }
 
@@ -331,4 +331,61 @@ abstract class QueryFilters
             ->orderByRaw("{$this->with_property} = ? DESC", [$value])
             ->company();
     }
+
+
+    /**
+     * Filter by date range
+     *
+     * @param string $date_range
+     * @return Builder
+     */
+    public function date_range(string $date_range = ''): Builder
+    {
+        $parts = explode(",", $date_range);
+
+        if (count($parts) != 2 || !in_array('date', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+            return $this->builder;
+        }
+
+        try {
+
+            $start_date = Carbon::parse($parts[0]);
+            $end_date = Carbon::parse($parts[1]);
+
+            return $this->builder->whereBetween('date', [$start_date, $end_date]);
+        } catch (\Exception $e) {
+            return $this->builder;
+        }
+
+    }
+
+    /**
+     * Filter by due date range
+     *
+     * @param string $date_range
+     * @return Builder
+     */
+    public function due_date_range(string $date_range = ''): Builder
+    {
+
+        $parts = explode(",", $date_range);
+
+        if (count($parts) != 2 || !in_array('due_date', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+            return $this->builder;
+        }
+
+        try {
+
+            $start_date = Carbon::parse($parts[0]);
+            $end_date = Carbon::parse($parts[1]);
+
+            return $this->builder->whereBetween('due_date', [$start_date, $end_date]);
+        } catch (\Exception $e) {
+            return $this->builder;
+        }
+
+    }
+
+
+
 }

@@ -4,30 +4,30 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\PaymentDrivers;
 
-use App\Factory\ClientContactFactory;
-use App\Factory\ClientFactory;
-use App\Http\Requests\Payments\PaymentWebhookRequest;
-use App\Jobs\Mail\PaymentFailedMailer;
-use App\Jobs\Util\SystemLogger;
 use App\Models\Client;
-use App\Models\ClientGatewayToken;
 use App\Models\Country;
-use App\Models\GatewayType;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Models\SystemLog;
+use App\Models\GatewayType;
 use App\Models\PaymentHash;
 use App\Models\PaymentType;
-use App\Models\SystemLog;
-use App\Utils\Traits\GeneratesCounter;
+use App\Factory\ClientFactory;
+use App\Jobs\Util\SystemLogger;
 use App\Utils\Traits\MakesHash;
+use App\Models\ClientGatewayToken;
+use App\Factory\ClientContactFactory;
+use App\Jobs\Mail\PaymentFailedMailer;
+use App\Utils\Traits\GeneratesCounter;
 use Illuminate\Database\QueryException;
+use App\Http\Requests\Payments\PaymentWebhookRequest;
 
 class GoCardlessPaymentDriver extends BaseDriver
 {
@@ -49,11 +49,11 @@ class GoCardlessPaymentDriver extends BaseDriver
     public static $methods = [
         GatewayType::BANK_TRANSFER => \App\PaymentDrivers\GoCardless\DirectDebit::class,
         GatewayType::DIRECT_DEBIT => \App\PaymentDrivers\GoCardless\DirectDebit::class,
-        GatewayType::SEPA => \App\PaymentDrivers\GoCardless\SEPA::class,
+        GatewayType::SEPA => \App\PaymentDrivers\GoCardless\DirectDebit::class,
         GatewayType::INSTANT_BANK_PAY => \App\PaymentDrivers\GoCardless\InstantBankPay::class,
     ];
 
-    const SYSTEM_LOG_TYPE = SystemLog::TYPE_GOCARDLESS;
+    public const SYSTEM_LOG_TYPE = SystemLog::TYPE_GOCARDLESS;
 
     public function setPaymentMethod($payment_method_id)
     {
@@ -79,17 +79,16 @@ class GoCardlessPaymentDriver extends BaseDriver
         if (
             $this->client
             && isset($this->client->country)
-            // && in_array($this->client->country->iso_3166_3, ['GBR'])
-            && in_array($this->client->currency()->code, ['EUR', 'GBP','DKK','SEK','AUD','NZD'])
+            && in_array($this->client->currency()->code, ['EUR', 'GBP','DKK','SEK','AUD','NZD','CAD'])
         ) {
             $types[] = GatewayType::DIRECT_DEBIT;
         }
 
-        if (in_array($this->client->currency()->code, ['EUR', 'GBP'])) {
+        if ($this->client && in_array($this->client->currency()->code, ['EUR', 'GBP'])) {
             $types[] = GatewayType::SEPA;
         }
 
-        if ($this->client->currency()->code === 'GBP') {
+        if ($this->client && (($this->client->currency()->code === 'GBP' && $this->client->country->iso_3166_2 === 'GB') || ($this->client->currency()->code === 'EUR' && in_array($this->client->country->iso_3166_2, ['IE','FR','DE'])))) {
             $types[] = GatewayType::INSTANT_BANK_PAY;
         }
 
@@ -98,15 +97,21 @@ class GoCardlessPaymentDriver extends BaseDriver
 
     public function init(): self
     {
+        $environment = $this->company_gateway->getConfigField('testMode') ? \GoCardlessPro\Environment::SANDBOX : \GoCardlessPro\Environment::LIVE;
+        
+        if ($this->company_gateway->getConfigField('oauth2')) {
+            $environment = \GoCardlessPro\Environment::LIVE;
+        }
+
         try {
             $this->gateway = new \GoCardlessPro\Client([
                 'access_token' => $this->company_gateway->getConfigField('accessToken'),
-                'environment'  => $this->company_gateway->getConfigField('testMode') ? \GoCardlessPro\Environment::SANDBOX : \GoCardlessPro\Environment::LIVE,
+                'environment'  => $environment,
             ]);
-        } catch(\GoCardlessPro\Core\Exception\AuthenticationException $e) {
+        } catch (\GoCardlessPro\Core\Exception\AuthenticationException $e) {
 
             throw new \Exception('GoCardless: Invalid Access Token', 403);
-            
+
         }
 
         return $this;
@@ -165,8 +170,7 @@ class GoCardlessPaymentDriver extends BaseDriver
                 ],
             ]);
 
-            if ($payment->status === 'pending_submission') {
-                $this->confirmGatewayFee();
+            if (in_array($payment->status, ['submitted', 'pending_submission'])) {
 
                 $data = [
                     'payment_method' => $cgt->hashed_id,
@@ -176,7 +180,9 @@ class GoCardlessPaymentDriver extends BaseDriver
                     'gateway_type_id' => GatewayType::BANK_TRANSFER,
                 ];
 
-                $payment = $this->createPayment($data, Payment::STATUS_PENDING);
+                $this->confirmGatewayFee($data);
+
+                $_payment = $this->createPayment($data, Payment::STATUS_PENDING);
 
                 SystemLogger::dispatch(
                     ['response' => $payment, 'data' => $data],
@@ -187,7 +193,7 @@ class GoCardlessPaymentDriver extends BaseDriver
                     $this->client->company
                 );
 
-                return $payment;
+                return $_payment;
             }
 
             $this->sendFailureMail($payment->status);
@@ -256,7 +262,7 @@ class GoCardlessPaymentDriver extends BaseDriver
         $this->init();
 
         nlog('GoCardless Event');
-
+        nlog($request->all());
         if (! $request->has('events')) {
             nlog('No GoCardless events to process in response?');
 
@@ -266,7 +272,9 @@ class GoCardlessPaymentDriver extends BaseDriver
         sleep(1);
 
         foreach ($request->events as $event) {
-            if ($event['action'] === 'confirmed' || $event['action'] === 'paid_out') {
+            if (
+                ($event['resource_type'] == 'payments' && $event['action'] == 'confirmed') ||
+                $event['action'] === 'paid_out') {
                 nlog('Searching for transaction reference');
 
                 $payment = Payment::query()
@@ -321,53 +329,53 @@ class GoCardlessPaymentDriver extends BaseDriver
             //after i resolve the payment hash, ensure the invoice has not been marked as paid and the payment does not already exist.
             //if it does exist, ensure it is completed and not pending.
 
-            if ($event['action'] == 'fulfilled' && array_key_exists('billing_request', $event['links'])) {
-                $hash = PaymentHash::whereJsonContains('data->billing_request', $event['links']['billing_request'])->first();
+            // if ($event['action'] == 'fulfilled' && array_key_exists('billing_request', $event['links'])) {
+            //     $hash = PaymentHash::whereJsonContains('data->billing_request', $event['links']['billing_request'])->first();
 
-                if (!$hash) {
-                    nlog("GoCardless: couldn't find a hash, need to abort => Billing Request => " . $event['links']['billing_request']);
-                    return response()->json([], 200);
-                }
+            //     if (!$hash) {
+            //         nlog("GoCardless: couldn't find a hash, need to abort => Billing Request => " . $event['links']['billing_request']);
+            //         return response()->json([], 200);
+            //     }
 
-                $this->setPaymentHash($hash);
+            //     $this->setPaymentHash($hash);
 
-                $billing_request = $this->gateway->billingRequests()->get(
-                    $event['links']['billing_request']
-                );
+            //     $billing_request = $this->gateway->billingRequests()->get(
+            //         $event['links']['billing_request']
+            //     );
 
-                $payment = $this->gateway->payments()->get(
-                    $billing_request->payment_request->links->payment
-                );
+            //     $payment = $this->gateway->payments()->get(
+            //         $billing_request->payment_request->links->payment
+            //     );
 
-                if ($billing_request->status === 'fulfilled') {
-                    $invoices = Invoice::query()->whereIn('id', $this->transformKeys(array_column($hash->invoices(), 'invoice_id')))->withTrashed()->get();
+            //     if ($billing_request->status === 'fulfilled') {
+            //         $invoices = Invoice::query()->whereIn('id', $this->transformKeys(array_column($hash->invoices(), 'invoice_id')))->withTrashed()->get();
 
-                    $this->client = $invoices->first()->client;
+            //         $this->client = $invoices->first()->client;
 
-                    $invoices->each(function ($invoice) {
-                        //if payments exist already, they just need to be confirmed.
-                        if ($invoice->payments()->exists()) {
-                            $invoice->payments()->where('status_id', 1)->cursor()->each(function ($payment) {
-                                $payment->status_id = 4;
-                                $payment->save();
-                            });
-                        }
-                    });
+            //         $invoices->each(function ($invoice) {
+            //             //if payments exist already, they just need to be confirmed.
+            //             if ($invoice->payments()->exists()) {
+            //                 $invoice->payments()->where('status_id', 1)->cursor()->each(function ($payment) {
+            //                     $payment->status_id = 4;
+            //                     $payment->save();
+            //                 });
+            //             }
+            //         });
 
-                    // remove all paid invoices
-                    $invoices->filter(function ($invoice) {
-                        return $invoice->isPayable();
-                    });
+            //         // remove all paid invoices
+            //         $invoices->filter(function ($invoice) {
+            //             return $invoice->isPayable();
+            //         });
 
-                    //return early if nothing to do
-                    if ($invoices->count() == 0) {
-                        nlog("GoCardless: Could not harvest any invoices - probably all paid!!");
-                        return response()->json([], 200);
-                    }
+            //         //return early if nothing to do
+            //         if ($invoices->count() == 0) {
+            //             nlog("GoCardless: Could not harvest any invoices - probably all paid!!");
+            //             return response()->json([], 200);
+            //         }
 
-                    $this->processSuccessfulPayment($payment);
-                }
-            }
+            //         $this->processSuccessfulPayment($payment);
+            //     }
+            // }
         }
 
         return response()->json([], 200);
@@ -404,8 +412,8 @@ class GoCardlessPaymentDriver extends BaseDriver
             $this->init();
             $mandate = $this->gateway->mandates()->get($token);
 
-            if(!in_array($mandate->status, ['pending_submission', 'submitted', 'active','pending_customer_approval'])) {
-             
+            if (!in_array($mandate->status, ['pending_submission', 'submitted', 'active','pending_customer_approval'])) {
+
                 // if ($mandate->status !== 'active') {
                 throw new \Exception(ctrans('texts.gocardless_mandate_not_ready'));
             }
@@ -431,7 +439,7 @@ class GoCardlessPaymentDriver extends BaseDriver
                 $this->updatePaymentMethods($customer, $existing_customer_token->client);
             } elseif ($customer->email && $this->company_gateway->company->client_contacts()->where('email', $customer->email)->exists()) {
                 nlog("Customer exists: {$customer->email} just updating payment methods");
-    
+
                 $this->company_gateway->company->client_contacts()->where('email', $customer->email)->each(function ($contact) use ($customer) {
                     $this->updatePaymentMethods($customer, $contact->client);
                 });
@@ -454,7 +462,7 @@ class GoCardlessPaymentDriver extends BaseDriver
                 continue;
             }
 
-            $payment_meta = new \stdClass;
+            $payment_meta = new \stdClass();
 
             if ($mandate->scheme == 'bacs') {
                 $payment_meta->brand = ctrans('texts.payment_type_direct_debit');
@@ -465,7 +473,7 @@ class GoCardlessPaymentDriver extends BaseDriver
             } else {
                 continue;
             }
-            
+
             $payment_meta->state = 'authorized';
 
             $data = [
@@ -530,7 +538,7 @@ class GoCardlessPaymentDriver extends BaseDriver
         $contact->email = $customer->email ?: '';
         $contact->client_id = $client->id;
         $contact->saveQuietly();
-        
+
         if (! isset($client->number) || empty($client->number)) {
             $x = 1;
 
@@ -558,5 +566,17 @@ class GoCardlessPaymentDriver extends BaseDriver
     public function verificationView()
     {
         return render('gateways.gocardless.verification');
+    }
+
+    public function auth(): bool
+    {
+        try {
+            $customers = $this->init()->gateway->customers()->list();
+            return true;
+        } catch (\Exception $e) {
+
+        }
+
+        return false;
     }
 }

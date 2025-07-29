@@ -11,13 +11,14 @@
 
 namespace Tests\Unit;
 
+use App\DataMapper\ClientSettings;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Validation\ValidationException;
 use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * @test
+ * 
  */
 class ClientSettingsTest extends TestCase
 {
@@ -26,7 +27,7 @@ class ClientSettingsTest extends TestCase
 
     public $faker;
 
-    protected function setUp() :void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -35,6 +36,32 @@ class ClientSettingsTest extends TestCase
         $this->faker = \Faker\Factory::create();
     }
 
+
+    public function testBadProps()
+    {
+        $client = \App\Models\Client::factory()->create([
+            'company_id' => $this->company->id,
+            'user_id' => $this->user->id,
+            'settings' => ClientSettings::defaults(),
+        ]);
+
+        $this->assertNotNull($client);
+
+        $settings = $client->settings;
+
+        $settings->timezone_id = '15';
+
+        $client->saveSettings($settings, $client);
+
+        $this->assertNotNull($client);
+
+        $settings->something_crazy_here = '5424234234';
+
+        $client->saveSettings($settings, $client);
+
+        $this->assertFalse(property_exists($client->settings, 'something_crazy_here'));
+
+    }
 
     public function testClientValidSettingsWithBadProps()
     {
@@ -64,7 +91,7 @@ class ClientSettingsTest extends TestCase
                 'custom_value3' => null,
                 'custom_value4' => null,
                 'invoice_terms' => null,
-                'quote_terms' =>null,
+                'quote_terms' => null,
                 'quote_footer' => null,
                 'credit_terms' => null,
                 'credit_footer' => null,
@@ -81,7 +108,7 @@ class ClientSettingsTest extends TestCase
         $response->assertStatus(200);
 
         $arr = $response->json();
-        
+
         $this->assertEquals('frank', $arr['data']['settings']['name']);
 
         $client_id = $arr['data']['id'];
@@ -124,7 +151,7 @@ class ClientSettingsTest extends TestCase
                 'custom_value3' => null,
                 'custom_value4' => null,
                 'invoice_terms' => null,
-                'quote_terms' =>null,
+                'quote_terms' => null,
                 'quote_footer' => null,
                 'credit_terms' => null,
                 'credit_footer' => null,
@@ -231,12 +258,12 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-        
+
         $response = $this->withHeaders([
             'X-API-SECRET' => config('ninja.api_secret'),
             'X-API-TOKEN' => $this->token,
         ])->postJson('/api/v1/clients/', $data);
-        
+
 
         $response->assertStatus(422);
     }
@@ -258,17 +285,12 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-        try {
-            $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/clients/', $data);
-        } catch (ValidationException $e) {
-            $message = json_decode($e->validator->getMessageBag(), 1);
-            nlog($message);
-        }
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/clients/', $data);
 
-        $response->assertStatus(302);
+        $response->assertStatus(422);
     }
 
     public function testClientIllegalPaymenTerms()
@@ -288,17 +310,13 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-        try {
-            $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/clients/', $data);
-        } catch (ValidationException $e) {
-            $message = json_decode($e->validator->getMessageBag(), 1);
-            nlog($message);
-        }
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/clients/', $data);
 
-        $response->assertStatus(302);
+
+        $response->assertStatus(422);
     }
 
     public function testClientIllegalValidUntil()
@@ -318,17 +336,14 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-        try {
-            $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/clients/', $data);
-        } catch (ValidationException $e) {
-            $message = json_decode($e->validator->getMessageBag(), 1);
-            nlog($message);
-        }
 
-        $response->assertStatus(302);
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/clients/', $data);
+
+
+        $response->assertStatus(422);
     }
 
     public function testClientIllegalDefaultTaskRate()
@@ -381,17 +396,13 @@ class ClientSettingsTest extends TestCase
 
         $response = false;
 
-        try {
-            $response = $this->withHeaders([
-                'X-API-SECRET' => config('ninja.api_secret'),
-                'X-API-TOKEN' => $this->token,
-            ])->post('/api/v1/clients/', $data);
-        } catch (ValidationException $e) {
-            $message = json_decode($e->validator->getMessageBag(), 1);
-            nlog($message);
-        }
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->postJson('/api/v1/clients/', $data);
 
-        $response->assertStatus(302);
+
+        $response->assertStatus(422);
     }
 
     public function testClientSettingBools()

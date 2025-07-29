@@ -4,14 +4,17 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
 
 namespace App\Models;
 
+use App\Services\Subscription\PaymentLinkService;
+use App\Services\Subscription\SubscriptionCalculator;
 use App\Services\Subscription\SubscriptionService;
+use App\Services\Subscription\SubscriptionStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,12 +25,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $user_id
  * @property int|null $assigned_user_id
  * @property int $company_id
+ * @property int $remaining_cycles
  * @property string|null $product_ids
  * @property int|null $frequency_id
  * @property string|null $auto_bill
  * @property string|null $promo_code
  * @property float $promo_discount
- * @property int $is_amount_discount
+ * @property bool $is_amount_discount
  * @property int $allow_cancellation
  * @property int $per_seat_enabled
  * @property int $min_seats_limit
@@ -72,7 +76,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Subscription extends BaseModel
 {
-    use HasFactory, SoftDeletes, Filterable;
+    use HasFactory;
+    use SoftDeletes;
+    use Filterable;
 
     protected $hidden = [
         'id',
@@ -111,6 +117,8 @@ class Subscription extends BaseModel
         'optional_product_ids',
         'optional_recurring_product_ids',
         'use_inventory_management',
+        'steps',
+        'remaining_cycles',
     ];
 
     protected $casts = [
@@ -119,6 +127,8 @@ class Subscription extends BaseModel
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
+        'trial_enabled' => 'boolean',
+        'allow_plan_changes' => 'boolean',
     ];
 
     protected $with = [
@@ -128,6 +138,21 @@ class Subscription extends BaseModel
     public function service(): SubscriptionService
     {
         return new SubscriptionService($this);
+    }
+
+    public function link_service(): PaymentLinkService
+    {
+        return new PaymentLinkService($this);
+    }
+
+    public function status(RecurringInvoice $recurring_invoice): SubscriptionStatus
+    {
+        return (new SubscriptionStatus($this, $recurring_invoice))->run();
+    }
+
+    public function calc(): SubscriptionCalculator
+    {
+        return new SubscriptionCalculator($this);
     }
 
     public function company(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -175,5 +200,28 @@ class Subscription extends BaseModel
             default:
                 return null;
         }
+    }
+
+    /**
+     * Calculates the maximum product quantity available
+     *
+     * @param  mixed $product
+     * @return int
+     */
+    public function maxQuantity(mixed $product): int
+    {
+        $max_quantity = data_get($product, 'max_quantity', 0);
+        $in_stock_quantity = data_get($product, 'in_stock_quantity', 0);
+        $max_limit = 100;
+
+        if (!$this->use_inventory_management) {
+            return min($max_limit, $max_quantity > 0 ? $max_quantity : $max_limit);
+        }
+
+        if ($max_quantity > 0) {
+            return min($max_limit, $max_quantity);
+        }
+
+        return min($max_limit, $in_stock_quantity);
     }
 }

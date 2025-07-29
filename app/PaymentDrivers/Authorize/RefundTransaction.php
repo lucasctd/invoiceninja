@@ -5,7 +5,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -52,7 +52,7 @@ class RefundTransaction
 
         $transaction_type = $transaction_status == 'capturedPendingSettlement' ? 'voidTransaction' : 'refundTransaction';
 
-        if($transaction_type == 'voidTransaction') {
+        if ($transaction_type == 'voidTransaction') {
             $amount = $transaction_details->getTransaction()->getAuthAmount();
         }
 
@@ -82,6 +82,10 @@ class RefundTransaction
         // $transactionRequest->setProfile($customerProfile);
         $transactionRequest->setPayment($paymentOne);
         $transactionRequest->setRefTransId($payment->transaction_reference);
+
+        $solution = new \net\authorize\api\contract\v1\SolutionType();
+        $solution->setId($this->authorize->company_gateway->getConfigField('testMode') ? 'AAA100303' : 'AAA172036');
+        $transactionRequest->setSolution($solution);
 
         $request = new CreateTransactionRequest();
         $request->setMerchantAuthentication($this->authorize->merchant_authentication);

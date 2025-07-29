@@ -4,7 +4,7 @@
  *
  * @link https://github.com/invoiceninja/invoiceninja source repository
  *
- * @copyright Copyright (c) 2023. Invoice Ninja LLC (https://invoiceninja.com)
+ * @copyright Copyright (c) 2025. Invoice Ninja LLC (https://invoiceninja.com)
  *
  * @license https://www.elastic.co/licensing/elastic-license
  */
@@ -107,7 +107,7 @@ class CompanyUserController extends BaseController
      *     )
      * @param UpdateCompanyUserRequest $request
      * @param User $user
-     * @return Response|mixed|void
+     * @return Response| \Illuminate\Http\JsonResponse|mixed|void
      */
     public function update(UpdateCompanyUserRequest $request, User $user)
     {
@@ -119,8 +119,6 @@ class CompanyUserController extends BaseController
 
         if (! $company_user) {
             throw new ModelNotFoundException(ctrans('texts.company_user_not_found'));
-
-            return;
         }
 
         if ($auth_user->isAdmin()) {
@@ -129,7 +127,7 @@ class CompanyUserController extends BaseController
             $company_user->settings = $request->input('company_user')['settings'];
             $company_user->notifications = $request->input('company_user')['notifications'];
 
-            if(isset($request->input('company_user')['react_settings'])) {
+            if (isset($request->input('company_user')['react_settings'])) {
                 $company_user->react_settings = $request->input('company_user')['react_settings'];
             }
 
@@ -152,7 +150,6 @@ class CompanyUserController extends BaseController
 
         if (! $company_user) {
             throw new ModelNotFoundException(ctrans('texts.company_user_not_found'));
-            return;
         }
 
         $this->entity_type = User::class;
@@ -161,7 +158,7 @@ class CompanyUserController extends BaseController
 
         $company_user->react_settings = $request->react_settings;
         $company_user->save();
-        
+
         return $this->itemResponse($user->fresh());
     }
 
