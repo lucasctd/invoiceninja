@@ -4,7 +4,9 @@ FROM php:8.4-fpm-alpine
 WORKDIR /var/www
 
 # Install system dependencies
-RUN apk --no-cache add \
+RUN apk add --no-cache --update \
+    curl \
+    openssl \
     build-base \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -37,8 +39,18 @@ COPY . /var/www
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
+COPY ./docker/php-fpm/ping.php /ping.php
+
 # Change current user to www
 USER www-data
+
+#RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+#RUN composer dump-autoload --optimize
+
+#RUN php artisan config:cache && \
+#    php artisan route:cache && \
+#    php artisan view:cache
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
