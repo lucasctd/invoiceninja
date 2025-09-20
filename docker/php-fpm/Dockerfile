@@ -36,6 +36,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Copy existing application directory contents
 COPY . /var/www
 
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+
+RUN composer dump-autoload --optimize
+
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
@@ -43,14 +51,6 @@ COPY ./docker/php-fpm/ping.php /ping.php
 
 # Change current user to www
 USER www-data
-
-#RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-#RUN composer dump-autoload --optimize
-
-#RUN php artisan config:cache && \
-#    php artisan route:cache && \
-#    php artisan view:cache
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
