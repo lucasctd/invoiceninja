@@ -1,9 +1,10 @@
+# Use a imagem base do PHP 8.4 FPM Alpine
 FROM php:8.4-fpm-alpine
 
-# Set working directory
+# Define o diretório de trabalho
 WORKDIR /var/www
 
-# Install system dependencies
+# Instala dependências do sistema, incluindo o supervisor
 RUN apk add --no-cache --update \
     curl \
     openssl \
@@ -20,21 +21,21 @@ RUN apk add --no-cache --update \
     bash \
     fcgi \
     libmcrypt-dev \
-    oniguruma-dev
+    oniguruma-dev \
+    supervisor # Adicionado o supervisor
 
-# Clear cache
+# Limpa o cache do apk
 RUN rm -rf /var/cache/apk/*
 
-# Install PHP extensions
+# Instala extensões do PHP
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install gd \
     && docker-php-ext-install pdo pdo_mysql mbstring zip exif pcntl bcmath opcache
 
-# Install Composer
+# Instala o Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Copy existing application directory contents
-
+# Copia o conteúdo da aplicação
 COPY --chown=www-data:www-data . .
 COPY ./docker/php-fpm/ping.php /ping.php
 COPY .env.docker .env
@@ -43,14 +44,22 @@ COPY ./docker/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /ping.php
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Instala dependências do composer como www-data
+# Configuração do Supervisor e Cron
+# Copia a configuração do supervisor
+COPY ./docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Copia o arquivo crontab do Laravel para o diretório de crontabs
+COPY ./docker/cron/laravel.crontab /etc/crontabs/www-data
+
+# Garante que o usuário www-data seja o dono do arquivo crontab
+RUN chown www-data:www-data /etc/crontabs/www-data
+
+# Instala as dependências do Composer como usuário root
+# O usuário será trocado para www-data dentro do supervisor quando necessário
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Change current user to www
-USER www-data
-
-# Expose port 9000 and start php-fpm server
+# Expõe a porta 9000 para o php-fpm
 EXPOSE 9000
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["php-fpm"]
+# Inicia o supervisor, que por sua vez gerenciará o php-fpm e o cron
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
