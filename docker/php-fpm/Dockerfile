@@ -35,23 +35,25 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Copy existing application directory contents
 COPY . /var/www
+COPY ./docker/php-fpm/ping.php /ping.php
+COPY .env.docker /var/www/.env
+
+RUN chmod +x /ping.php
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-RUN composer dump-autoload --optimize
-
-RUN php artisan config:cache && \
-    php artisan route:cache && \
-    php artisan view:cache
 
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
-COPY ./docker/php-fpm/ping.php /ping.php
+# Copy entrypoint script and give execution permission
+COPY ./docker/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Change current user to www
 USER www-data
 
 # Expose port 9000 and start php-fpm server
 EXPOSE 9000
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["php-fpm"]
