@@ -1,1 +1,1 @@
-<?php echo "ping";
+<?php echo "pong";
