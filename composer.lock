@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8318e1e4c83e423108e0155e52e26fd8",
+    "content-hash": "723ca47e65d1f578072d1ba1a3a28265",
     "packages": [
         {
             "name": "afosto/yaac",
@@ -496,16 +496,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.337.3",
+            "version": "3.356.22",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "06dfc8f76423b49aaa181debd25bbdc724c346d6"
+                "reference": "5b3f65a158a0e822586d110192ee78c6565b4f06"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/06dfc8f76423b49aaa181debd25bbdc724c346d6",
-                "reference": "06dfc8f76423b49aaa181debd25bbdc724c346d6",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/5b3f65a158a0e822586d110192ee78c6565b4f06",
+                "reference": "5b3f65a158a0e822586d110192ee78c6565b4f06",
                 "shasum": ""
             },
             "require": {
@@ -513,31 +513,30 @@
                 "ext-json": "*",
                 "ext-pcre": "*",
                 "ext-simplexml": "*",
-                "guzzlehttp/guzzle": "^6.5.8 || ^7.4.5",
-                "guzzlehttp/promises": "^1.4.0 || ^2.0",
-                "guzzlehttp/psr7": "^1.9.1 || ^2.4.5",
-                "mtdowling/jmespath.php": "^2.6",
-                "php": ">=7.2.5",
+                "guzzlehttp/guzzle": "^7.4.5",
+                "guzzlehttp/promises": "^2.0",
+                "guzzlehttp/psr7": "^2.4.5",
+                "mtdowling/jmespath.php": "^2.8.0",
+                "php": ">=8.1",
                 "psr/http-message": "^1.0 || ^2.0"
             },
             "require-dev": {
                 "andrewsville/php-token-reflection": "^1.4",
                 "aws/aws-php-sns-message-validator": "~1.0",
                 "behat/behat": "~3.0",
-                "composer/composer": "^1.10.22",
+                "composer/composer": "^2.7.8",
                 "dms/phpunit-arraysubset-asserts": "^0.4.0",
                 "doctrine/cache": "~1.4",
                 "ext-dom": "*",
                 "ext-openssl": "*",
                 "ext-pcntl": "*",
                 "ext-sockets": "*",
-                "nette/neon": "^2.3",
-                "paragonie/random_compat": ">= 2",
                 "phpunit/phpunit": "^5.6.3 || ^8.5 || ^9.5",
-                "psr/cache": "^1.0 || ^2.0 || ^3.0",
-                "psr/simple-cache": "^1.0 || ^2.0 || ^3.0",
-                "sebastian/comparator": "^1.2.3 || ^4.0",
-                "yoast/phpunit-polyfills": "^1.0"
+                "psr/cache": "^2.0 || ^3.0",
+                "psr/simple-cache": "^2.0 || ^3.0",
+                "sebastian/comparator": "^1.2.3 || ^4.0 || ^5.0",
+                "symfony/filesystem": "^v6.4.0 || ^v7.1.0",
+                "yoast/phpunit-polyfills": "^2.0"
             },
             "suggest": {
                 "aws/aws-php-sns-message-validator": "To validate incoming SNS notifications",
@@ -586,11 +585,11 @@
                 "sdk"
             ],
             "support": {
-                "forum": "https://forums.aws.amazon.com/forum.jspa?forumID=80",
+                "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.337.3"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.356.22"
             },
-            "time": "2025-01-21T19:10:05+00:00"
+            "time": "2025-09-19T18:25:30+00:00"
         },
         {
             "name": "babenkoivan/elastic-adapter",
@@ -1070,18 +1069,6 @@
         },
         {
             "name": "braintree/braintree_php",
-<<<<<<< HEAD
-            "version": "6.27.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/braintree/braintree_php.git",
-                "reference": "2843f65ef19f5b2a0344b07a59a632df92857993"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/braintree/braintree_php/zipball/2843f65ef19f5b2a0344b07a59a632df92857993",
-                "reference": "2843f65ef19f5b2a0344b07a59a632df92857993",
-=======
             "version": "6.28.0",
             "source": {
                 "type": "git",
@@ -1092,7 +1079,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/braintree/braintree_php/zipball/f8693ee85b232c6fe4599100cdaba2c07ca34b79",
                 "reference": "f8693ee85b232c6fe4599100cdaba2c07ca34b79",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -1126,37 +1112,31 @@
             "description": "Braintree PHP Client Library",
             "support": {
                 "issues": "https://github.com/braintree/braintree_php/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/braintree/braintree_php/tree/6.27.0"
-            },
-            "time": "2025-06-26T19:49:44+00:00"
-=======
                 "source": "https://github.com/braintree/braintree_php/tree/6.28.0"
             },
             "time": "2025-08-05T18:53:15+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "brick/math",
-            "version": "0.12.3",
+            "version": "0.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/brick/math.git",
-                "reference": "866551da34e9a618e64a819ee1e01c20d8a588ba"
+                "reference": "113a8ee2656b882d4c3164fa31aa6e12cbb7aaa2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/brick/math/zipball/866551da34e9a618e64a819ee1e01c20d8a588ba",
-                "reference": "866551da34e9a618e64a819ee1e01c20d8a588ba",
+                "url": "https://api.github.com/repos/brick/math/zipball/113a8ee2656b882d4c3164fa31aa6e12cbb7aaa2",
+                "reference": "113a8ee2656b882d4c3164fa31aa6e12cbb7aaa2",
                 "shasum": ""
             },
             "require": {
-                "php": "^8.1"
+                "php": "^8.2"
             },
             "require-dev": {
                 "php-coveralls/php-coveralls": "^2.2",
-                "phpunit/phpunit": "^10.1",
-                "vimeo/psalm": "6.8.8"
+                "phpstan/phpstan": "2.1.22",
+                "phpunit/phpunit": "^11.5"
             },
             "type": "library",
             "autoload": {
@@ -1186,7 +1166,7 @@
             ],
             "support": {
                 "issues": "https://github.com/brick/math/issues",
-                "source": "https://github.com/brick/math/tree/0.12.3"
+                "source": "https://github.com/brick/math/tree/0.14.0"
             },
             "funding": [
                 {
@@ -1194,7 +1174,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-28T13:11:00+00:00"
+            "time": "2025-08-29T12:40:03+00:00"
         },
         {
             "name": "btcpayserver/btcpayserver-greenfield-php",
@@ -1455,18 +1435,6 @@
         },
         {
             "name": "composer/ca-bundle",
-<<<<<<< HEAD
-            "version": "1.5.7",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/composer/ca-bundle.git",
-                "reference": "d665d22c417056996c59019579f1967dfe5c1e82"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/d665d22c417056996c59019579f1967dfe5c1e82",
-                "reference": "d665d22c417056996c59019579f1967dfe5c1e82",
-=======
             "version": "1.5.8",
             "source": {
                 "type": "git",
@@ -1477,7 +1445,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/composer/ca-bundle/zipball/719026bb30813accb68271fee7e39552a58e9f65",
                 "reference": "719026bb30813accb68271fee7e39552a58e9f65",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -1524,11 +1491,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/ca-bundle/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/composer/ca-bundle/tree/1.5.7"
-=======
                 "source": "https://github.com/composer/ca-bundle/tree/1.5.8"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -1540,11 +1503,7 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-26T15:08:54+00:00"
-=======
             "time": "2025-08-20T18:49:47+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "composer/pcre",
@@ -1690,16 +1649,16 @@
         },
         {
             "name": "dasprid/enum",
-            "version": "1.0.6",
+            "version": "1.0.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/DASPRiD/Enum.git",
-                "reference": "8dfd07c6d2cf31c8da90c53b83c026c7696dda90"
+                "reference": "b5874fa9ed0043116c72162ec7f4fb50e02e7cce"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/DASPRiD/Enum/zipball/8dfd07c6d2cf31c8da90c53b83c026c7696dda90",
-                "reference": "8dfd07c6d2cf31c8da90c53b83c026c7696dda90",
+                "url": "https://api.github.com/repos/DASPRiD/Enum/zipball/b5874fa9ed0043116c72162ec7f4fb50e02e7cce",
+                "reference": "b5874fa9ed0043116c72162ec7f4fb50e02e7cce",
                 "shasum": ""
             },
             "require": {
@@ -1734,9 +1693,9 @@
             ],
             "support": {
                 "issues": "https://github.com/DASPRiD/Enum/issues",
-                "source": "https://github.com/DASPRiD/Enum/tree/1.0.6"
+                "source": "https://github.com/DASPRiD/Enum/tree/1.0.7"
             },
-            "time": "2024-08-09T14:30:48+00:00"
+            "time": "2025-09-16T12:23:56+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -1814,115 +1773,6 @@
             "time": "2024-07-08T12:26:09+00:00"
         },
         {
-<<<<<<< HEAD
-            "name": "doctrine/dbal",
-            "version": "4.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/doctrine/dbal.git",
-                "reference": "ac336c95ea9e13433d56ca81c308b39db0e1a2a7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/dbal/zipball/ac336c95ea9e13433d56ca81c308b39db0e1a2a7",
-                "reference": "ac336c95ea9e13433d56ca81c308b39db0e1a2a7",
-                "shasum": ""
-            },
-            "require": {
-                "doctrine/deprecations": "^1.1.5",
-                "php": "^8.2",
-                "psr/cache": "^1|^2|^3",
-                "psr/log": "^1|^2|^3"
-            },
-            "require-dev": {
-                "doctrine/coding-standard": "13.0.0",
-                "fig/log-test": "^1",
-                "jetbrains/phpstorm-stubs": "2023.2",
-                "phpstan/phpstan": "2.1.17",
-                "phpstan/phpstan-phpunit": "2.0.6",
-                "phpstan/phpstan-strict-rules": "^2",
-                "phpunit/phpunit": "11.5.23",
-                "slevomat/coding-standard": "8.16.2",
-                "squizlabs/php_codesniffer": "3.13.1",
-                "symfony/cache": "^6.3.8|^7.0",
-                "symfony/console": "^5.4|^6.3|^7.0"
-            },
-            "suggest": {
-                "symfony/console": "For helpful console commands such as SQL execution and import of files."
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Doctrine\\DBAL\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Guilherme Blanco",
-                    "email": "guilhermeblanco@gmail.com"
-                },
-                {
-                    "name": "Roman Borschel",
-                    "email": "roman@code-factory.org"
-                },
-                {
-                    "name": "Benjamin Eberlei",
-                    "email": "kontakt@beberlei.de"
-                },
-                {
-                    "name": "Jonathan Wage",
-                    "email": "jonwage@gmail.com"
-                }
-            ],
-            "description": "Powerful PHP database abstraction layer (DBAL) with many features for database schema introspection and management.",
-            "homepage": "https://www.doctrine-project.org/projects/dbal.html",
-            "keywords": [
-                "abstraction",
-                "database",
-                "db2",
-                "dbal",
-                "mariadb",
-                "mssql",
-                "mysql",
-                "oci8",
-                "oracle",
-                "pdo",
-                "pgsql",
-                "postgresql",
-                "queryobject",
-                "sasql",
-                "sql",
-                "sqlite",
-                "sqlserver",
-                "sqlsrv"
-            ],
-            "support": {
-                "issues": "https://github.com/doctrine/dbal/issues",
-                "source": "https://github.com/doctrine/dbal/tree/4.3.1"
-            },
-            "funding": [
-                {
-                    "url": "https://www.doctrine-project.org/sponsorship.html",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://www.patreon.com/phpdoctrine",
-                    "type": "patreon"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/doctrine%2Fdbal",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2025-07-22T10:09:51+00:00"
-        },
-        {
-=======
->>>>>>> invoiceninja/v5-stable
             "name": "doctrine/deprecations",
             "version": "1.1.5",
             "source": {
@@ -2209,16 +2059,16 @@
         },
         {
             "name": "dompdf/dompdf",
-            "version": "v3.1.0",
+            "version": "v3.1.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/dompdf/dompdf.git",
-                "reference": "a51bd7a063a65499446919286fb18b518177155a"
+                "reference": "794ec856134a73d2a69a474c5d4faa47e1e645b1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/a51bd7a063a65499446919286fb18b518177155a",
-                "reference": "a51bd7a063a65499446919286fb18b518177155a",
+                "url": "https://api.github.com/repos/dompdf/dompdf/zipball/794ec856134a73d2a69a474c5d4faa47e1e645b1",
+                "reference": "794ec856134a73d2a69a474c5d4faa47e1e645b1",
                 "shasum": ""
             },
             "require": {
@@ -2267,9 +2117,9 @@
             "homepage": "https://github.com/dompdf/dompdf",
             "support": {
                 "issues": "https://github.com/dompdf/dompdf/issues",
-                "source": "https://github.com/dompdf/dompdf/tree/v3.1.0"
+                "source": "https://github.com/dompdf/dompdf/tree/v3.1.1"
             },
-            "time": "2025-01-15T14:09:04+00:00"
+            "time": "2025-09-20T17:30:31+00:00"
         },
         {
             "name": "dompdf/php-font-lib",
@@ -2554,18 +2404,6 @@
         },
         {
             "name": "elasticsearch/elasticsearch",
-<<<<<<< HEAD
-            "version": "v8.18.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/elastic/elasticsearch-php.git",
-                "reference": "df8ee73046c688ee9ce2d69cb5c54a03ca38cc5c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/elastic/elasticsearch-php/zipball/df8ee73046c688ee9ce2d69cb5c54a03ca38cc5c",
-                "reference": "df8ee73046c688ee9ce2d69cb5c54a03ca38cc5c",
-=======
             "version": "v8.19.0",
             "source": {
                 "type": "git",
@@ -2576,7 +2414,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/elastic/elasticsearch-php/zipball/1771284cb43a7b653634d418b6f5f0ec84ff8a6d",
                 "reference": "1771284cb43a7b653634d418b6f5f0ec84ff8a6d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -2618,15 +2455,9 @@
             ],
             "support": {
                 "issues": "https://github.com/elastic/elasticsearch-php/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/elastic/elasticsearch-php/tree/v8.18.0"
-            },
-            "time": "2025-05-02T10:38:56+00:00"
-=======
                 "source": "https://github.com/elastic/elasticsearch-php/tree/v8.19.0"
             },
             "time": "2025-08-06T16:58:06+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "endroid/qr-code",
@@ -3205,33 +3036,20 @@
         },
         {
             "name": "google/apiclient-services",
-<<<<<<< HEAD
-            "version": "v0.405.0",
+            "version": "v0.413.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-api-php-client-services.git",
-                "reference": "8366037e450b62ffc1c5489459f207640acca2b4"
+                "reference": "8c8f936b85a50d658c50fbfd4331cfd5144c473f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/8366037e450b62ffc1c5489459f207640acca2b4",
-                "reference": "8366037e450b62ffc1c5489459f207640acca2b4",
-=======
-            "version": "v0.410.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/googleapis/google-api-php-client-services.git",
-                "reference": "ef335e912305403aef8a6552cc2101c537b9ebdd"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/ef335e912305403aef8a6552cc2101c537b9ebdd",
-                "reference": "ef335e912305403aef8a6552cc2101c537b9ebdd",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/googleapis/google-api-php-client-services/zipball/8c8f936b85a50d658c50fbfd4331cfd5144c473f",
+                "reference": "8c8f936b85a50d658c50fbfd4331cfd5144c473f",
                 "shasum": ""
             },
             "require": {
-                "php": "^8.0"
+                "php": "^8.1"
             },
             "require-dev": {
                 "phpunit/phpunit": "^9.6"
@@ -3256,35 +3074,29 @@
             ],
             "support": {
                 "issues": "https://github.com/googleapis/google-api-php-client-services/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.405.0"
+                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.413.0"
             },
-            "time": "2025-06-04T17:28:44+00:00"
-=======
-                "source": "https://github.com/googleapis/google-api-php-client-services/tree/v0.410.0"
-            },
-            "time": "2025-08-26T16:51:06+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-22T00:58:25+00:00"
         },
         {
             "name": "google/auth",
-            "version": "v1.47.1",
+            "version": "v1.48.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/googleapis/google-auth-library-php.git",
-                "reference": "d7a0a215ec42ca0c8cb40e9ae0c5960aa9a024b7"
+                "reference": "3053a5bfe284538419d4fee8c9df148488db6d30"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/googleapis/google-auth-library-php/zipball/d7a0a215ec42ca0c8cb40e9ae0c5960aa9a024b7",
-                "reference": "d7a0a215ec42ca0c8cb40e9ae0c5960aa9a024b7",
+                "url": "https://api.github.com/repos/googleapis/google-auth-library-php/zipball/3053a5bfe284538419d4fee8c9df148488db6d30",
+                "reference": "3053a5bfe284538419d4fee8c9df148488db6d30",
                 "shasum": ""
             },
             "require": {
                 "firebase/php-jwt": "^6.0",
                 "guzzlehttp/guzzle": "^7.4.5",
                 "guzzlehttp/psr7": "^2.4.5",
-                "php": "^8.0",
+                "php": "^8.1",
                 "psr/cache": "^2.0||^3.0",
                 "psr/http-message": "^1.1||^2.0",
                 "psr/log": "^3.0"
@@ -3296,7 +3108,7 @@
                 "phpspec/prophecy-phpunit": "^2.1",
                 "phpunit/phpunit": "^9.6",
                 "sebastian/comparator": ">=1.2.3",
-                "squizlabs/php_codesniffer": "^3.5",
+                "squizlabs/php_codesniffer": "^4.0",
                 "symfony/process": "^6.0||^7.0",
                 "webmozart/assert": "^1.11"
             },
@@ -3323,9 +3135,9 @@
             "support": {
                 "docs": "https://cloud.google.com/php/docs/reference/auth/latest",
                 "issues": "https://github.com/googleapis/google-auth-library-php/issues",
-                "source": "https://github.com/googleapis/google-auth-library-php/tree/v1.47.1"
+                "source": "https://github.com/googleapis/google-auth-library-php/tree/v1.48.0"
             },
-            "time": "2025-07-09T15:26:02+00:00"
+            "time": "2025-09-16T22:09:18+00:00"
         },
         {
             "name": "graham-campbell/result-type",
@@ -3447,18 +3259,6 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-<<<<<<< HEAD
-            "version": "7.9.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
-                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
-=======
             "version": "7.10.0",
             "source": {
                 "type": "git",
@@ -3469,7 +3269,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/guzzle/guzzle/zipball/b51ac707cfa420b7bfd4e4d5e510ba8008e822b4",
                 "reference": "b51ac707cfa420b7bfd4e4d5e510ba8008e822b4",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -3566,11 +3365,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/guzzle/guzzle/tree/7.9.3"
-=======
                 "source": "https://github.com/guzzle/guzzle/tree/7.10.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -3586,22 +3381,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-27T13:37:11+00:00"
-        },
-        {
-            "name": "guzzlehttp/promises",
-            "version": "2.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/guzzle/promises.git",
-                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/7c69f28996b0a6920945dd20b3857e499d9ca96c",
-                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c",
-=======
             "time": "2025-08-23T22:36:01+00:00"
         },
         {
@@ -3616,7 +3395,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/guzzle/promises/zipball/481557b130ef3790cf82b713667b43030dc9c957",
                 "reference": "481557b130ef3790cf82b713667b43030dc9c957",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -3670,11 +3448,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/guzzle/promises/tree/2.2.0"
-=======
                 "source": "https://github.com/guzzle/promises/tree/2.3.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -3690,22 +3464,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-27T13:27:01+00:00"
-        },
-        {
-            "name": "guzzlehttp/psr7",
-            "version": "2.7.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/guzzle/psr7.git",
-                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/c2270caaabe631b3b44c85f99e5a04bbb8060d16",
-                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16",
-=======
             "time": "2025-08-22T14:34:08+00:00"
         },
         {
@@ -3720,7 +3478,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/guzzle/psr7/zipball/21dc724a0583619cd1652f673303492272778051",
                 "reference": "21dc724a0583619cd1652f673303492272778051",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -3807,11 +3564,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/guzzle/psr7/tree/2.7.1"
-=======
                 "source": "https://github.com/guzzle/psr7/tree/2.8.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -3827,11 +3580,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-27T12:30:47+00:00"
-=======
             "time": "2025-08-23T21:21:41+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "guzzlehttp/uri-template",
@@ -4466,7 +4215,6 @@
         },
         {
             "name": "imdhemy/appstore-iap",
-<<<<<<< HEAD
             "version": "1.9.1",
             "source": {
                 "type": "git",
@@ -4477,18 +4225,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/imdhemy/appstore-iap/zipball/ffa194aa6d238f3843d7ff81ef036f54ce9990a3",
                 "reference": "ffa194aa6d238f3843d7ff81ef036f54ce9990a3",
-=======
-            "version": "1.8.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/imdhemy/appstore-iap.git",
-                "reference": "18ab9841b4bdfaf21d48ed57cf62ef26da43fe9c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/imdhemy/appstore-iap/zipball/18ab9841b4bdfaf21d48ed57cf62ef26da43fe9c",
-                "reference": "18ab9841b4bdfaf21d48ed57cf62ef26da43fe9c",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -4499,11 +4235,7 @@
                 "lcobucci/clock": "^3.0",
                 "lcobucci/jwt": "^5.3",
                 "nesbot/carbon": "^2.66|^3.8",
-<<<<<<< HEAD
                 "php": ">=8.3"
-=======
-                "php": ">=8.1"
->>>>>>> invoiceninja/v5-stable
             },
             "require-dev": {
                 "fakerphp/faker": "^1.22",
@@ -4532,15 +4264,9 @@
             "description": "PHP Appstore In-App Purchase implementation",
             "support": {
                 "issues": "https://github.com/imdhemy/appstore-iap/issues",
-<<<<<<< HEAD
                 "source": "https://github.com/imdhemy/appstore-iap/tree/1.9.1"
             },
             "time": "2025-07-02T08:50:41+00:00"
-=======
-                "source": "https://github.com/imdhemy/appstore-iap/tree/1.8.0"
-            },
-            "time": "2025-05-25T18:05:17+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "imdhemy/google-play-billing",
@@ -4598,7 +4324,6 @@
         },
         {
             "name": "imdhemy/laravel-purchases",
-<<<<<<< HEAD
             "version": "1.18.0",
             "source": {
                 "type": "git",
@@ -4609,28 +4334,12 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/imdhemy/laravel-in-app-purchases/zipball/440a69766cce487cf28570462b190919ed9c4570",
                 "reference": "440a69766cce487cf28570462b190919ed9c4570",
-=======
-            "version": "1.17.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/imdhemy/laravel-in-app-purchases.git",
-                "reference": "54a93cfad81e9c55b06f28a2d2492babf8070ec7"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/imdhemy/laravel-in-app-purchases/zipball/54a93cfad81e9c55b06f28a2d2492babf8070ec7",
-                "reference": "54a93cfad81e9c55b06f28a2d2492babf8070ec7",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
                 "ext-openssl": "*",
-<<<<<<< HEAD
                 "imdhemy/appstore-iap": "^1.9",
-=======
-                "imdhemy/appstore-iap": "^1.8",
->>>>>>> invoiceninja/v5-stable
                 "imdhemy/google-play-billing": "^1.5",
                 "laravel/framework": ">=10",
                 "php": ">=8.3"
@@ -4680,11 +4389,7 @@
             ],
             "support": {
                 "issues": "https://github.com/imdhemy/laravel-in-app-purchases/issues",
-<<<<<<< HEAD
                 "source": "https://github.com/imdhemy/laravel-in-app-purchases/tree/1.18.0"
-=======
-                "source": "https://github.com/imdhemy/laravel-in-app-purchases/tree/1.17.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -4692,11 +4397,7 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
             "time": "2025-06-20T18:27:42+00:00"
-=======
-            "time": "2025-06-03T11:22:45+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "intervention/image",
@@ -5380,33 +5081,20 @@
         },
         {
             "name": "laravel/framework",
-<<<<<<< HEAD
-            "version": "v11.45.1",
+            "version": "v11.46.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "b09ba32795b8e71df10856a2694706663984a239"
+                "reference": "2c6d85f22d08123ad45aa3a6726b16f06e68eecd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/b09ba32795b8e71df10856a2694706663984a239",
-                "reference": "b09ba32795b8e71df10856a2694706663984a239",
-=======
-            "version": "v11.45.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/framework.git",
-                "reference": "d134bf11e2208c0c5bd488cf19e612ca176b820a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/d134bf11e2208c0c5bd488cf19e612ca176b820a",
-                "reference": "d134bf11e2208c0c5bd488cf19e612ca176b820a",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/laravel/framework/zipball/2c6d85f22d08123ad45aa3a6726b16f06e68eecd",
+                "reference": "2c6d85f22d08123ad45aa3a6726b16f06e68eecd",
                 "shasum": ""
             },
             "require": {
-                "brick/math": "^0.9.3|^0.10.2|^0.11|^0.12",
+                "brick/math": "^0.9.3|^0.10.2|^0.11|^0.12|^0.13|^0.14",
                 "composer-runtime-api": "^2.2",
                 "doctrine/inflector": "^2.0.5",
                 "dragonmantank/cron-expression": "^3.4",
@@ -5510,11 +5198,7 @@
                 "league/flysystem-read-only": "^3.25.1",
                 "league/flysystem-sftp-v3": "^3.25.1",
                 "mockery/mockery": "^1.6.10",
-<<<<<<< HEAD
-                "orchestra/testbench-core": "^9.13.2",
-=======
-                "orchestra/testbench-core": "^9.16.0",
->>>>>>> invoiceninja/v5-stable
+                "orchestra/testbench-core": "^9.16.1",
                 "pda/pheanstalk": "^5.0.6",
                 "php-http/discovery": "^1.15",
                 "phpstan/phpstan": "^2.0",
@@ -5608,37 +5292,20 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-<<<<<<< HEAD
-            "time": "2025-06-03T14:01:40+00:00"
+            "time": "2025-09-08T21:54:34+00:00"
         },
         {
             "name": "laravel/octane",
-            "version": "v2.12.0",
+            "version": "v2.12.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/octane.git",
-                "reference": "d606f3dffc785032f11c23a017334c99800f2e40"
+                "reference": "7cbb80a0bd7ccfbf0615dd33de7907c5dad21171"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/octane/zipball/d606f3dffc785032f11c23a017334c99800f2e40",
-                "reference": "d606f3dffc785032f11c23a017334c99800f2e40",
-=======
-            "time": "2025-08-13T20:28:00+00:00"
-        },
-        {
-            "name": "laravel/octane",
-            "version": "v2.12.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/octane.git",
-                "reference": "4ca38b90d76f31b8c1e27873316c2db34450151c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/octane/zipball/4ca38b90d76f31b8c1e27873316c2db34450151c",
-                "reference": "4ca38b90d76f31b8c1e27873316c2db34450151c",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/laravel/octane/zipball/7cbb80a0bd7ccfbf0615dd33de7907c5dad21171",
+                "reference": "7cbb80a0bd7ccfbf0615dd33de7907c5dad21171",
                 "shasum": ""
             },
             "require": {
@@ -5715,11 +5382,7 @@
                 "issues": "https://github.com/laravel/octane/issues",
                 "source": "https://github.com/laravel/octane"
             },
-<<<<<<< HEAD
-            "time": "2025-07-18T15:50:14+00:00"
-=======
-            "time": "2025-07-25T15:03:05+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-07T23:19:55+00:00"
         },
         {
             "name": "laravel/prompts",
@@ -5782,18 +5445,6 @@
         },
         {
             "name": "laravel/scout",
-<<<<<<< HEAD
-            "version": "v10.17.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/laravel/scout.git",
-                "reference": "66b064ab1f987560d1edfbc10f46557fddfed600"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/laravel/scout/zipball/66b064ab1f987560d1edfbc10f46557fddfed600",
-                "reference": "66b064ab1f987560d1edfbc10f46557fddfed600",
-=======
             "version": "v10.19.0",
             "source": {
                 "type": "git",
@@ -5804,7 +5455,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/laravel/scout/zipball/996b2a8b5ccc583e7df667c8aac924a46bc8bdd3",
                 "reference": "996b2a8b5ccc583e7df667c8aac924a46bc8bdd3",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -5872,11 +5522,7 @@
                 "issues": "https://github.com/laravel/scout/issues",
                 "source": "https://github.com/laravel/scout"
             },
-<<<<<<< HEAD
-            "time": "2025-07-22T15:54:45+00:00"
-=======
             "time": "2025-08-26T14:24:24+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "laravel/serializable-closure",
@@ -6533,16 +6179,16 @@
         },
         {
             "name": "league/csv",
-            "version": "9.24.1",
+            "version": "9.25.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/csv.git",
-                "reference": "e0221a3f16aa2a823047d59fab5809d552e29bc8"
+                "reference": "f856f532866369fb1debe4e7c5a1db185f40ef86"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/csv/zipball/e0221a3f16aa2a823047d59fab5809d552e29bc8",
-                "reference": "e0221a3f16aa2a823047d59fab5809d552e29bc8",
+                "url": "https://api.github.com/repos/thephpleague/csv/zipball/f856f532866369fb1debe4e7c5a1db185f40ef86",
+                "reference": "f856f532866369fb1debe4e7c5a1db185f40ef86",
                 "shasum": ""
             },
             "require": {
@@ -6558,7 +6204,7 @@
                 "phpstan/phpstan-deprecation-rules": "^1.2.1",
                 "phpstan/phpstan-phpunit": "^1.4.2",
                 "phpstan/phpstan-strict-rules": "^1.6.2",
-                "phpunit/phpunit": "^10.5.16 || ^11.5.22",
+                "phpunit/phpunit": "^10.5.16 || ^11.5.22 || ^12.3.6",
                 "symfony/var-dumper": "^6.4.8 || ^7.3.0"
             },
             "suggest": {
@@ -6620,7 +6266,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-06-25T14:53:51+00:00"
+            "time": "2025-09-11T08:29:08+00:00"
         },
         {
             "name": "league/flysystem",
@@ -8117,18 +7763,6 @@
         },
         {
             "name": "myclabs/deep-copy",
-<<<<<<< HEAD
-            "version": "1.13.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/myclabs/DeepCopy.git",
-                "reference": "faed855a7b5f4d4637717c2b3863e277116beb36"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/faed855a7b5f4d4637717c2b3863e277116beb36",
-                "reference": "faed855a7b5f4d4637717c2b3863e277116beb36",
-=======
             "version": "1.13.4",
             "source": {
                 "type": "git",
@@ -8139,7 +7773,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/myclabs/DeepCopy/zipball/07d290f0c47959fd5eed98c95ee5602db07e0b6a",
                 "reference": "07d290f0c47959fd5eed98c95ee5602db07e0b6a",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -8178,11 +7811,7 @@
             ],
             "support": {
                 "issues": "https://github.com/myclabs/DeepCopy/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/myclabs/DeepCopy/tree/1.13.3"
-=======
                 "source": "https://github.com/myclabs/DeepCopy/tree/1.13.4"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -8190,11 +7819,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-07-05T12:25:42+00:00"
-=======
             "time": "2025-08-01T08:46:24+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "nelexa/zip",
@@ -8271,29 +7896,16 @@
         },
         {
             "name": "nesbot/carbon",
-<<<<<<< HEAD
-            "version": "3.10.1",
+            "version": "3.10.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/CarbonPHP/carbon.git",
-                "reference": "1fd1935b2d90aef2f093c5e35f7ae1257c448d00"
+                "reference": "8e3643dcd149ae0fe1d2ff4f2c8e4bbfad7c165f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/1fd1935b2d90aef2f093c5e35f7ae1257c448d00",
-                "reference": "1fd1935b2d90aef2f093c5e35f7ae1257c448d00",
-=======
-            "version": "3.10.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/CarbonPHP/carbon.git",
-                "reference": "76b5c07b8a9d2025ed1610e14cef1f3fd6ad2c24"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/76b5c07b8a9d2025ed1610e14cef1f3fd6ad2c24",
-                "reference": "76b5c07b8a9d2025ed1610e14cef1f3fd6ad2c24",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/CarbonPHP/carbon/zipball/8e3643dcd149ae0fe1d2ff4f2c8e4bbfad7c165f",
+                "reference": "8e3643dcd149ae0fe1d2ff4f2c8e4bbfad7c165f",
                 "shasum": ""
             },
             "require": {
@@ -8311,13 +7923,13 @@
             "require-dev": {
                 "doctrine/dbal": "^3.6.3 || ^4.0",
                 "doctrine/orm": "^2.15.2 || ^3.0",
-                "friendsofphp/php-cs-fixer": "^3.75.0",
+                "friendsofphp/php-cs-fixer": "^v3.87.1",
                 "kylekatarnls/multi-tester": "^2.5.3",
                 "phpmd/phpmd": "^2.15.0",
                 "phpstan/extension-installer": "^1.4.3",
-                "phpstan/phpstan": "^2.1.17",
-                "phpunit/phpunit": "^10.5.46",
-                "squizlabs/php_codesniffer": "^3.13.0"
+                "phpstan/phpstan": "^2.1.22",
+                "phpunit/phpunit": "^10.5.53",
+                "squizlabs/php_codesniffer": "^3.13.4"
             },
             "bin": [
                 "bin/carbon"
@@ -8385,11 +7997,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-21T15:19:35+00:00"
-=======
-            "time": "2025-08-02T09:36:06+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-06T13:39:36+00:00"
         },
         {
             "name": "nette/schema",
@@ -8455,18 +8063,6 @@
         },
         {
             "name": "nette/utils",
-<<<<<<< HEAD
-            "version": "v4.0.7",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nette/utils.git",
-                "reference": "e67c4061eb40b9c113b218214e42cb5a0dda28f2"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nette/utils/zipball/e67c4061eb40b9c113b218214e42cb5a0dda28f2",
-                "reference": "e67c4061eb40b9c113b218214e42cb5a0dda28f2",
-=======
             "version": "v4.0.8",
             "source": {
                 "type": "git",
@@ -8477,7 +8073,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/nette/utils/zipball/c930ca4e3cf4f17dcfb03037703679d2396d2ede",
                 "reference": "c930ca4e3cf4f17dcfb03037703679d2396d2ede",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -8551,24 +8146,6 @@
             ],
             "support": {
                 "issues": "https://github.com/nette/utils/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/nette/utils/tree/v4.0.7"
-            },
-            "time": "2025-06-03T04:55:08+00:00"
-        },
-        {
-            "name": "nikic/php-parser",
-            "version": "v5.6.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "221b0d0fdf1369c71047ad1d18bb5880017bbc56"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/221b0d0fdf1369c71047ad1d18bb5880017bbc56",
-                "reference": "221b0d0fdf1369c71047ad1d18bb5880017bbc56",
-=======
                 "source": "https://github.com/nette/utils/tree/v4.0.8"
             },
             "time": "2025-08-06T21:43:34+00:00"
@@ -8585,7 +8162,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2",
                 "reference": "f103601b29efebd7ff4a1ca7b3eeea9e3336a2a2",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -8628,15 +8204,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nikic/PHP-Parser/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/nikic/PHP-Parser/tree/v5.6.0"
-            },
-            "time": "2025-07-27T20:03:57+00:00"
-=======
                 "source": "https://github.com/nikic/PHP-Parser/tree/v5.6.1"
             },
             "time": "2025-08-13T20:13:15+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "nordigen/nordigen-php",
@@ -8949,20 +8519,20 @@
         },
         {
             "name": "open-telemetry/api",
-            "version": "1.4.0",
+            "version": "1.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/api.git",
-                "reference": "b3a9286f9c1c8247c83493c5b1fa475cd0cec7f7"
+                "reference": "ee17d937652eca06c2341b6fadc0f74c1c1a5af2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/api/zipball/b3a9286f9c1c8247c83493c5b1fa475cd0cec7f7",
-                "reference": "b3a9286f9c1c8247c83493c5b1fa475cd0cec7f7",
+                "url": "https://api.github.com/repos/opentelemetry-php/api/zipball/ee17d937652eca06c2341b6fadc0f74c1c1a5af2",
+                "reference": "ee17d937652eca06c2341b6fadc0f74c1c1a5af2",
                 "shasum": ""
             },
             "require": {
-                "open-telemetry/context": "^1.0",
+                "open-telemetry/context": "^1.4",
                 "php": "^8.1",
                 "psr/log": "^1.1|^2.0|^3.0",
                 "symfony/polyfill-php82": "^1.26"
@@ -9015,33 +8585,20 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-            "time": "2025-06-19T23:36:51+00:00"
+            "time": "2025-09-19T00:05:49+00:00"
         },
         {
             "name": "open-telemetry/context",
-<<<<<<< HEAD
-            "version": "1.2.1",
+            "version": "1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opentelemetry-php/context.git",
-                "reference": "1eb2b837ee9362db064a6b65d5ecce15a9f9f020"
+                "reference": "d4c4470b541ce72000d18c339cfee633e4c8e0cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/context/zipball/1eb2b837ee9362db064a6b65d5ecce15a9f9f020",
-                "reference": "1eb2b837ee9362db064a6b65d5ecce15a9f9f020",
-=======
-            "version": "1.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/opentelemetry-php/context.git",
-                "reference": "438f71812242db3f196fb4c717c6f92cbc819be6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/opentelemetry-php/context/zipball/438f71812242db3f196fb4c717c6f92cbc819be6",
-                "reference": "438f71812242db3f196fb4c717c6f92cbc819be6",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/opentelemetry-php/context/zipball/d4c4470b541ce72000d18c339cfee633e4c8e0cf",
+                "reference": "d4c4470b541ce72000d18c339cfee633e4c8e0cf",
                 "shasum": ""
             },
             "require": {
@@ -9087,11 +8644,7 @@
                 "issues": "https://github.com/open-telemetry/opentelemetry-php/issues",
                 "source": "https://github.com/open-telemetry/opentelemetry-php"
             },
-<<<<<<< HEAD
-            "time": "2025-05-07T23:36:50+00:00"
-=======
-            "time": "2025-08-13T01:12:00+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-19T00:05:49+00:00"
         },
         {
             "name": "paragonie/constant_time_encoding",
@@ -9212,16 +8765,16 @@
         },
         {
             "name": "paragonie/sodium_compat",
-            "version": "v2.1.0",
+            "version": "v2.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/paragonie/sodium_compat.git",
-                "reference": "a673d5f310477027cead2e2f2b6db5d8368157cb"
+                "reference": "9c3535883f1b60b5d26aeae5914bbec61132ad7f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/a673d5f310477027cead2e2f2b6db5d8368157cb",
-                "reference": "a673d5f310477027cead2e2f2b6db5d8368157cb",
+                "url": "https://api.github.com/repos/paragonie/sodium_compat/zipball/9c3535883f1b60b5d26aeae5914bbec61132ad7f",
+                "reference": "9c3535883f1b60b5d26aeae5914bbec61132ad7f",
                 "shasum": ""
             },
             "require": {
@@ -9229,8 +8782,10 @@
                 "php-64bit": "*"
             },
             "require-dev": {
-                "phpunit/phpunit": "^7|^8|^9",
-                "vimeo/psalm": "^4|^5"
+                "infection/infection": "^0",
+                "nikic/php-fuzzer": "^0",
+                "phpunit/phpunit": "^7|^8|^9|^10|^11",
+                "vimeo/psalm": "^4|^5|^6"
             },
             "suggest": {
                 "ext-sodium": "Better performance, password hashing (Argon2i), secure memory management (memzero), and better security."
@@ -9244,7 +8799,10 @@
             "autoload": {
                 "files": [
                     "autoload.php"
-                ]
+                ],
+                "psr-4": {
+                    "ParagonIE\\Sodium\\": "namespaced/"
+                }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
@@ -9297,9 +8855,9 @@
             ],
             "support": {
                 "issues": "https://github.com/paragonie/sodium_compat/issues",
-                "source": "https://github.com/paragonie/sodium_compat/tree/v2.1.0"
+                "source": "https://github.com/paragonie/sodium_compat/tree/v2.2.0"
             },
-            "time": "2024-09-04T12:51:01+00:00"
+            "time": "2025-09-21T18:27:14+00:00"
         },
         {
             "name": "payfast/payfast-php-sdk",
@@ -9847,18 +9405,6 @@
         },
         {
             "name": "phpdocumentor/reflection-docblock",
-<<<<<<< HEAD
-            "version": "5.6.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/phpDocumentor/ReflectionDocBlock.git",
-                "reference": "92dde6a5919e34835c506ac8c523ef095a95ed62"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/92dde6a5919e34835c506ac8c523ef095a95ed62",
-                "reference": "92dde6a5919e34835c506ac8c523ef095a95ed62",
-=======
             "version": "5.6.3",
             "source": {
                 "type": "git",
@@ -9869,7 +9415,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/phpDocumentor/ReflectionDocBlock/zipball/94f8051919d1b0369a6bcc7931d679a511c03fe9",
                 "reference": "94f8051919d1b0369a6bcc7931d679a511c03fe9",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -9918,15 +9463,9 @@
             "description": "With this component, a library can provide support for annotations via DocBlocks or otherwise retrieve information that is embedded in a DocBlock.",
             "support": {
                 "issues": "https://github.com/phpDocumentor/ReflectionDocBlock/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/phpDocumentor/ReflectionDocBlock/tree/5.6.2"
-            },
-            "time": "2025-04-13T19:20:35+00:00"
-=======
                 "source": "https://github.com/phpDocumentor/ReflectionDocBlock/tree/5.6.3"
             },
             "time": "2025-08-01T19:43:32+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "phpdocumentor/type-resolver",
@@ -9988,29 +9527,16 @@
         },
         {
             "name": "phpoffice/phpspreadsheet",
-<<<<<<< HEAD
-            "version": "2.3.10",
+            "version": "2.4.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPOffice/PhpSpreadsheet.git",
-                "reference": "22058ce75b774bf40ceefcadd090a424d558f1ca"
+                "reference": "096ae6faf94b49b2cf53e92a0073133c941e1f57"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/22058ce75b774bf40ceefcadd090a424d558f1ca",
-                "reference": "22058ce75b774bf40ceefcadd090a424d558f1ca",
-=======
-            "version": "2.4.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/PHPOffice/PhpSpreadsheet.git",
-                "reference": "3a3cad86101a77019eb2fc693aab1a8c11b18b94"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/3a3cad86101a77019eb2fc693aab1a8c11b18b94",
-                "reference": "3a3cad86101a77019eb2fc693aab1a8c11b18b94",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/PHPOffice/PhpSpreadsheet/zipball/096ae6faf94b49b2cf53e92a0073133c941e1f57",
+                "reference": "096ae6faf94b49b2cf53e92a0073133c941e1f57",
                 "shasum": ""
             },
             "require": {
@@ -10100,15 +9626,9 @@
             ],
             "support": {
                 "issues": "https://github.com/PHPOffice/PhpSpreadsheet/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/PHPOffice/PhpSpreadsheet/tree/2.3.10"
+                "source": "https://github.com/PHPOffice/PhpSpreadsheet/tree/2.4.1"
             },
-            "time": "2025-07-23T04:43:28+00:00"
-=======
-                "source": "https://github.com/PHPOffice/PhpSpreadsheet/tree/2.4.0"
-            },
-            "time": "2025-08-10T06:45:13+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-01T18:41:37+00:00"
         },
         {
             "name": "phpoption/phpoption",
@@ -10297,18 +9817,6 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-<<<<<<< HEAD
-            "version": "2.2.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "b9e61a61e39e02dd90944e9115241c7f7e76bfd8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/b9e61a61e39e02dd90944e9115241c7f7e76bfd8",
-                "reference": "b9e61a61e39e02dd90944e9115241c7f7e76bfd8",
-=======
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -10319,7 +9827,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/1e0cd5370df5dd2e556a36b9c62f62e555870495",
                 "reference": "1e0cd5370df5dd2e556a36b9c62f62e555870495",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -10351,15 +9858,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/2.2.0"
-            },
-            "time": "2025-07-13T07:04:09+00:00"
-=======
                 "source": "https://github.com/phpstan/phpdoc-parser/tree/2.3.0"
             },
             "time": "2025-08-30T15:50:23+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "pragmarx/google2fa",
@@ -10938,29 +10439,16 @@
         },
         {
             "name": "psy/psysh",
-<<<<<<< HEAD
-            "version": "v0.12.9",
+            "version": "v0.12.12",
             "source": {
                 "type": "git",
                 "url": "https://github.com/bobthecow/psysh.git",
-                "reference": "1b801844becfe648985372cb4b12ad6840245ace"
+                "reference": "cd23863404a40ccfaf733e3af4db2b459837f7e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/1b801844becfe648985372cb4b12ad6840245ace",
-                "reference": "1b801844becfe648985372cb4b12ad6840245ace",
-=======
-            "version": "v0.12.10",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/bobthecow/psysh.git",
-                "reference": "6e80abe6f2257121f1eb9a4c55bf29d921025b22"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/6e80abe6f2257121f1eb9a4c55bf29d921025b22",
-                "reference": "6e80abe6f2257121f1eb9a4c55bf29d921025b22",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/bobthecow/psysh/zipball/cd23863404a40ccfaf733e3af4db2b459837f7e7",
+                "reference": "cd23863404a40ccfaf733e3af4db2b459837f7e7",
                 "shasum": ""
             },
             "require": {
@@ -11023,15 +10511,9 @@
             ],
             "support": {
                 "issues": "https://github.com/bobthecow/psysh/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/bobthecow/psysh/tree/v0.12.9"
+                "source": "https://github.com/bobthecow/psysh/tree/v0.12.12"
             },
-            "time": "2025-06-23T02:35:06+00:00"
-=======
-                "source": "https://github.com/bobthecow/psysh/tree/v0.12.10"
-            },
-            "time": "2025-08-04T12:39:37+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-20T13:46:31+00:00"
         },
         {
             "name": "pusher/pusher-php-server",
@@ -11276,20 +10758,20 @@
         },
         {
             "name": "ramsey/uuid",
-            "version": "4.9.0",
+            "version": "4.9.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ramsey/uuid.git",
-                "reference": "4e0e23cc785f0724a0e838279a9eb03f28b092a0"
+                "reference": "81f941f6f729b1e3ceea61d9d014f8b6c6800440"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ramsey/uuid/zipball/4e0e23cc785f0724a0e838279a9eb03f28b092a0",
-                "reference": "4e0e23cc785f0724a0e838279a9eb03f28b092a0",
+                "url": "https://api.github.com/repos/ramsey/uuid/zipball/81f941f6f729b1e3ceea61d9d014f8b6c6800440",
+                "reference": "81f941f6f729b1e3ceea61d9d014f8b6c6800440",
                 "shasum": ""
             },
             "require": {
-                "brick/math": "^0.8.8 || ^0.9 || ^0.10 || ^0.11 || ^0.12 || ^0.13",
+                "brick/math": "^0.8.8 || ^0.9 || ^0.10 || ^0.11 || ^0.12 || ^0.13 || ^0.14",
                 "php": "^8.0",
                 "ramsey/collection": "^1.2 || ^2.0"
             },
@@ -11348,24 +10830,12 @@
             ],
             "support": {
                 "issues": "https://github.com/ramsey/uuid/issues",
-                "source": "https://github.com/ramsey/uuid/tree/4.9.0"
+                "source": "https://github.com/ramsey/uuid/tree/4.9.1"
             },
-            "time": "2025-06-25T14:20:11+00:00"
+            "time": "2025-09-04T20:59:21+00:00"
         },
         {
             "name": "razorpay/razorpay",
-<<<<<<< HEAD
-            "version": "2.9.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/razorpay/razorpay-php.git",
-                "reference": "d5e49ef12c4862f6bc8003f87f79b942a9dd3a8b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/razorpay/razorpay-php/zipball/d5e49ef12c4862f6bc8003f87f79b942a9dd3a8b",
-                "reference": "d5e49ef12c4862f6bc8003f87f79b942a9dd3a8b",
-=======
             "version": "2.9.2",
             "source": {
                 "type": "git",
@@ -11376,7 +10846,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/razorpay/razorpay-php/zipball/c5cf59941eb2d888e80371328d932e6e8266d352",
                 "reference": "c5cf59941eb2d888e80371328d932e6e8266d352",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -11428,11 +10897,7 @@
                 "issues": "https://github.com/Razorpay/razorpay-php/issues",
                 "source": "https://github.com/Razorpay/razorpay-php"
             },
-<<<<<<< HEAD
-            "time": "2025-03-20T12:51:47+00:00"
-=======
             "time": "2025-08-05T07:13:20+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "rmccue/requests",
@@ -11718,29 +11183,16 @@
         },
         {
             "name": "sentry/sentry",
-<<<<<<< HEAD
-            "version": "4.14.2",
+            "version": "4.15.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/getsentry/sentry-php.git",
-                "reference": "bfeec74303d60d3f8bc33701ab3e86f8a8729f17"
+                "reference": "61a2d918e8424b6de4a2e265c15133a00c17db51"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/getsentry/sentry-php/zipball/bfeec74303d60d3f8bc33701ab3e86f8a8729f17",
-                "reference": "bfeec74303d60d3f8bc33701ab3e86f8a8729f17",
-=======
-            "version": "4.15.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/getsentry/sentry-php.git",
-                "reference": "0d09baf3700869ec4b723c95eb466de56c3d74b6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/getsentry/sentry-php/zipball/0d09baf3700869ec4b723c95eb466de56c3d74b6",
-                "reference": "0d09baf3700869ec4b723c95eb466de56c3d74b6",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/getsentry/sentry-php/zipball/61a2d918e8424b6de4a2e265c15133a00c17db51",
+                "reference": "61a2d918e8424b6de4a2e265c15133a00c17db51",
                 "shasum": ""
             },
             "require": {
@@ -11804,11 +11256,7 @@
             ],
             "support": {
                 "issues": "https://github.com/getsentry/sentry-php/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/getsentry/sentry-php/tree/4.14.2"
-=======
-                "source": "https://github.com/getsentry/sentry-php/tree/4.15.1"
->>>>>>> invoiceninja/v5-stable
+                "source": "https://github.com/getsentry/sentry-php/tree/4.15.2"
             },
             "funding": [
                 {
@@ -11820,31 +11268,27 @@
                     "type": "custom"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-07-21T08:28:29+00:00"
-=======
-            "time": "2025-08-28T15:45:14+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-03T07:23:48+00:00"
         },
         {
             "name": "sentry/sentry-laravel",
-            "version": "4.15.1",
+            "version": "4.16.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/getsentry/sentry-laravel.git",
-                "reference": "7e0675e8e06d1ec5cb623792892920000a3aedb5"
+                "reference": "b33b2e487b02db02d92988228f142d7fa2be2bfa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/getsentry/sentry-laravel/zipball/7e0675e8e06d1ec5cb623792892920000a3aedb5",
-                "reference": "7e0675e8e06d1ec5cb623792892920000a3aedb5",
+                "url": "https://api.github.com/repos/getsentry/sentry-laravel/zipball/b33b2e487b02db02d92988228f142d7fa2be2bfa",
+                "reference": "b33b2e487b02db02d92988228f142d7fa2be2bfa",
                 "shasum": ""
             },
             "require": {
                 "illuminate/support": "^6.0 | ^7.0 | ^8.0 | ^9.0 | ^10.0 | ^11.0 | ^12.0",
                 "nyholm/psr7": "^1.0",
                 "php": "^7.2 | ^8.0",
-                "sentry/sentry": "^4.14.1",
+                "sentry/sentry": "^4.15.2",
                 "symfony/psr-http-message-bridge": "^1.0 | ^2.0 | ^6.0 | ^7.0"
             },
             "require-dev": {
@@ -11901,7 +11345,7 @@
             ],
             "support": {
                 "issues": "https://github.com/getsentry/sentry-laravel/issues",
-                "source": "https://github.com/getsentry/sentry-laravel/tree/4.15.1"
+                "source": "https://github.com/getsentry/sentry-laravel/tree/4.16.0"
             },
             "funding": [
                 {
@@ -11913,7 +11357,7 @@
                     "type": "custom"
                 }
             ],
-            "time": "2025-06-24T12:39:03+00:00"
+            "time": "2025-09-10T16:38:18+00:00"
         },
         {
             "name": "setasign/fpdf",
@@ -12538,18 +11982,6 @@
         },
         {
             "name": "symfony/cache",
-<<<<<<< HEAD
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/cache.git",
-                "reference": "a7c6caa9d6113cebfb3020b427bcb021ebfdfc9e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/cache/zipball/a7c6caa9d6113cebfb3020b427bcb021ebfdfc9e",
-                "reference": "a7c6caa9d6113cebfb3020b427bcb021ebfdfc9e",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -12560,7 +11992,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/cache/zipball/6621a2bee5373e3e972b2ae5dbedd5ac899d8cb6",
                 "reference": "6621a2bee5373e3e972b2ae5dbedd5ac899d8cb6",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -12629,11 +12060,7 @@
                 "psr6"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/cache/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/cache/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -12653,11 +12080,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-=======
             "time": "2025-07-30T17:13:41+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/cache-contracts",
@@ -12811,18 +12234,6 @@
         },
         {
             "name": "symfony/config",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/config.git",
-                "reference": "ba62ae565f1327c2f6366726312ed828c85853bc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/config/zipball/ba62ae565f1327c2f6366726312ed828c85853bc",
-                "reference": "ba62ae565f1327c2f6366726312ed828c85853bc",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -12833,7 +12244,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/config/zipball/faef36e271bbeb74a9d733be4b56419b157762e2",
                 "reference": "faef36e271bbeb74a9d733be4b56419b157762e2",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -12879,11 +12289,7 @@
             "description": "Helps you find, load, combine, autofill and validate configuration values of any kind",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/config/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/config/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -12903,22 +12309,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-15T09:04:05+00:00"
-        },
-        {
-            "name": "symfony/console",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/console.git",
-                "reference": "9e27aecde8f506ba0fd1d9989620c04a87697101"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/9e27aecde8f506ba0fd1d9989620c04a87697101",
-                "reference": "9e27aecde8f506ba0fd1d9989620c04a87697101",
-=======
             "time": "2025-07-26T13:55:06+00:00"
         },
         {
@@ -12933,7 +12323,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/console/zipball/cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7",
                 "reference": "cb0102a1c5ac3807cf3fdf8bea96007df7fdbea7",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -12998,11 +12387,7 @@
                 "terminal"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/console/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/console/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13022,11 +12407,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-=======
             "time": "2025-08-25T06:35:40+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/css-selector",
@@ -13095,18 +12476,6 @@
         },
         {
             "name": "symfony/dependency-injection",
-<<<<<<< HEAD
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/dependency-injection.git",
-                "reference": "8656c4848b48784c4bb8c4ae50d2b43f832cead8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/dependency-injection/zipball/8656c4848b48784c4bb8c4ae50d2b43f832cead8",
-                "reference": "8656c4848b48784c4bb8c4ae50d2b43f832cead8",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -13117,7 +12486,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/dependency-injection/zipball/ab6c38dad5da9b15b1f7afb2f5c5814112e70261",
                 "reference": "ab6c38dad5da9b15b1f7afb2f5c5814112e70261",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13168,11 +12536,7 @@
             "description": "Allows you to standardize and centralize the way objects are constructed in your application",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/dependency-injection/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/dependency-injection/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13192,11 +12556,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-24T04:04:43+00:00"
-=======
             "time": "2025-08-14T09:54:27+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -13267,18 +12627,6 @@
         },
         {
             "name": "symfony/error-handler",
-<<<<<<< HEAD
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/error-handler.git",
-                "reference": "35b55b166f6752d6aaf21aa042fc5ed280fce235"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/error-handler/zipball/35b55b166f6752d6aaf21aa042fc5ed280fce235",
-                "reference": "35b55b166f6752d6aaf21aa042fc5ed280fce235",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -13289,7 +12637,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/error-handler/zipball/0b31a944fcd8759ae294da4d2808cbc53aebd0c3",
                 "reference": "0b31a944fcd8759ae294da4d2808cbc53aebd0c3",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13337,11 +12684,7 @@
             "description": "Provides tools to manage errors and ease debugging PHP code",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/error-handler/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/error-handler/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13361,22 +12704,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-13T07:48:40+00:00"
-        },
-        {
-            "name": "symfony/event-dispatcher",
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/event-dispatcher.git",
-                "reference": "497f73ac996a598c92409b44ac43b6690c4f666d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/497f73ac996a598c92409b44ac43b6690c4f666d",
-                "reference": "497f73ac996a598c92409b44ac43b6690c4f666d",
-=======
             "time": "2025-07-07T08:17:57+00:00"
         },
         {
@@ -13391,7 +12718,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/b7dc69e71de420ac04bc9ab830cf3ffebba48191",
                 "reference": "b7dc69e71de420ac04bc9ab830cf3ffebba48191",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13442,11 +12768,7 @@
             "description": "Provides tools that allow your application components to communicate with each other by dispatching events and listening to them",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/event-dispatcher/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/event-dispatcher/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13466,11 +12788,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-04-22T09:11:45+00:00"
-=======
             "time": "2025-08-13T11:49:31+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/event-dispatcher-contracts",
@@ -13550,11 +12868,7 @@
         },
         {
             "name": "symfony/filesystem",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-=======
             "version": "v7.3.2",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/filesystem.git",
@@ -13600,11 +12914,7 @@
             "description": "Provides basic utilities for the filesystem",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/filesystem/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/filesystem/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13628,18 +12938,6 @@
         },
         {
             "name": "symfony/finder",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/finder.git",
-                "reference": "ec2344cf77a48253bbca6939aa3d2477773ea63d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/finder/zipball/ec2344cf77a48253bbca6939aa3d2477773ea63d",
-                "reference": "ec2344cf77a48253bbca6939aa3d2477773ea63d",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -13650,7 +12948,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/finder/zipball/2a6614966ba1074fa93dae0bc804227422df4dfe",
                 "reference": "2a6614966ba1074fa93dae0bc804227422df4dfe",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13685,11 +12982,7 @@
             "description": "Finds files and directories via an intuitive fluent interface",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/finder/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/finder/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13709,22 +13002,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2024-12-30T19:00:26+00:00"
-        },
-        {
-            "name": "symfony/framework-bundle",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/framework-bundle.git",
-                "reference": "91905f22f26aa350a33b3b9690bdf94976b0d0ab"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/framework-bundle/zipball/91905f22f26aa350a33b3b9690bdf94976b0d0ab",
-                "reference": "91905f22f26aa350a33b3b9690bdf94976b0d0ab",
-=======
             "time": "2025-07-15T13:41:35+00:00"
         },
         {
@@ -13739,7 +13016,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/framework-bundle/zipball/19ec4ab6be90322ed190e041e2404a976ed22571",
                 "reference": "19ec4ab6be90322ed190e041e2404a976ed22571",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13864,11 +13140,7 @@
             "description": "Provides a tight integration between Symfony components and the Symfony full-stack framework",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/framework-bundle/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/framework-bundle/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -13888,22 +13160,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-        },
-        {
-            "name": "symfony/http-client",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/http-client.git",
-                "reference": "4403d87a2c16f33345dca93407a8714ee8c05a64"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-client/zipball/4403d87a2c16f33345dca93407a8714ee8c05a64",
-                "reference": "4403d87a2c16f33345dca93407a8714ee8c05a64",
-=======
             "time": "2025-08-27T07:45:05+00:00"
         },
         {
@@ -13918,7 +13174,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/http-client/zipball/333b9bd7639cbdaecd25a3a48a9d2dcfaa86e019",
                 "reference": "333b9bd7639cbdaecd25a3a48a9d2dcfaa86e019",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -13985,11 +13240,7 @@
                 "http"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/http-client/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/http-client/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14009,11 +13260,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-28T07:58:39+00:00"
-=======
             "time": "2025-08-27T07:45:05+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/http-client-contracts",
@@ -14095,18 +13342,6 @@
         },
         {
             "name": "symfony/http-foundation",
-<<<<<<< HEAD
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/http-foundation.git",
-                "reference": "23dd60256610c86a3414575b70c596e5deff6ed9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-foundation/zipball/23dd60256610c86a3414575b70c596e5deff6ed9",
-                "reference": "23dd60256610c86a3414575b70c596e5deff6ed9",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -14117,7 +13352,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/http-foundation/zipball/7475561ec27020196c49bb7c4f178d33d7d3dc00",
                 "reference": "7475561ec27020196c49bb7c4f178d33d7d3dc00",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -14167,11 +13401,7 @@
             "description": "Defines an object-oriented layer for the HTTP specification",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/http-foundation/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/http-foundation/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14191,22 +13421,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-23T15:07:14+00:00"
-        },
-        {
-            "name": "symfony/http-kernel",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/http-kernel.git",
-                "reference": "1644879a66e4aa29c36fe33dfa6c54b450ce1831"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-kernel/zipball/1644879a66e4aa29c36fe33dfa6c54b450ce1831",
-                "reference": "1644879a66e4aa29c36fe33dfa6c54b450ce1831",
-=======
             "time": "2025-08-20T08:04:18+00:00"
         },
         {
@@ -14221,7 +13435,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/http-kernel/zipball/72c304de37e1a1cec6d5d12b81187ebd4850a17b",
                 "reference": "72c304de37e1a1cec6d5d12b81187ebd4850a17b",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -14306,11 +13519,7 @@
             "description": "Provides a structured process for converting a Request into a Response",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/http-kernel/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/http-kernel/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14330,22 +13539,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-28T08:24:55+00:00"
-        },
-        {
-            "name": "symfony/intl",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/intl.git",
-                "reference": "bd50940329ac1cfc4af0491cc4468f477d967e45"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/intl/zipball/bd50940329ac1cfc4af0491cc4468f477d967e45",
-                "reference": "bd50940329ac1cfc4af0491cc4468f477d967e45",
-=======
             "time": "2025-08-29T08:23:45+00:00"
         },
         {
@@ -14360,7 +13553,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/intl/zipball/754d5ad02c889e380efc5a74fa3f6cfe56b7454d",
                 "reference": "754d5ad02c889e380efc5a74fa3f6cfe56b7454d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -14417,11 +13609,7 @@
                 "localization"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/intl/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/intl/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14441,11 +13629,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-06T16:10:07+00:00"
-=======
             "time": "2025-08-19T14:06:46+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/mailer",
@@ -14598,18 +13782,6 @@
         },
         {
             "name": "symfony/mime",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/mime.git",
-                "reference": "0e7b19b2f399c31df0cdbe5d8cbf53f02f6cfcd9"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/mime/zipball/0e7b19b2f399c31df0cdbe5d8cbf53f02f6cfcd9",
-                "reference": "0e7b19b2f399c31df0cdbe5d8cbf53f02f6cfcd9",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -14620,7 +13792,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/mime/zipball/e0a0f859148daf1edf6c60b398eb40bfc96697d1",
                 "reference": "e0a0f859148daf1edf6c60b398eb40bfc96697d1",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -14675,11 +13846,7 @@
                 "mime-type"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/mime/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/mime/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14699,22 +13866,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-02-19T08:51:26+00:00"
-        },
-        {
-            "name": "symfony/options-resolver",
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/options-resolver.git",
-                "reference": "afb9a8038025e5dbc657378bfab9198d75f10fca"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/options-resolver/zipball/afb9a8038025e5dbc657378bfab9198d75f10fca",
-                "reference": "afb9a8038025e5dbc657378bfab9198d75f10fca",
-=======
             "time": "2025-07-15T13:41:35+00:00"
         },
         {
@@ -14729,7 +13880,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/options-resolver/zipball/0ff2f5c3df08a395232bbc3c2eb7e84912df911d",
                 "reference": "0ff2f5c3df08a395232bbc3c2eb7e84912df911d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -14767,11 +13917,7 @@
                 "options"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/options-resolver/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/options-resolver/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14791,19 +13937,11 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-04-04T13:12:05+00:00"
-        },
-        {
-            "name": "symfony/polyfill-ctype",
-            "version": "v1.32.0",
-=======
             "time": "2025-08-05T10:16:07+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
@@ -14862,11 +14000,7 @@
                 "portable"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-ctype/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14890,11 +14024,7 @@
         },
         {
             "name": "symfony/polyfill-intl-grapheme",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-grapheme.git",
@@ -14952,11 +14082,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-intl-grapheme/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -14980,18 +14106,6 @@
         },
         {
             "name": "symfony/polyfill-intl-icu",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/polyfill-intl-icu.git",
-                "reference": "763d2a91fea5681509ca01acbc1c5e450d127811"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-intl-icu/zipball/763d2a91fea5681509ca01acbc1c5e450d127811",
-                "reference": "763d2a91fea5681509ca01acbc1c5e450d127811",
-=======
             "version": "v1.33.0",
             "source": {
                 "type": "git",
@@ -15002,7 +14116,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/polyfill-intl-icu/zipball/bfc8fa13dbaf21d69114b0efcd72ab700fb04d0c",
                 "reference": "bfc8fa13dbaf21d69114b0efcd72ab700fb04d0c",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -15057,11 +14170,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-intl-icu/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-intl-icu/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15081,19 +14190,11 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2024-12-21T18:38:29+00:00"
-        },
-        {
-            "name": "symfony/polyfill-intl-idn",
-            "version": "v1.32.0",
-=======
             "time": "2025-06-20T22:24:30+00:00"
         },
         {
             "name": "symfony/polyfill-intl-idn",
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-idn.git",
@@ -15156,11 +14257,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-intl-idn/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15184,11 +14281,7 @@
         },
         {
             "name": "symfony/polyfill-intl-normalizer",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-intl-normalizer.git",
@@ -15249,11 +14342,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-intl-normalizer/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15277,11 +14366,7 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
@@ -15342,11 +14427,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15370,11 +14451,7 @@
         },
         {
             "name": "symfony/polyfill-php80",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php80.git",
@@ -15434,11 +14511,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-php80/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15462,11 +14535,7 @@
         },
         {
             "name": "symfony/polyfill-php82",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php82.git",
@@ -15522,11 +14591,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-php82/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-php82/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15550,11 +14615,7 @@
         },
         {
             "name": "symfony/polyfill-php83",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php83.git",
@@ -15610,11 +14671,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-php83/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-php83/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15718,11 +14775,7 @@
         },
         {
             "name": "symfony/polyfill-uuid",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-uuid.git",
@@ -15781,11 +14834,7 @@
                 "uuid"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-uuid/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-uuid/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15879,18 +14928,6 @@
         },
         {
             "name": "symfony/process",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/process.git",
-                "reference": "40c295f2deb408d5e9d2d32b8ba1dd61e36f05af"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/40c295f2deb408d5e9d2d32b8ba1dd61e36f05af",
-                "reference": "40c295f2deb408d5e9d2d32b8ba1dd61e36f05af",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -15901,7 +14938,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/process/zipball/32241012d521e2e8a9d713adb0812bb773b907f1",
                 "reference": "32241012d521e2e8a9d713adb0812bb773b907f1",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -15933,11 +14969,7 @@
             "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/process/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/process/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -15957,22 +14989,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-04-17T09:11:12+00:00"
-        },
-        {
-            "name": "symfony/property-access",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/property-access.git",
-                "reference": "518d15c8cca726ebe665dcd7154074584cf862e8"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/property-access/zipball/518d15c8cca726ebe665dcd7154074584cf862e8",
-                "reference": "518d15c8cca726ebe665dcd7154074584cf862e8",
-=======
             "time": "2025-08-18T09:42:54+00:00"
         },
         {
@@ -15987,7 +15003,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/property-access/zipball/4a4389e5c8bd1d0320d80a23caa6a1ac71cb81a7",
                 "reference": "4a4389e5c8bd1d0320d80a23caa6a1ac71cb81a7",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16034,11 +15049,7 @@
                 "reflection"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/property-access/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/property-access/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16058,11 +15069,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-24T04:04:43+00:00"
-=======
             "time": "2025-08-04T15:15:28+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/property-info",
@@ -16235,18 +15242,6 @@
         },
         {
             "name": "symfony/routing",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/routing.git",
-                "reference": "8e213820c5fea844ecea29203d2a308019007c15"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/routing/zipball/8e213820c5fea844ecea29203d2a308019007c15",
-                "reference": "8e213820c5fea844ecea29203d2a308019007c15",
-=======
             "version": "v7.3.2",
             "source": {
                 "type": "git",
@@ -16257,7 +15252,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/routing/zipball/7614b8ca5fa89b9cd233e21b627bfc5774f586e4",
                 "reference": "7614b8ca5fa89b9cd233e21b627bfc5774f586e4",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16309,11 +15303,7 @@
                 "url"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/routing/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/routing/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16333,22 +15323,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-24T20:43:28+00:00"
-        },
-        {
-            "name": "symfony/serializer",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/serializer.git",
-                "reference": "feaf837cedbbc8287986602223175d3fd639922d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/serializer/zipball/feaf837cedbbc8287986602223175d3fd639922d",
-                "reference": "feaf837cedbbc8287986602223175d3fd639922d",
-=======
             "time": "2025-07-15T11:36:08+00:00"
         },
         {
@@ -16363,7 +15337,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/serializer/zipball/5608b04d8daaf29432d76ecc618b0fac169c2dfb",
                 "reference": "5608b04d8daaf29432d76ecc618b0fac169c2dfb",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16433,11 +15406,7 @@
             "description": "Handles serializing and deserializing data structures, including object graphs, into array structures or other formats like XML and JSON.",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/serializer/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/serializer/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16457,11 +15426,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-=======
             "time": "2025-08-27T11:34:33+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/service-contracts",
@@ -16548,18 +15513,6 @@
         },
         {
             "name": "symfony/string",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/string.git",
-                "reference": "f3570b8c61ca887a9e2938e85cb6458515d2b125"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/f3570b8c61ca887a9e2938e85cb6458515d2b125",
-                "reference": "f3570b8c61ca887a9e2938e85cb6458515d2b125",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -16570,7 +15523,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/string/zipball/17a426cce5fd1f0901fefa9b2a490d0038fd3c9c",
                 "reference": "17a426cce5fd1f0901fefa9b2a490d0038fd3c9c",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16628,11 +15580,7 @@
                 "utf8"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/string/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/string/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16652,22 +15600,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-04-20T20:19:01+00:00"
-        },
-        {
-            "name": "symfony/translation",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/translation.git",
-                "reference": "241d5ac4910d256660238a7ecf250deba4c73063"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/translation/zipball/241d5ac4910d256660238a7ecf250deba4c73063",
-                "reference": "241d5ac4910d256660238a7ecf250deba4c73063",
-=======
             "time": "2025-08-25T06:35:40+00:00"
         },
         {
@@ -16682,7 +15614,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/translation/zipball/e0837b4cbcef63c754d89a4806575cada743a38d",
                 "reference": "e0837b4cbcef63c754d89a4806575cada743a38d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16749,11 +15680,7 @@
             "description": "Provides tools to internationalize your application",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/translation/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/translation/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16773,11 +15700,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-=======
             "time": "2025-08-01T21:02:37+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/translation-contracts",
@@ -16859,18 +15782,6 @@
         },
         {
             "name": "symfony/twig-bridge",
-<<<<<<< HEAD
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/twig-bridge.git",
-                "reference": "082eb15d8a4f9afee0acc4709fbe3aaf26d48891"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/twig-bridge/zipball/082eb15d8a4f9afee0acc4709fbe3aaf26d48891",
-                "reference": "082eb15d8a4f9afee0acc4709fbe3aaf26d48891",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -16881,7 +15792,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/twig-bridge/zipball/33558f013b7f6ed72805527c8405cae0062e47c5",
                 "reference": "33558f013b7f6ed72805527c8405cae0062e47c5",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -16963,11 +15873,7 @@
             "description": "Provides integration for Twig with various Symfony components",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/twig-bridge/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/twig-bridge/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -16987,22 +15893,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-19T13:28:56+00:00"
-        },
-        {
-            "name": "symfony/twig-bundle",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/twig-bundle.git",
-                "reference": "bc23c11d9716fc2261ee26a32e654b0e8b1b1896"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/twig-bundle/zipball/bc23c11d9716fc2261ee26a32e654b0e8b1b1896",
-                "reference": "bc23c11d9716fc2261ee26a32e654b0e8b1b1896",
-=======
             "time": "2025-08-18T13:10:53+00:00"
         },
         {
@@ -17017,7 +15907,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/twig-bundle/zipball/5d85220df4d8d79e6a9ca57eea6f70004de39657",
                 "reference": "5d85220df4d8d79e6a9ca57eea6f70004de39657",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17072,11 +15961,7 @@
             "description": "Provides a tight integration of Twig into the Symfony full-stack framework",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/twig-bundle/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/twig-bundle/tree/v7.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17096,22 +15981,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-24T04:04:43+00:00"
-        },
-        {
-            "name": "symfony/type-info",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/type-info.git",
-                "reference": "5fa6e25e4195e73ce9e457b521ac5e61ec271150"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/type-info/zipball/5fa6e25e4195e73ce9e457b521ac5e61ec271150",
-                "reference": "5fa6e25e4195e73ce9e457b521ac5e61ec271150",
-=======
             "time": "2025-07-10T08:47:49+00:00"
         },
         {
@@ -17126,7 +15995,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/type-info/zipball/aa64b58ed04517d4d730202dd035895743c23273",
                 "reference": "aa64b58ed04517d4d730202dd035895743c23273",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17176,11 +16044,7 @@
                 "type"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/type-info/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/type-info/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17200,11 +16064,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-=======
             "time": "2025-08-28T09:38:04+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "symfony/uid",
@@ -17282,18 +16142,6 @@
         },
         {
             "name": "symfony/validator",
-<<<<<<< HEAD
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/validator.git",
-                "reference": "e2f2497c869fc57446f735fbf00cff4de32ae8c3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/validator/zipball/e2f2497c869fc57446f735fbf00cff4de32ae8c3",
-                "reference": "e2f2497c869fc57446f735fbf00cff4de32ae8c3",
-=======
             "version": "v7.3.3",
             "source": {
                 "type": "git",
@@ -17304,7 +16152,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/validator/zipball/a2f26d7c122393db75a2d41435ad8251250f8bc6",
                 "reference": "a2f26d7c122393db75a2d41435ad8251250f8bc6",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17373,11 +16220,7 @@
             "description": "Provides tools to validate values",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/validator/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/validator/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17397,22 +16240,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-26T13:22:23+00:00"
-        },
-        {
-            "name": "symfony/var-dumper",
-            "version": "v7.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "6e209fbe5f5a7b6043baba46fe5735a4b85d0d42"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/6e209fbe5f5a7b6043baba46fe5735a4b85d0d42",
-                "reference": "6e209fbe5f5a7b6043baba46fe5735a4b85d0d42",
-=======
             "time": "2025-08-27T11:34:33+00:00"
         },
         {
@@ -17427,7 +16254,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/var-dumper/zipball/34d8d4c4b9597347306d1ec8eb4e1319b1e6986f",
                 "reference": "34d8d4c4b9597347306d1ec8eb4e1319b1e6986f",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17481,11 +16307,7 @@
                 "dump"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/var-dumper/tree/v7.3.1"
-=======
                 "source": "https://github.com/symfony/var-dumper/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17505,22 +16327,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-27T19:55:54+00:00"
-        },
-        {
-            "name": "symfony/var-exporter",
-            "version": "v7.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/var-exporter.git",
-                "reference": "c9a1168891b5aaadfd6332ef44393330b3498c4c"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-exporter/zipball/c9a1168891b5aaadfd6332ef44393330b3498c4c",
-                "reference": "c9a1168891b5aaadfd6332ef44393330b3498c4c",
-=======
             "time": "2025-08-13T11:49:31+00:00"
         },
         {
@@ -17535,7 +16341,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/var-exporter/zipball/d4dfcd2a822cbedd7612eb6fbd260e46f87b7137",
                 "reference": "d4dfcd2a822cbedd7612eb6fbd260e46f87b7137",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17583,11 +16388,7 @@
                 "serialize"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/var-exporter/tree/v7.3.0"
-=======
                 "source": "https://github.com/symfony/var-exporter/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17607,22 +16408,6 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-15T09:04:05+00:00"
-        },
-        {
-            "name": "symfony/yaml",
-            "version": "v6.4.23",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/yaml.git",
-                "reference": "93e29e0deb5f1b2e360adfb389a20d25eb81a27b"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/93e29e0deb5f1b2e360adfb389a20d25eb81a27b",
-                "reference": "93e29e0deb5f1b2e360adfb389a20d25eb81a27b",
-=======
             "time": "2025-08-18T13:10:53+00:00"
         },
         {
@@ -17637,7 +16422,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/symfony/yaml/zipball/d4f4a66866fe2451f61296924767280ab5732d9d",
                 "reference": "d4f4a66866fe2451f61296924767280ab5732d9d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -17680,11 +16464,7 @@
             "description": "Loads and dumps YAML files",
             "homepage": "https://symfony.com",
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/yaml/tree/v6.4.23"
-=======
                 "source": "https://github.com/symfony/yaml/tree/v7.3.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -17704,11 +16484,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-03T06:46:12+00:00"
-=======
             "time": "2025-08-27T11:34:33+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "tijsverkoyen/css-to-inline-styles",
@@ -17767,18 +16543,6 @@
         },
         {
             "name": "turbo124/beacon",
-<<<<<<< HEAD
-            "version": "v2.0.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/turbo124/beacon.git",
-                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/turbo124/beacon/zipball/17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
-                "reference": "17769e5b29b9a5e9db5fabd896e0af9e64738dbb",
-=======
             "version": "v3.0.1",
             "source": {
                 "type": "git",
@@ -17789,19 +16553,10 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/turbo124/beacon/zipball/3a2d4edc82a190230ccabce25a586b01120b5b66",
                 "reference": "3a2d4edc82a190230ccabce25a586b01120b5b66",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
                 "guzzlehttp/guzzle": "^7",
-<<<<<<< HEAD
-                "illuminate/support": "^9.0|^10.0|^11|^12",
-                "php": "^8",
-                "turbo124/waffy": "^1.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^10.0"
-=======
                 "illuminate/support": "^11|^12",
                 "php": "^8.2|^8.3",
                 "turbo124/waffy": "^1.0"
@@ -17811,7 +16566,6 @@
                 "orchestra/testbench": "^10.6",
                 "phpstan/phpstan": "^2.1",
                 "phpunit/phpunit": "^11"
->>>>>>> invoiceninja/v5-stable
             },
             "type": "library",
             "extra": {
@@ -17849,15 +16603,9 @@
                 "turbo124"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/turbo124/beacon/tree/v2.0.4"
-            },
-            "time": "2025-04-16T10:54:18+00:00"
-=======
                 "source": "https://github.com/turbo124/beacon/tree/v3.0.1"
             },
             "time": "2025-09-01T02:13:38+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "turbo124/waffy",
@@ -18951,18 +17699,6 @@
         },
         {
             "name": "composer/class-map-generator",
-<<<<<<< HEAD
-            "version": "1.6.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/composer/class-map-generator.git",
-                "reference": "134b705ddb0025d397d8318a75825fe3c9d1da34"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/composer/class-map-generator/zipball/134b705ddb0025d397d8318a75825fe3c9d1da34",
-                "reference": "134b705ddb0025d397d8318a75825fe3c9d1da34",
-=======
             "version": "1.6.2",
             "source": {
                 "type": "git",
@@ -18973,7 +17709,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/composer/class-map-generator/zipball/ba9f089655d4cdd64e762a6044f411ccdaec0076",
                 "reference": "ba9f089655d4cdd64e762a6044f411ccdaec0076",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -19017,11 +17752,7 @@
             ],
             "support": {
                 "issues": "https://github.com/composer/class-map-generator/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/composer/class-map-generator/tree/1.6.1"
-=======
                 "source": "https://github.com/composer/class-map-generator/tree/1.6.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -19033,11 +17764,7 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-24T13:50:44+00:00"
-=======
             "time": "2025-08-20T18:52:43+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "composer/semver",
@@ -19292,18 +18019,6 @@
         },
         {
             "name": "filp/whoops",
-<<<<<<< HEAD
-            "version": "2.18.3",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/filp/whoops.git",
-                "reference": "59a123a3d459c5a23055802237cb317f609867e5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/filp/whoops/zipball/59a123a3d459c5a23055802237cb317f609867e5",
-                "reference": "59a123a3d459c5a23055802237cb317f609867e5",
-=======
             "version": "2.18.4",
             "source": {
                 "type": "git",
@@ -19314,7 +18029,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/filp/whoops/zipball/d2102955e48b9fd9ab24280a7ad12ed552752c4d",
                 "reference": "d2102955e48b9fd9ab24280a7ad12ed552752c4d",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -19364,11 +18078,7 @@
             ],
             "support": {
                 "issues": "https://github.com/filp/whoops/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/filp/whoops/tree/2.18.3"
-=======
                 "source": "https://github.com/filp/whoops/tree/2.18.4"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -19376,37 +18086,20 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-16T00:02:10+00:00"
-        },
-        {
-            "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.84.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "38dad0767bf2a9b516b976852200ae722fe984ca"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/38dad0767bf2a9b516b976852200ae722fe984ca",
-                "reference": "38dad0767bf2a9b516b976852200ae722fe984ca",
-=======
             "time": "2025-08-08T12:00:00+00:00"
         },
         {
             "name": "friendsofphp/php-cs-fixer",
-            "version": "v3.86.0",
+            "version": "v3.87.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer.git",
-                "reference": "4a952bd19dc97879b0620f495552ef09b55f7d36"
+                "reference": "da5f0a7858c79b56fc0b8c36d3efcfe5f37f0992"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/4a952bd19dc97879b0620f495552ef09b55f7d36",
-                "reference": "4a952bd19dc97879b0620f495552ef09b55f7d36",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/PHP-CS-Fixer/PHP-CS-Fixer/zipball/da5f0a7858c79b56fc0b8c36d3efcfe5f37f0992",
+                "reference": "da5f0a7858c79b56fc0b8c36d3efcfe5f37f0992",
                 "shasum": ""
             },
             "require": {
@@ -19417,48 +18110,38 @@
                 "ext-hash": "*",
                 "ext-json": "*",
                 "ext-tokenizer": "*",
-                "fidry/cpu-core-counter": "^1.2",
+                "fidry/cpu-core-counter": "^1.3",
                 "php": "^7.4 || ^8.0",
                 "react/child-process": "^0.6.6",
-<<<<<<< HEAD
-                "react/event-loop": "^1.0",
-                "react/promise": "^2.11 || ^3.0",
-                "react/socket": "^1.0",
-                "react/stream": "^1.0",
-                "sebastian/diff": "^4.0.6 || ^5.1.1 || ^6.0.2 || ^7.0",
-                "symfony/console": "^5.4.45 || ^6.4.13 || ^7.0",
-=======
                 "react/event-loop": "^1.5",
-                "react/promise": "^3.2",
+                "react/promise": "^3.3",
                 "react/socket": "^1.16",
                 "react/stream": "^1.4",
                 "sebastian/diff": "^4.0.6 || ^5.1.1 || ^6.0.2 || ^7.0",
-                "symfony/console": "^5.4.47 || ^6.4.13 || ^7.0",
->>>>>>> invoiceninja/v5-stable
-                "symfony/event-dispatcher": "^5.4.45 || ^6.4.13 || ^7.0",
-                "symfony/filesystem": "^5.4.45 || ^6.4.13 || ^7.0",
-                "symfony/finder": "^5.4.45 || ^6.4.17 || ^7.0",
-                "symfony/options-resolver": "^5.4.45 || ^6.4.16 || ^7.0",
-                "symfony/polyfill-mbstring": "^1.32",
-                "symfony/polyfill-php80": "^1.32",
-                "symfony/polyfill-php81": "^1.32",
-                "symfony/process": "^5.4.47 || ^6.4.20 || ^7.2",
-                "symfony/stopwatch": "^5.4.45 || ^6.4.19 || ^7.0"
+                "symfony/console": "^5.4.47 || ^6.4.24 || ^7.0",
+                "symfony/event-dispatcher": "^5.4.45 || ^6.4.24 || ^7.0",
+                "symfony/filesystem": "^5.4.45 || ^6.4.24 || ^7.0",
+                "symfony/finder": "^5.4.45 || ^6.4.24 || ^7.0",
+                "symfony/options-resolver": "^5.4.45 || ^6.4.24 || ^7.0",
+                "symfony/polyfill-mbstring": "^1.33",
+                "symfony/polyfill-php80": "^1.33",
+                "symfony/polyfill-php81": "^1.33",
+                "symfony/process": "^5.4.47 || ^6.4.24 || ^7.2",
+                "symfony/stopwatch": "^5.4.45 || ^6.4.24 || ^7.0"
             },
             "require-dev": {
-                "facile-it/paraunit": "^1.3.1 || ^2.6",
+                "facile-it/paraunit": "^1.3.1 || ^2.7",
                 "infection/infection": "^0.29.14",
-                "justinrainbow/json-schema": "^5.3 || ^6.4",
+                "justinrainbow/json-schema": "^6.5",
                 "keradus/cli-executor": "^2.2",
                 "mikey179/vfsstream": "^1.6.12",
                 "php-coveralls/php-coveralls": "^2.8",
-                "php-cs-fixer/accessible-object": "^1.1",
                 "php-cs-fixer/phpunit-constraint-isidenticalstring": "^1.6",
                 "php-cs-fixer/phpunit-constraint-xmlmatchesxsd": "^1.6",
-                "phpunit/phpunit": "^9.6.23 || ^10.5.47 || ^11.5.25",
-                "symfony/polyfill-php84": "^1.32",
-                "symfony/var-dumper": "^5.4.48 || ^6.4.23 || ^7.3.1",
-                "symfony/yaml": "^5.4.45 || ^6.4.23 || ^7.3.1"
+                "phpunit/phpunit": "^9.6.25 || ^10.5.53 || ^11.5.34",
+                "symfony/polyfill-php84": "^1.33",
+                "symfony/var-dumper": "^5.4.48 || ^6.4.24 || ^7.3.2",
+                "symfony/yaml": "^5.4.45 || ^6.4.24 || ^7.3.2"
             },
             "suggest": {
                 "ext-dom": "For handling output formats in XML",
@@ -19499,11 +18182,7 @@
             ],
             "support": {
                 "issues": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/issues",
-<<<<<<< HEAD
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.84.0"
-=======
-                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.86.0"
->>>>>>> invoiceninja/v5-stable
+                "source": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/tree/v3.87.2"
             },
             "funding": [
                 {
@@ -19511,11 +18190,7 @@
                     "type": "github"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-07-15T18:21:57+00:00"
-=======
-            "time": "2025-08-13T22:36:21+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-10T09:51:40+00:00"
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -20132,16 +18807,16 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "1.12.28",
+            "version": "1.12.29",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpstan.git",
-                "reference": "fcf8b71aeab4e1a1131d1783cef97b23a51b87a9"
+                "reference": "0835c625a38ac6484f050077116b6668bc3ab57d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/fcf8b71aeab4e1a1131d1783cef97b23a51b87a9",
-                "reference": "fcf8b71aeab4e1a1131d1783cef97b23a51b87a9",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/0835c625a38ac6484f050077116b6668bc3ab57d",
+                "reference": "0835c625a38ac6484f050077116b6668bc3ab57d",
                 "shasum": ""
             },
             "require": {
@@ -20186,22 +18861,10 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-07-17T17:15:39+00:00"
+            "time": "2025-09-16T08:46:57+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
-<<<<<<< HEAD
-            "version": "11.0.10",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/php-code-coverage.git",
-                "reference": "1a800a7446add2d79cc6b3c01c45381810367d76"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/1a800a7446add2d79cc6b3c01c45381810367d76",
-                "reference": "1a800a7446add2d79cc6b3c01c45381810367d76",
-=======
             "version": "11.0.11",
             "source": {
                 "type": "git",
@@ -20212,7 +18875,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/php-code-coverage/zipball/4f7722aa9a7b76aa775e2d9d4e95d1ea16eeeef4",
                 "reference": "4f7722aa9a7b76aa775e2d9d4e95d1ea16eeeef4",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -20269,11 +18931,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/php-code-coverage/issues",
                 "security": "https://github.com/sebastianbergmann/php-code-coverage/security/policy",
-<<<<<<< HEAD
-                "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/show"
-=======
                 "source": "https://github.com/sebastianbergmann/php-code-coverage/tree/11.0.11"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -20293,11 +18951,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-06-18T08:56:18+00:00"
-=======
             "time": "2025-08-27T14:37:49+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "phpunit/php-file-iterator",
@@ -20546,29 +19200,16 @@
         },
         {
             "name": "phpunit/phpunit",
-<<<<<<< HEAD
-            "version": "11.5.27",
+            "version": "11.5.39",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "446d43867314781df7e9adf79c3ec7464956fd8f"
+                "reference": "ad5597f79d8489d2870073ac0bc0dd0ad1fa9931"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/446d43867314781df7e9adf79c3ec7464956fd8f",
-                "reference": "446d43867314781df7e9adf79c3ec7464956fd8f",
-=======
-            "version": "11.5.35",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "d341ee94ee5007b286fc7907b383aae6b5b3cc91"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/d341ee94ee5007b286fc7907b383aae6b5b3cc91",
-                "reference": "d341ee94ee5007b286fc7907b383aae6b5b3cc91",
->>>>>>> invoiceninja/v5-stable
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/ad5597f79d8489d2870073ac0bc0dd0ad1fa9931",
+                "reference": "ad5597f79d8489d2870073ac0bc0dd0ad1fa9931",
                 "shasum": ""
             },
             "require": {
@@ -20578,40 +19219,24 @@
                 "ext-mbstring": "*",
                 "ext-xml": "*",
                 "ext-xmlwriter": "*",
-<<<<<<< HEAD
-                "myclabs/deep-copy": "^1.13.3",
-                "phar-io/manifest": "^2.0.4",
-                "phar-io/version": "^3.2.1",
-                "php": ">=8.2",
-                "phpunit/php-code-coverage": "^11.0.10",
-=======
                 "myclabs/deep-copy": "^1.13.4",
                 "phar-io/manifest": "^2.0.4",
                 "phar-io/version": "^3.2.1",
                 "php": ">=8.2",
                 "phpunit/php-code-coverage": "^11.0.11",
->>>>>>> invoiceninja/v5-stable
                 "phpunit/php-file-iterator": "^5.1.0",
                 "phpunit/php-invoker": "^5.0.1",
                 "phpunit/php-text-template": "^4.0.1",
                 "phpunit/php-timer": "^7.0.1",
                 "sebastian/cli-parser": "^3.0.2",
                 "sebastian/code-unit": "^3.0.3",
-<<<<<<< HEAD
-                "sebastian/comparator": "^6.3.1",
-=======
                 "sebastian/comparator": "^6.3.2",
->>>>>>> invoiceninja/v5-stable
                 "sebastian/diff": "^6.0.2",
                 "sebastian/environment": "^7.2.1",
                 "sebastian/exporter": "^6.3.0",
                 "sebastian/global-state": "^7.0.2",
                 "sebastian/object-enumerator": "^6.0.1",
-<<<<<<< HEAD
-                "sebastian/type": "^5.1.2",
-=======
                 "sebastian/type": "^5.1.3",
->>>>>>> invoiceninja/v5-stable
                 "sebastian/version": "^5.0.2",
                 "staabm/side-effects-detector": "^1.0.5"
             },
@@ -20656,11 +19281,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/phpunit/issues",
                 "security": "https://github.com/sebastianbergmann/phpunit/security/policy",
-<<<<<<< HEAD
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.27"
-=======
-                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.35"
->>>>>>> invoiceninja/v5-stable
+                "source": "https://github.com/sebastianbergmann/phpunit/tree/11.5.39"
             },
             "funding": [
                 {
@@ -20684,11 +19305,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-07-11T04:10:06+00:00"
-=======
-            "time": "2025-08-28T05:13:54+00:00"
->>>>>>> invoiceninja/v5-stable
+            "time": "2025-09-14T06:20:41+00:00"
         },
         {
             "name": "react/cache",
@@ -21388,18 +20005,6 @@
         },
         {
             "name": "sebastian/comparator",
-<<<<<<< HEAD
-            "version": "6.3.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/comparator.git",
-                "reference": "24b8fbc2c8e201bb1308e7b05148d6ab393b6959"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/24b8fbc2c8e201bb1308e7b05148d6ab393b6959",
-                "reference": "24b8fbc2c8e201bb1308e7b05148d6ab393b6959",
-=======
             "version": "6.3.2",
             "source": {
                 "type": "git",
@@ -21410,7 +20015,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/comparator/zipball/85c77556683e6eee4323e4c5468641ca0237e2e8",
                 "reference": "85c77556683e6eee4323e4c5468641ca0237e2e8",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -21469,11 +20073,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/comparator/issues",
                 "security": "https://github.com/sebastianbergmann/comparator/security/policy",
-<<<<<<< HEAD
-                "source": "https://github.com/sebastianbergmann/comparator/tree/6.3.1"
-=======
                 "source": "https://github.com/sebastianbergmann/comparator/tree/6.3.2"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -21493,11 +20093,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-07T06:57:01+00:00"
-=======
             "time": "2025-08-10T08:07:46+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "sebastian/complexity",
@@ -22090,18 +20686,6 @@
         },
         {
             "name": "sebastian/type",
-<<<<<<< HEAD
-            "version": "5.1.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/sebastianbergmann/type.git",
-                "reference": "a8a7e30534b0eb0c77cd9d07e82de1a114389f5e"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/type/zipball/a8a7e30534b0eb0c77cd9d07e82de1a114389f5e",
-                "reference": "a8a7e30534b0eb0c77cd9d07e82de1a114389f5e",
-=======
             "version": "5.1.3",
             "source": {
                 "type": "git",
@@ -22112,7 +20696,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/sebastianbergmann/type/zipball/f77d2d4e78738c98d9a68d2596fe5e8fa380f449",
                 "reference": "f77d2d4e78738c98d9a68d2596fe5e8fa380f449",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -22148,11 +20731,7 @@
             "support": {
                 "issues": "https://github.com/sebastianbergmann/type/issues",
                 "security": "https://github.com/sebastianbergmann/type/security/policy",
-<<<<<<< HEAD
-                "source": "https://github.com/sebastianbergmann/type/tree/5.1.2"
-=======
                 "source": "https://github.com/sebastianbergmann/type/tree/5.1.3"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -22172,11 +20751,7 @@
                     "type": "tidelift"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-03-18T13:35:50+00:00"
-=======
             "time": "2025-08-09T06:55:48+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "sebastian/version",
@@ -22234,18 +20809,6 @@
         },
         {
             "name": "spatie/backtrace",
-<<<<<<< HEAD
-            "version": "1.7.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/spatie/backtrace.git",
-                "reference": "cd37a49fce7137359ac30ecc44ef3e16404cccbe"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/spatie/backtrace/zipball/cd37a49fce7137359ac30ecc44ef3e16404cccbe",
-                "reference": "cd37a49fce7137359ac30ecc44ef3e16404cccbe",
-=======
             "version": "1.8.1",
             "source": {
                 "type": "git",
@@ -22256,7 +20819,6 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/spatie/backtrace/zipball/8c0f16a59ae35ec8c62d85c3c17585158f430110",
                 "reference": "8c0f16a59ae35ec8c62d85c3c17585158f430110",
->>>>>>> invoiceninja/v5-stable
                 "shasum": ""
             },
             "require": {
@@ -22294,12 +20856,8 @@
                 "spatie"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/spatie/backtrace/tree/1.7.4"
-=======
                 "issues": "https://github.com/spatie/backtrace/issues",
                 "source": "https://github.com/spatie/backtrace/tree/1.8.1"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -22311,11 +20869,7 @@
                     "type": "other"
                 }
             ],
-<<<<<<< HEAD
-            "time": "2025-05-08T15:41:09+00:00"
-=======
             "time": "2025-08-26T08:22:30+00:00"
->>>>>>> invoiceninja/v5-stable
         },
         {
             "name": "spatie/error-solutions",
@@ -22750,11 +21304,7 @@
         },
         {
             "name": "symfony/polyfill-php81",
-<<<<<<< HEAD
-            "version": "v1.32.0",
-=======
             "version": "v1.33.0",
->>>>>>> invoiceninja/v5-stable
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php81.git",
@@ -22810,11 +21360,7 @@
                 "shim"
             ],
             "support": {
-<<<<<<< HEAD
-                "source": "https://github.com/symfony/polyfill-php81/tree/v1.32.0"
-=======
                 "source": "https://github.com/symfony/polyfill-php81/tree/v1.33.0"
->>>>>>> invoiceninja/v5-stable
             },
             "funding": [
                 {
@@ -22967,6 +21513,6 @@
         "ext-libxml": "*",
         "ext-simplexml": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }
