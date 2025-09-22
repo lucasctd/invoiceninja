@@ -4,8 +4,6 @@ services:
       context: .
       dockerfile: ./docker/nginx/Dockerfile
     restart: unless-stopped
-    volumes:
-      - app:/var/www:ro
     networks:
       - invoice-net
     ports:
@@ -19,9 +17,6 @@ services:
       context: .
       dockerfile: ./docker/php-fpm/Dockerfile
     restart: unless-stopped
-    volumes:
-      - app:/var/www
-      - storage:/var/www/storage
     env_file:
       - .env
     networks:
@@ -71,5 +66,3 @@ networks:
 
 volumes:
   db_data:
-  storage:
-  app:
