@@ -35,8 +35,8 @@ services:
     image: mysql:8.0
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: eJVzC2siywYlD64QQ2vcM
-      MYSQL_DATABASE: lara_db_faturas_jjemplacamentos
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_DATABASE: $DB_DATABASE
     ports:
       - 3306
     volumes:
