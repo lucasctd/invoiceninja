@@ -2,7 +2,7 @@ services:
   invoice-web:
     build:
       context: .
-      dockerfile: ./docker/nginx/Dockerfile
+      dockerfile: ./docker-prod/nginx/Dockerfile
     restart: unless-stopped
     networks:
       - invoice-net
@@ -15,7 +15,7 @@ services:
   invoice-php-fpm:
     build:
       context: .
-      dockerfile: ./docker/php-fpm/Dockerfile
+      dockerfile: ./docker-prod/php-fpm/Dockerfile
     restart: unless-stopped
     env_file:
       - .env
