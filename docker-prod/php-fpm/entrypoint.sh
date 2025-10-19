@@ -3,6 +3,9 @@ set -e
 
 echo "Running entrypoint script..."
 
+# Define o diretório como seguro para o git
+git config --global --add safe.directory /var/www
+
 # Garante que o usuário www-data seja o dono dos diretórios de cache e storage
 # Isso previne problemas de permissão ao rodar os comandos artisan
 chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache

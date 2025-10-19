@@ -4,12 +4,15 @@ services:
       context: .
       dockerfile_inline: |
         FROM dunglas/frankenphp:php8.4-alpine
-        
+
         # Install system dependencies
         RUN apk add --no-cache \
             supervisor \
             dcron \
             bash \
+            zip \
+            unzip \
+            curl \
             mysql-client
         
         # Install PHP extensions needed for Laravel
@@ -21,7 +24,14 @@ services:
             opcache \
             redis \
             bcmath \
-            pcntl
+            pcntl \
+            mbstring \
+            xml \
+            curl
+
+        # Create app directory with correct permissions
+        RUN mkdir -p /app && chown www-data:www-data /app
+        WORKDIR /app
         
         # Copy custom php.ini
         COPY docker-prod/franken/php.ini /usr/local/etc/php/php.ini
@@ -30,26 +40,26 @@ services:
         COPY docker-prod/franken/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
         
         # Copy application files
-        COPY . /app
-        WORKDIR /app
-        
+        COPY --chown=www-data:www-data . .
+        COPY --chown=www-data:www-data .env.docker .env
+       
         # Copy composer
         COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
         
-        # Copy environment file
-        COPY .env.docker .env
-
-        COPY ./docker-prod/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
+        COPY ./docker-prod/franken/entrypoint.sh /usr/local/bin/entrypoint.sh
         RUN chmod +x /usr/local/bin/entrypoint.sh
         
-        # Install dependencies
+        # Install dependencies as www-data
+        USER www-data
         RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+        USER root
         
-        # Create Laravel cron entry
-        RUN echo "* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1" > /etc/crontabs/www-data
+        # Create Laravel cron entry for www-data
+        RUN echo "* * * * * su -s /bin/sh www-data -c 'cd /app && php artisan schedule:run >> /dev/null 2>&1'" > /etc/crontabs/root
         
-        # Set permissions for Laravel
-        RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+        # Ensure proper permissions
+        RUN chown -R www-data:www-data /app
+        RUN chmod -R 755 /app
         RUN chmod -R 775 /app/storage /app/bootstrap/cache
         
         # Create log directory
@@ -65,8 +75,6 @@ services:
       - SERVER_NAME=:80
     ports:
       - "8060:80" # HTTP
-      - "443:443" # HTTPS
-      - "443:443/udp" # HTTP/3
     volumes:
       - caddy_data:/data
       - caddy_config:/config
