@@ -7,7 +7,7 @@ services:
     networks:
       - invoice-net
     ports:
-      - 80
+      - 8060:80
     depends_on:
       invoice-php-fpm:
         condition: service_healthy
@@ -38,7 +38,7 @@ services:
       MYSQL_ROOT_PASSWORD: $DB_PASSWORD
       MYSQL_DATABASE: $DB_DATABASE
     ports:
-      - 3306
+      - 33067:3306
     volumes:
       - invoice_db_data:/var/lib/mysql
     networks:

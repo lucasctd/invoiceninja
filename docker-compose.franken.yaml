@@ -1,0 +1,119 @@
+services:
+  php:
+    build: 
+      context: .
+      dockerfile_inline: |
+        FROM dunglas/frankenphp:php8.4-alpine
+        
+        # Install system dependencies
+        RUN apk add --no-cache \
+            supervisor \
+            dcron \
+            bash \
+            mysql-client
+        
+        # Install PHP extensions needed for Laravel
+        RUN install-php-extensions \
+            pdo_mysql \
+            gd \
+            intl \
+            zip \
+            opcache \
+            redis \
+            bcmath \
+            pcntl
+        
+        # Copy custom php.ini
+        COPY docker-prod/franken/php.ini /usr/local/etc/php/php.ini
+        
+        # Copy supervisor configuration
+        COPY docker-prod/franken/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+        
+        # Copy application files
+        COPY . /app
+        WORKDIR /app
+        
+        # Copy composer
+        COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+        
+        # Copy environment file
+        COPY .env.docker .env
+
+        COPY ./docker-prod/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
+        RUN chmod +x /usr/local/bin/entrypoint.sh
+        
+        # Install dependencies
+        RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+        
+        # Create Laravel cron entry
+        RUN echo "* * * * * cd /app && php artisan schedule:run >> /dev/null 2>&1" > /etc/crontabs/www-data
+        
+        # Set permissions for Laravel
+        RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
+        RUN chmod -R 775 /app/storage /app/bootstrap/cache
+        
+        # Create log directory
+        RUN mkdir -p /var/log/supervisor
+        
+        ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+        CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+        
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - SERVER_NAME=:80
+    ports:
+      - "8060:80" # HTTP
+      - "443:443" # HTTPS
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./storage:/app/storage
+      - ./bootstrap/cache:/app/bootstrap/cache
+    networks:
+      - invoice-net
+    depends_on:
+      invoice-mysql:
+        condition: service_healthy
+      invoice-redis:
+        condition: service_healthy
+
+  invoice-mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_DATABASE: $DB_DATABASE
+    ports:
+      - 33067:3306
+    volumes:
+      - invoice_db_data:/var/lib/mysql
+    networks:
+      - invoice-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+  invoice-redis:
+    image: redis:alpine
+    restart: unless-stopped
+    networks:
+      - invoice-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+# Volumes needed for Caddy certificates and configuration
+volumes:
+  caddy_data:
+  caddy_config:
+  invoice_db_data:
+
+networks:
+  invoice-net:
