@@ -6,7 +6,6 @@ echo "Running entrypoint script..."
 echo "Optimizing Laravel application..."
 
 # Executa os comandos de otimização como o usuário 'www-data'
-su www-data -s /bin/sh -c "composer dump-autoload --optimize"
 su www-data -s /bin/sh -c "php artisan config:cache"
 su www-data -s /bin/sh -c "php artisan route:cache"
 su www-data -s /bin/sh -c "php artisan view:cache"

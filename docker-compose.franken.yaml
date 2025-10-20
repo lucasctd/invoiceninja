@@ -58,9 +58,8 @@ services:
         RUN echo "* * * * * su -s /bin/sh www-data -c 'cd /app && php artisan schedule:run >> /dev/null 2>&1'" > /etc/crontabs/root
         
         # Ensure proper permissions
-        RUN chown -R www-data:www-data /app
-        RUN chmod -R 755 /app
-        RUN chmod -R 775 /app/storage /app/bootstrap/cache
+        RUN find /app -type f -exec chmod 644 {} \;
+        RUN find /app -type d -exec chmod 755 {} \; 
         
         # Create log directory
         RUN mkdir -p /var/log/supervisor
@@ -78,8 +77,6 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-      - ./storage:/app/storage
-      - ./bootstrap/cache:/app/bootstrap/cache
     networks:
       - invoice-net
     depends_on:
