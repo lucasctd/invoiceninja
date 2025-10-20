@@ -7,7 +7,7 @@ services:
     networks:
       - invoice-net
     ports:
-      - 8060:80
+      - 80
     depends_on:
       invoice-php-fpm:
         condition: service_healthy

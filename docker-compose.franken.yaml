@@ -73,7 +73,7 @@ services:
     environment:
       - SERVER_NAME=:80
     ports:
-      - "8060:80" # HTTP
+      - 80
     volumes:
       - caddy_data:/data
       - caddy_config:/config
