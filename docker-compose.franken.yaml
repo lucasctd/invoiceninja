@@ -42,6 +42,10 @@ services:
         # Copy application files
         COPY --chown=www-data:www-data . .
         COPY --chown=www-data:www-data .env.docker .env
+
+        # Ensure proper permissions
+        RUN find /app -type f -exec chmod 644 {} \;
+        RUN find /app -type d -exec chmod 755 {} \;
        
         # Copy composer
         COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -51,15 +55,13 @@ services:
         
         # Install dependencies as www-data
         USER www-data
-        RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+        RUN composer install --optimize-autoloader --no-interaction --no-scripts
+        RUN php artisan route:cache
+        RUN php artisan view:cache
         USER root
-        
+
         # Create Laravel cron entry for www-data
         RUN echo "* * * * * su -s /bin/sh www-data -c 'cd /app && php artisan schedule:run >> /dev/null 2>&1'" > /etc/crontabs/root
-        
-        # Ensure proper permissions
-        RUN find /app -type f -exec chmod 644 {} \;
-        RUN find /app -type d -exec chmod 755 {} \; 
         
         # Create log directory
         RUN mkdir -p /var/log/supervisor
@@ -89,7 +91,9 @@ services:
     image: mysql:8.0
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: $DB_PASSWORD
+      MYSQL_RANDOM_ROOT_PASSWORD: yes
+      MYSQL_USER: $DB_USERNAME
+      MYSQL_PASSWORD: $DB_PASSWORD
       MYSQL_DATABASE: $DB_DATABASE
     ports:
       - 33067:3306
