@@ -56,8 +56,6 @@ services:
         # Install dependencies as www-data
         USER www-data
         RUN composer install --optimize-autoloader --no-interaction --no-scripts
-        RUN php artisan route:cache
-        RUN php artisan view:cache
         USER root
 
         # Create Laravel cron entry for www-data
