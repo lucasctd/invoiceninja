@@ -68,6 +68,8 @@ services:
         CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
         
     restart: unless-stopped
+    healthcheck:
+      disable: true
     env_file:
       - .env
     environment:
