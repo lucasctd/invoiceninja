@@ -94,7 +94,7 @@ services:
       MYSQL_PASSWORD: $DB_PASSWORD
       MYSQL_DATABASE: $DB_DATABASE
     ports:
-      - 33067:3306
+      - 3306
     volumes:
       - invoice_db_data:/var/lib/mysql
     networks:
