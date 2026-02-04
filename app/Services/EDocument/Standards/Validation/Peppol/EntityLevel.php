@@ -12,7 +12,7 @@
 
 namespace App\Services\EDocument\Standards\Validation\Peppol;
 
-use App\Exceptions\PeppolValidationException;
+use XSLTProcessor;
 use App\Models\Quote;
 use App\Models\Client;
 use App\Models\Credit;
@@ -20,12 +20,14 @@ use App\Models\Vendor;
 use App\Models\Company;
 use App\Models\Invoice;
 use App\Models\PurchaseOrder;
-use App\Services\EDocument\Standards\Peppol;
-use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
+use App\Models\RecurringInvoice;
 use Illuminate\Support\Facades\App;
-use XSLTProcessor;
+use App\Services\EDocument\Standards\Peppol;
+use App\Exceptions\PeppolValidationException;
+use App\Services\EDocument\Standards\Validation\EntityLevelInterface;
+use App\Services\EDocument\Standards\Validation\XsltDocumentValidator;
 
-class EntityLevel
+class EntityLevel implements EntityLevelInterface
 {
     private array $eu_country_codes = [
             'AT', // Austria
@@ -63,7 +65,7 @@ class EntityLevel
     private array $client_fields = [
         'address1',
         'city',
-        // 'state',
+        'state',
         'postal_code',
         'country_id',
     ];
@@ -123,7 +125,12 @@ class EntityLevel
 
     }
 
-    public function checkInvoice(Invoice $invoice): array
+    public function checkRecurringInvoice(RecurringInvoice $recurring_invoice): array
+    {
+        return ['passes' => true];
+    }
+
+    public function checkInvoice(Invoice | Credit $invoice): array
     {
         $this->init($invoice->client->locale());
 
@@ -192,15 +199,17 @@ class EntityLevel
 
         foreach ($this->client_fields as $field) {
 
-            if ($this->validString($client->{$field})) {
-                continue;
-            }
-
             if ($field == 'country_id' && $client->country_id >= 1) {
                 continue;
             }
 
-            $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
+            if (in_array($field, ['address1', 'address2', 'city', 'state', 'postal_code']) && strlen($client->address1 ?? '') < 2) {
+                $errors[] = ['field' => $field, 'label' => ctrans("texts.{$field}")];
+            }
+
+            if ($this->validString($client->{$field})) {
+                continue;
+            }
 
         }
 
@@ -268,7 +277,7 @@ class EntityLevel
         }
 
         //test legal entity id present
-        if (!is_int($company->legal_entity_id)) {
+        if(intval($company->legal_entity_id) == 0){
             $errors[] = ['field' => "You have not registered a legal entity id as yet."];
         }
 
@@ -310,7 +319,7 @@ class EntityLevel
     /************************************ helpers ************************************/
     private function validString(?string $string): bool
     {
-        return iconv_strlen($string) >= 1;
+        return iconv_strlen($string ?? '') >= 1;
     }
 
     private function checkNexus(Client $client): self
@@ -330,12 +339,12 @@ class EntityLevel
                                 $client->company->tax_data->regions->EU->has_sales_above_threshold;
 
             // Is this B2B or B2C?
-            $is_b2c = strlen($client->vat_number) < 2 ||
+            $is_b2c = strlen($client->vat_number ?? '') < 2 ||
                     !($client->has_valid_vat_number ?? false) ||
                     $client->classification == 'individual';
 
             // B2C, under threshold, no Company VAT Registerd - must charge origin country VAT
-            if ($is_b2c && !$is_over_threshold && strlen($client->company->settings->vat_number) < 2) {
+            if ($is_b2c && !$is_over_threshold && strlen($client->company->settings->vat_number ?? '') < 2) {
 
             } elseif ($is_b2c) {
                 if ($is_over_threshold) {

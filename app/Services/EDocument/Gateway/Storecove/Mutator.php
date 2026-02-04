@@ -19,7 +19,8 @@ use App\Services\EDocument\Gateway\Storecove\StorecoveRouter;
 
 class Mutator implements MutatorInterface
 {
-    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice $p_invoice;
+    /** @var \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote */
+    private \InvoiceNinja\EInvoice\Models\Peppol\Invoice | \InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice;
 
     private ?\InvoiceNinja\EInvoice\Models\Peppol\Invoice $_client_settings;
 
@@ -51,7 +52,7 @@ class Mutator implements MutatorInterface
     /**
      * setPeppol
      *
-     * @param  \InvoiceNinja\EInvoice\Models\Peppol\Invoice $p_invoice
+     * @param  \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote $p_invoice
      * @return self
      */
     public function setPeppol($p_invoice): self
@@ -63,7 +64,7 @@ class Mutator implements MutatorInterface
     /**
      * getPeppol
      *
-     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice
+     * @return \InvoiceNinja\EInvoice\Models\Peppol\Invoice|\InvoiceNinja\EInvoice\Models\Peppol\CreditNote
      */
     public function getPeppol(): mixed
     {
@@ -193,9 +194,9 @@ class Mutator implements MutatorInterface
         $companyID = new \InvoiceNinja\EInvoice\Models\Peppol\IdentifierType\CompanyID();
         $companyID->schemeID = "0184";
         $companyID->value = $this->override_vat_number ?? preg_replace("/[^a-zA-Z0-9]/", "", $this->invoice->company->settings->id_number);
-        
+
         $this->p_invoice->AccountingSupplierParty->Party->PartyLegalEntity[0]->CompanyID = $companyID;
-                
+
         return $this;
 
     }
@@ -613,6 +614,26 @@ class Mutator implements MutatorInterface
             $this->setEmailRouting($client_email);
         }
 
+
+        if(stripos($this->invoice->client->routing_id ?? '', ":") !== false){
+
+            $parts = explode(":", $this->invoice->client->routing_id);
+
+            if(count($parts) == 2){
+                $scheme = $parts[0];
+                $id = $parts[1];
+
+                if($this->storecove->discovery($id, $scheme)){
+                    $this->setStorecoveMeta($this->buildRouting([
+                        ["scheme" => $scheme, "id" => $id]
+                    ]));
+
+                    return $this;
+                }
+            }
+
+        }
+
         $code = $this->getClientRoutingCode();
         $identifier = false;
 
@@ -630,12 +651,23 @@ class Mutator implements MutatorInterface
             $identifier = $this->getClientPublicIdentifier($code);
         }
 
-        $identifier = str_ireplace(["FR","BE"], "", $identifier);
+        $identifier = str_ireplace(["FR", "BE"], "", $identifier);
         $identifier = preg_replace("/[^a-zA-Z0-9]/", "", $identifier);
+
+        //Check the recipient is on the network, and perhaps, adjust the identifier accordingly
+        // if(!$this->storecove->exists($identifier, $code) && $this->invoice->client->country->iso_3166_2 == "BE"){
+
+        //     nlog("identifier not found, adjusting for BE");
+        //     $code = "BE:VAT";
+        //     $identifier = "BE".$identifier;
+
+        // }
+
 
         $this->setStorecoveMeta($this->buildRouting([
                 ["scheme" => $code, "id" => $identifier]
             ]));
+
 
         return $this;
     }

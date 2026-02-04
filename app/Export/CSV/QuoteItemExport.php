@@ -82,6 +82,7 @@ class QuoteItemExport extends BaseExport
         if ($clients) {
             $query = $this->addClientFilter($query, $clients);
         }
+        $query = $this->filterByUserPermissions($query);
 
         $query = $this->addQuoteStatusFilter($query, $this->input['status'] ?? '');
 
@@ -126,7 +127,7 @@ class QuoteItemExport extends BaseExport
     {
 
         //load the CSV document from a string
-        $this->csv = Writer::createFromString();
+        $this->csv = Writer::fromString();
         \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
@@ -248,6 +249,9 @@ class QuoteItemExport extends BaseExport
         }
 
 
+        if (in_array('quote.subtotal', $this->input['report_keys'])) {
+            $entity['quote.subtotal'] = $quote->calc()->getSubTotal();
+        }   
 
         return $entity;
     }

@@ -79,6 +79,7 @@ class PurchaseOrderItemExport extends BaseExport
         if ($clients) {
             $query = $this->addClientFilter($query, $clients);
         }
+        $query = $this->filterByUserPermissions($query);
 
         $query = $this->addPurchaseOrderStatusFilter($query, $this->input['status'] ?? '');
 
@@ -120,7 +121,7 @@ class PurchaseOrderItemExport extends BaseExport
     public function run()
     {
         //load the CSV document from a string
-        $this->csv = Writer::createFromString();
+        $this->csv = Writer::fromString();
         \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $query = $this->init();
@@ -248,6 +249,10 @@ class PurchaseOrderItemExport extends BaseExport
             $entity['purchase_order.assigned_user_id'] = $purchase_order->assigned_user ? $purchase_order->assigned_user->present()->name() : '';
         }
 
+        if (in_array('purchase_order.subtotal', $this->input['report_keys'])) {
+            $entity['purchase_order.subtotal'] = $purchase_order->calc()->getSubTotal();
+        }       
+        
         return $entity;
     }
 

@@ -87,7 +87,7 @@ class CreditExport extends BaseExport
         return $clean_row;
     }
 
-    private function init(): Builder
+    public function init(): Builder
     {
 
         MultiDB::setDb($this->company->db);
@@ -123,6 +123,8 @@ class CreditExport extends BaseExport
             $query = $this->addCreditStatusFilter($query, $this->input['status']);
         }
 
+        $query = $this->filterByUserPermissions($query);
+
         if ($this->input['document_email_attachment'] ?? false) {
             $this->queueDocuments($query);
         }
@@ -138,7 +140,7 @@ class CreditExport extends BaseExport
     {
         $query = $this->init();
         //load the CSV document from a string
-        $this->csv = Writer::createFromString();
+        $this->csv = Writer::fromString();
         \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         //insert the header
@@ -249,6 +251,9 @@ class CreditExport extends BaseExport
             $entity['credit.user_id'] = $credit->user ? $credit->user->present()->name() : ''; //@phpstan-ignore-line
         }
 
+        if (in_array('credit.subtotal', $this->input['report_keys'])) {
+            $entity['credit.subtotal'] = $credit->calc()->getSubTotal();
+        }   
         return $entity;
     }
 }
