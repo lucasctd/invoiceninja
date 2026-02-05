@@ -83,6 +83,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $custom_surcharge_tax2
  * @property int $custom_surcharge_tax3
  * @property int $custom_surcharge_tax4
+ * @property int|null $location_id
  * @property float $exchange_rate
  * @property float $amount
  * @property float $balance
@@ -96,6 +97,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $reminder2_sent
  * @property string|null $reminder3_sent
  * @property string|null $reminder_last_sent
+ * @property int|null $location_id
+ * @property object|null $tax_data
+ * @property object|null $e_invoice
  * @property float $paid_to_date
  * @property object|null $tax_data
  * @property int|null $subscription_id
@@ -138,7 +142,7 @@ class Quote extends BaseModel
      */
     public function searchableAs(): string
     {
-        return 'quotes_v2';
+        return 'quotes';
     }
 
     protected $presenter = QuotePresenter::class;
@@ -209,6 +213,8 @@ class Quote extends BaseModel
 
     public const STATUS_CONVERTED = 4;
 
+    public const STATUS_REJECTED = 5;
+    
     public const STATUS_EXPIRED = -1;
 
     public function toSearchableArray()
@@ -378,6 +384,8 @@ class Quote extends BaseModel
                 return '<h5><span class="badge badge-danger">'.ctrans('texts.expired').'</span></h5>';
             case self::STATUS_CONVERTED:
                 return '<h5><span class="badge badge-light">'.ctrans('texts.converted').'</span></h5>';
+            case self::STATUS_REJECTED:
+                return '<h5><span class="badge badge-danger">'.ctrans('texts.rejected').'</span></h5>';
             default:
                 return '<h5><span class="badge badge-light">'.ctrans('texts.draft').'</span></h5>';
         }
@@ -396,6 +404,8 @@ class Quote extends BaseModel
                 return ctrans('texts.expired');
             case self::STATUS_CONVERTED:
                 return ctrans('texts.converted');
+            case self::STATUS_REJECTED:
+                return ctrans('texts.rejected');
             default:
                 return ctrans('texts.draft');
 
@@ -410,6 +420,15 @@ class Quote extends BaseModel
     public function isApproved(): bool
     {
         if ($this->status_id === $this::STATUS_APPROVED) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function isRejected(): bool
+    {
+        if ($this->status_id === $this::STATUS_REJECTED) {
             return true;
         }
 

@@ -147,12 +147,12 @@ abstract class QueryFilters
 
         return $this->builder->where(function ($query) use ($filters) {
             if (in_array(self::STATUS_ACTIVE, $filters)) {
-                $query = $query->orWhereNull('deleted_at');
+                $query = $query->orWhereNull($this->builder->getModel()->getTable() . '.deleted_at');
             }
 
             if (in_array(self::STATUS_ARCHIVED, $filters)) {
                 $query = $query->orWhere(function ($q) {
-                    $q->whereNotNull('deleted_at')->where('is_deleted', 0);
+                    $q->whereNotNull($this->builder->getModel()->getTable() . '.deleted_at')->where('is_deleted', 0);
                 });
             }
 
@@ -337,6 +337,33 @@ abstract class QueryFilters
             ->company();
     }
 
+
+
+    /**
+     * Filter by created at date range
+     *
+     * @param string $date_range
+     * @return Builder
+     */
+    public function created_between(string $date_range = ''): Builder
+    {
+        $parts = explode(",", $date_range);
+
+        if (count($parts) != 2 || !in_array('created_at', \Illuminate\Support\Facades\Schema::getColumnListing($this->builder->getModel()->getTable()))) {
+            return $this->builder;
+        }
+
+        try {
+
+            $start_date = Carbon::parse($parts[0]);
+            $end_date = Carbon::parse($parts[1]);
+
+            return $this->builder->whereBetween('created_at', [$start_date, $end_date]);
+        } catch (\Exception $e) {
+            return $this->builder;
+        }
+
+    }
 
     /**
      * Filter by date range

@@ -443,11 +443,9 @@ class ImportController extends Controller
 
     private function getCsvData($csvfile)
     {
-        if (! ini_get('auto_detect_line_endings')) {
-            ini_set('auto_detect_line_endings', '1');
-        }
 
-        $csv = Reader::createFromString($csvfile);
+        $csv = Reader::fromString($csvfile);
+        
         $csvdelimiter = self::detectDelimiter($csvfile);
         $csv->setDelimiter($csvdelimiter);
         $stmt = new Statement();
@@ -457,7 +455,7 @@ class ImportController extends Controller
             $headers = $data[0];
 
             // Remove Invoice Ninja headers
-            if (count($headers) && count($data) > 4) {
+            if (is_array($headers) && count($headers) > 0 && count($data) > 4) {
                 $firstCell = $headers[0];
 
                 if (strstr($firstCell, (string) config('ninja.app_name'))) {

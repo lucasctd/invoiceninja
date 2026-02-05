@@ -82,6 +82,9 @@ class InvoiceExport extends BaseExport
             $query = $this->addInvoiceStatusFilter($query, $this->input['status']);
         }
 
+        $query = $this->filterByUserPermissions($query);
+
+        
         if ($this->input['document_email_attachment'] ?? false) {
             $this->queueDocuments($query);
         }
@@ -120,7 +123,7 @@ class InvoiceExport extends BaseExport
         $query = $this->init();
 
         //load the CSV document from a string
-        $this->csv = Writer::createFromString();
+        $this->csv = Writer::fromString();
         \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         if ($tax_amount_position = array_search('invoice.total_taxes', $this->input['report_keys'])) {
@@ -246,7 +249,10 @@ class InvoiceExport extends BaseExport
 
         if (in_array('invoice.user_id', $this->input['report_keys'])) {
             $entity['invoice.user_id'] = $invoice->user ? $invoice->user->present()->name() : ''; // @phpstan-ignore-line
+        }
 
+        if (in_array('invoice.subtotal', $this->input['report_keys'])) {
+            $entity['invoice.subtotal'] = $invoice->calc()->getSubTotal();
         }
 
         return $entity;

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -27,7 +28,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 
 /**
- * 
+ *
  *  App\Http\Controllers\DesignController
  */
 class DesignApiTest extends TestCase
@@ -37,17 +38,41 @@ class DesignApiTest extends TestCase
     use MockAccountData;
 
     public $id;
-
-    public $faker;
-
     protected function setUp(): void
     {
         parent::setUp();
 
         $this->makeTestData();
+    }
 
-        $this->faker = \Faker\Factory::create();
+    public function testCloneDesign()
+    {
+     
+        $design = Design::find(2);
 
+        $this->assertNotNull($design);
+
+        $data = [
+            'ids' => [$design->hashed_id],
+            'action' => 'clone',
+        ];
+
+        $response = $this->withHeaders([
+            'X-API-SECRET' => config('ninja.api_secret'),
+            'X-API-TOKEN' => $this->token,
+        ])->post('/api/v1/designs/bulk', $data);
+   
+        
+        $response->assertStatus(204);
+
+
+        $d = Design::query()->latest()->first();
+
+
+        $this->assertEquals($this->user->id, $d->user_id);
+        $this->assertEquals($this->company->id, $d->company_id);
+        $this->assertStringContainsString($design->name.' clone ', $d->name);
+        // $dsd = Design::all()->pluck('name')->toArray();
     }
 
     public function testSelectiveDefaultDesignUpdatesInvoice()
@@ -86,7 +111,7 @@ class DesignApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        $new_design_truth_test = Invoice::where('company_id', $this->company->id)->orderBy('id','asc')->where('design_id', 7)->exists();
+        $new_design_truth_test = Invoice::where('company_id', $this->company->id)->orderBy('id', 'asc')->where('design_id', 7)->exists();
 
         $this->assertTrue($new_design_truth_test);
 
@@ -113,7 +138,7 @@ class DesignApiTest extends TestCase
         ////////////////////////////////////////////
 
         // Group Settings
-                
+
         $gs = GroupSettingFactory::create($this->company->id, $this->user->id);
         $settings = $gs->settings;
         $settings->invoice_design_id = $this->encodePrimaryKey(4);
@@ -195,7 +220,7 @@ class DesignApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        $new_design_truth_test = Quote::where('company_id', $this->company->id)->orderBy('id','asc')->where('design_id', 7)->exists();
+        $new_design_truth_test = Quote::where('company_id', $this->company->id)->orderBy('id', 'asc')->where('design_id', 7)->exists();
 
         $this->assertTrue($new_design_truth_test);
 
@@ -222,7 +247,7 @@ class DesignApiTest extends TestCase
         ////////////////////////////////////////////
 
         // Group Settings
-                
+
         $gs = GroupSettingFactory::create($this->company->id, $this->user->id);
         $settings = $gs->settings;
         $settings->quote_design_id = $this->encodePrimaryKey(4);
@@ -304,7 +329,7 @@ class DesignApiTest extends TestCase
 
         $response->assertStatus(200);
 
-        $new_design_truth_test = Credit::where('company_id', $this->company->id)->orderBy('id','asc')->where('design_id', 7)->exists();
+        $new_design_truth_test = Credit::where('company_id', $this->company->id)->orderBy('id', 'asc')->where('design_id', 7)->exists();
 
         $this->assertTrue($new_design_truth_test);
 
@@ -331,7 +356,7 @@ class DesignApiTest extends TestCase
         ////////////////////////////////////////////
 
         // Group Settings
-                
+
         $gs = GroupSettingFactory::create($this->company->id, $this->user->id);
         $settings = $gs->settings;
         $settings->credit_design_id = $this->encodePrimaryKey(4);

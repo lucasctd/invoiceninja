@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Invoice Ninja (https://invoiceninja.com).
  *
@@ -24,13 +25,12 @@ use Tests\MockAccountData;
 use Tests\TestCase;
 
 /**
- * 
+ *
  */
 class UsTaxTest extends TestCase
 {
     use MockAccountData;
     use DatabaseTransactions;
-
     private array $mock_response = [
                 "geoPostalCode" => "92582",
                 "geoCity" => "SAN JACINTO",
@@ -1025,7 +1025,7 @@ class UsTaxTest extends TestCase
         $tax_data->seller_subregion = 'CA';
         $tax_data->regions->US->has_sales_above_threshold = true;
         $tax_data->regions->US->tax_all_subregions = true;
-        
+
         $tax_data->regions->US->subregions->CA->tax_rate = 6;
         $tax_data->regions->US->subregions->CA->tax_name = 'Sales Tax';
 
@@ -1130,6 +1130,10 @@ class UsTaxTest extends TestCase
 
         $company->tax_data = $tax_data;
         $company->save();
+
+        // Reload the company relationship on the invoice to ensure fresh tax_data is used
+        $invoice->load('company');
+        $invoice->client->load('company');
 
         $invoice = $invoice->calc()->getInvoice()->service()->markSent()->save();
 

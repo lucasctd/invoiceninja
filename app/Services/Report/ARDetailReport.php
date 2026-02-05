@@ -32,7 +32,8 @@ class ARDetailReport extends BaseExport
 
     public Writer $csv;
 
-    public string $date_key = 'created_at';
+    // 2026-01-16: Changed from created_at to date to match the invoice date
+    public string $date_key = 'date';
 
     private string $template = '/views/templates/reports/ar_detail_report.html';
 
@@ -73,7 +74,7 @@ class ARDetailReport extends BaseExport
         $t = app('translator');
         $t->replace(Ninja::transformTranslations($this->company->settings));
 
-        $this->csv = Writer::createFromString();
+        $this->csv = Writer::fromString();
         \League\Csv\CharsetConverter::addTo($this->csv, 'UTF-8', 'UTF-8');
 
         $this->csv->insertOne([]);
@@ -103,9 +104,11 @@ class ARDetailReport extends BaseExport
         $query = $this->addDateRange($query, 'invoices');
 
         $query = $this->filterByClients($query);
+        $query = $this->filterByUserPermissions($query);
 
         $query->cursor()
             ->each(function ($invoice) {
+                /** @var \App\Models\Invoice $invoice */
                 $this->csv->insertOne($this->buildRow($invoice));
             });
 

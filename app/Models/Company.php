@@ -94,6 +94,7 @@ use Laracasts\Presenter\PresentableTrait;
  * @property bool $markdown_enabled
  * @property bool $use_comma_as_decimal_place
  * @property bool $report_include_drafts
+ * @property bool $invoice_task_project_header
  * @property array|null $client_registration_fields
  * @property bool $convert_rate_to_client
  * @property bool $markdown_email_enabled
@@ -131,14 +132,18 @@ use Laracasts\Presenter\PresentableTrait;
  * @property int|null $smtp_port
  * @property string|null $smtp_encryption
  * @property string|null $smtp_local_domain
+ * @property boolean $invoice_task_item_description
  * @property \App\DataMapper\QuickbooksSettings|null $quickbooks
  * @property boolean $smtp_verify_peer
+ * @property object|null $origin_tax_data
  * @property int|null $legal_entity_id
  * @property bool $invoice_task_item_description
  * @property bool $show_task_item_description
  * @property bool $invoice_task_project_header
  * @property-read \App\Models\Account $account
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Location> $locations
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\VerifactuLog> $verifactu_logs
  * @property-read int|null $activities_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $all_activities
  * @property-read int|null $all_activities_count
@@ -432,6 +437,11 @@ class Company extends BaseModel
     public function schedulers(): HasMany
     {
         return $this->hasMany(Scheduler::class);
+    }
+
+    public function verifactu_logs(): HasMany
+    {
+        return $this->hasMany(VerifactuLog::class)->orderBy('id', 'DESC');
     }
 
     public function task_schedulers(): HasMany
@@ -957,7 +967,7 @@ class Company extends BaseModel
         $timezone = $this->timezone();
 
         date_default_timezone_set('GMT');
-        $date = new \DateTime("now", new \DateTimeZone($timezone->name));
+        $date = new \DateTime("now", new \DateTimeZone($timezone->name ?? 'UTC'));
         $offset = $date->getOffset();
 
         return $offset;
@@ -976,7 +986,7 @@ class Company extends BaseModel
         $timezone = $this->timezone();
 
         date_default_timezone_set('GMT');
-        $date = new \DateTime("now", new \DateTimeZone($timezone->name));
+        $date = new \DateTime("now", new \DateTimeZone($timezone->name ?? 'UTC'));
         $offset -= $date->getOffset();
 
         $offset += ($entity_send_time * 3600);
@@ -1037,5 +1047,64 @@ class Company extends BaseModel
     public function peppolSendingEnabled(): bool
     {
         return !$this->account->is_flagged && $this->account->e_invoice_quota > 0 && isset($this->legal_entity_id) && isset($this->tax_data->acts_as_sender) && $this->tax_data->acts_as_sender;
+    }
+    
+    /**
+     * verifactuEnabled
+     * 
+     * Returns a flag if the current company is using verifactu as the e-invoice provider
+     *
+     * @return bool
+     */
+    public function verifactuEnabled(): bool
+    {
+        return once(function () {
+            return $this->getSetting('e_invoice_type') == 'VERIFACTU';
+        });
+    }
+
+    /**
+     * Check if QuickBooks push should be triggered for an entity/action.
+     * 
+     * Uses efficient checks to avoid overhead for companies not using QuickBooks.
+     * Uses once() to cache the result for the request lifecycle.
+     * 
+     * This method is designed to be called from model observers to efficiently
+     * determine if a push job should be dispatched, with zero overhead for
+     * companies that don't use QuickBooks.
+     * 
+     * @param string $entity Entity type: 'client', 'invoice', etc.
+     * @param string $action Action type: 'create', 'update', 'status'
+     * @param string|null $status Optional status for status-based pushes (e.g., invoice status: 'draft', 'sent', 'paid', 'deleted')
+     * @return bool
+     */
+    public function shouldPushToQuickbooks(string $entity, string $action, ?string $status = null): bool
+    {
+        // FASTEST CHECK: Raw database column (no object instantiation, no JSON decode)
+        // This is the cheapest possible check - just a null comparison
+        // For companies without QuickBooks, this returns immediately with ~0.001ms overhead
+        if (is_null($this->getRawOriginal('quickbooks'))) {
+            return false;
+        }
+        
+        // Cache the detailed check for this request lifecycle
+        // This prevents re-checking if called multiple times in the same request
+        return once(function () use ($entity) {
+            // Check if QuickBooks is actually configured (has token)
+            if (!$this->quickbooks->isConfigured()) {
+                return false;
+            }
+            
+            // Verify entity exists in settings
+            if (!isset($this->quickbooks->settings->{$entity})) {
+                return false;
+            }
+            
+            $entitySettings = $this->quickbooks->settings->{$entity};
+            $direction = $entitySettings->direction->value;
+            
+            // Check if sync direction allows push
+            return $direction === 'push' || $direction === 'bidirectional';
+        });
     }
 }

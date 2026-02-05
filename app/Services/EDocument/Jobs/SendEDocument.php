@@ -12,16 +12,21 @@
 
 namespace App\Services\EDocument\Jobs;
 
-use App\Services\Email\Email;
-use App\Services\Email\EmailObject;
+use Mail;
 use App\Utils\Ninja;
 use App\Models\Invoice;
-use App\Libraries\MultiDB;
+use App\Models\Credit;
 use App\Models\Activity;
+use App\Models\SystemLog;
+use App\Libraries\MultiDB;
 use App\Models\EInvoicingLog;
+use App\Services\Email\Email;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Cache;
+use App\Jobs\Util\SystemLogger;
+use App\Services\Email\EmailObject;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -29,8 +34,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use App\Services\EDocument\Standards\Peppol;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use App\Services\EDocument\Gateway\Storecove\Storecove;
-use Mail;
-use Illuminate\Mail\Mailables\Address;
 
 class SendEDocument implements ShouldQueue
 {
@@ -60,7 +63,7 @@ class SendEDocument implements ShouldQueue
 
         $model = $this->entity::withTrashed()->find($this->id);
 
-        if (isset($model->backup->guid) && is_string($model->backup->guid)) {
+        if (isset($model->backup->guid) && is_string($model->backup->guid) && strlen($model->backup->guid) > 3) {
             nlog("already sent!");
             return;
         }
@@ -71,7 +74,7 @@ class SendEDocument implements ShouldQueue
         }
 
         $model = $model->service()->markSent()->save();
-        
+
         /** Concrete implementation current linked to Storecove only */
         $p = new Peppol($model);
         $p->run();
@@ -98,7 +101,7 @@ class SendEDocument implements ShouldQueue
         ];
 
         //Self Hosted Sending Code Path
-        if (Ninja::isSelfHost() && ($model instanceof Invoice) && $model->company->peppolSendingEnabled()) {
+        if (Ninja::isSelfHost() && ($model instanceof Invoice || $model instanceof Credit) && $model->company->peppolSendingEnabled()) {
 
             $r = Http::withHeaders([...$this->getHeaders(), 'X-EInvoice-Token' => $model->company->account->e_invoicing_token])
                 ->post(config('ninja.hosted_ninja_url')."/api/einvoice/submission", $payload);
@@ -119,6 +122,16 @@ class SendEDocument implements ShouldQueue
             if ($r->failed()) {
                 nlog("Model {$model->number} failed to be accepted by invoice ninja, error follows:");
                 nlog($r->json());
+                (
+                    new SystemLogger(
+                        $r->json(),
+                        SystemLog::CATEGORY_PEPPOL,
+                        SystemLog::EVENT_PEPPOL_FAILURE,
+                        SystemLog::TYPE_PEPPOL_SEND,
+                        $model->client,
+                        $model->company
+                    )
+                )->handle();
                 $this->writeActivity($model, Activity::EINVOICE_DELIVERY_FAILURE, data_get($r->json(), 'errors.0.details', 'Unhandled error, check logs'));
             }
 
@@ -149,7 +162,7 @@ class SendEDocument implements ShouldQueue
         }
 
         //Hosted Sending Code Path.
-        if (($model instanceof Invoice) && $model->company->peppolSendingEnabled()) {
+        if (($model instanceof Invoice || $model instanceof Credit) && $model->company->peppolSendingEnabled()) {
             if ($model->company->account->e_invoice_quota <= config('ninja.e_invoice_quota_warning')) {
                 $key = "e_invoice_quota_low_{$model->company->account->key}";
 
@@ -212,17 +225,15 @@ class SendEDocument implements ShouldQueue
         $activity->company_id = $model->company_id;
         $activity->account_id = $model->company->account_id;
         $activity->activity_type_id = $activity_id;
-        $activity->invoice_id = $model->id;
+        $activity->invoice_id = ($model instanceof Invoice) ? $model->id : null;
+        $activity->credit_id = ($model instanceof Credit) ? $model->id : null;
         $activity->notes = str_replace('"', '', $notes);
         $activity->is_system = true;
 
         $activity->save();
 
         if ($activity_id == Activity::EINVOICE_DELIVERY_SUCCESS) {
-
-            $backup = ($model->backup && is_object($model->backup)) ? $model->backup : new \stdClass();
-            $backup->guid = str_replace('"', '', $notes);
-            $model->backup = $backup;
+            $model->backup->guid = str_replace('"', '', $notes);
             $model->saveQuietly();
 
         }

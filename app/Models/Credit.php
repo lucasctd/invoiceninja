@@ -12,6 +12,7 @@
 
 namespace App\Models;
 
+use App\DataMapper\InvoiceBackup;
 use App\Utils\Ninja;
 use App\Utils\Number;
 use Elastic\ScoutDriverPlus\Searchable;
@@ -47,13 +48,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $number
  * @property float $discount
  * @property bool $is_amount_discount
+ * @property bool $auto_bill_enabled
  * @property string|null $po_number
  * @property string|null $date
  * @property string|null $last_sent_date
  * @property string|null $due_date
  * @property bool $is_deleted
  * @property array|null $line_items
- * @property object|null $backup
+ * @property InvoiceBackup $backup
  * @property string|null $footer
  * @property string|null $public_notes
  * @property string|null $private_notes
@@ -92,6 +94,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $reminder2_sent
  * @property string|null $reminder3_sent
  * @property string|null $reminder_last_sent
+ * @property object|null $tax_data
+ * @property object|null $e_invoice
+ * @property int|null $location_id
  * @property float $paid_to_date
  * @property int|null $location_id
  * @property object|null $e_invoice
@@ -123,6 +128,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \App\Models\Vendor|null $vendor
  * @property-read \App\Models\Location|null $location
  * @property-read mixed $pivot
+ * @property-read \App\Models\Location|null $location
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Activity> $activities
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CompanyLedger> $company_ledger
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Document> $documents
@@ -150,7 +156,7 @@ class Credit extends BaseModel
      */
     public function searchableAs(): string
     {
-        return 'credits_v2';
+        return 'credits';
     }
 
     protected $presenter = CreditPresenter::class;
@@ -191,11 +197,12 @@ class Credit extends BaseModel
         'subscription_id',
         'vendor_id',
         'location_id',
+        'e_invoice',
     ];
 
     protected $casts = [
         'line_items' => 'object',
-        'backup' => 'object',
+        'backup' => InvoiceBackup::class,
         'updated_at' => 'timestamp',
         'created_at' => 'timestamp',
         'deleted_at' => 'timestamp',
@@ -318,7 +325,7 @@ class Credit extends BaseModel
      */
     public function invoice(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Invoice::class);
+        return $this->belongsTo(Invoice::class)->withTrashed();
     }
 
     /**
