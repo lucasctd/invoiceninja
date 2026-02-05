@@ -268,4 +268,5 @@ return [
     'disable_purify_html' => env('DISABLE_PURIFY_HTML', false),
     'zugferd_version_two' => env('ZUGFERD_VERSION_TWO', true),
     'chart_service_url' => env('CHART_SERVICE_URL', false),
+    'max_per_page' => env('MAX_PER_PAGE', 1000),
 ];
