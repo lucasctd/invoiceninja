@@ -600,8 +600,7 @@ class BaseController extends Controller
     private function resolveQueryLimit(): int
     {
         if (request()->has('per_page')) {
-            $maxLimit = config('ninja.max_per_page', 1000);
-            return min(abs((int)request()->input('per_page', 20)), $maxLimit);
+            return min(abs((int)request()->input('per_page', 20)), 5000);
         }
 
         return 20;

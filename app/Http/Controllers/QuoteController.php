@@ -122,8 +122,6 @@ class QuoteController extends BaseController
     {
         $quotes = Quote::filter($filters);
 
-        $quotes->with(['client', 'invitations', 'documents']);
-
         return $this->listResponse($quotes);
     }
 
