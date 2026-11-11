@@ -1,5 +1,5 @@
-# Use a imagem base do PHP 8.4 FPM Alpine
-FROM php:8.4-fpm-alpine
+# Use a imagem base do PHP 8.4.27 FPM Alpine (inclui correções para CVE-2026-109618 e CVE-2026-109619 / PHP2Shell)
+FROM php:8.4.27-fpm-alpine
 
 # Define o diretório de trabalho
 WORKDIR /var/www
