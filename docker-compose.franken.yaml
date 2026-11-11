@@ -3,13 +3,14 @@ services:
     build: 
       context: .
       dockerfile_inline: |
-        FROM dunglas/frankenphp:php8.4-alpine
+        FROM dunglas/frankenphp:php8.4.27-alpine
 
         # Install system dependencies
         RUN apk add --no-cache \
             supervisor \
             dcron \
             bash \
+            git \
             zip \
             unzip \
             curl \
@@ -19,6 +20,7 @@ services:
         RUN install-php-extensions \
             pdo_mysql \
             gd \
+            exif \
             intl \
             zip \
             opcache \
@@ -55,7 +57,7 @@ services:
         
         # Install dependencies as www-data
         USER www-data
-        RUN composer install --optimize-autoloader --no-interaction --no-scripts
+        RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
         USER root
 
         # Create Laravel cron entry for www-data
